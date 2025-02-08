@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Image Downloader & PDF Creator</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f9f9f9;
+      padding: 20px;
+    }
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+    h1 {
+      text-align: center;
+    }
+    form {
+      margin-top: 20px;
+    }
+    label {
+      font-weight: bold;
+    }
+    input[type="text"], input[type="submit"] {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+    }
+    input[type="submit"] {
+      background-color: #007BFF;
+      color: white;
+      cursor: pointer;
+    }
+    input[type="submit"]:hover {
+      background-color: #0056b3;
+    }
+    .message {
+      margin-top: 10px;
+      padding: 10px;
+      border-radius: 5px;
+    }
+    .success {
+      background-color: #d4edda;
+      color: #155724;
+    }
+    .error {
+      background-color: #f8d7da;
+      color: #721c24;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Criador de Quadrinhos e mangás</h1>
+    <form action="/baixar_imagens" method="POST">
+      <label for="url_site">Digite a URL do site para baixar imagens:</label>
+      <input type="text" id="url_site" name="url_site" placeholder="https://exemplo.com" required>
+      <input type="submit" value="Baixar Imagens">
+    </form>
+
+    <form action="/gerar_cbr" method="POST">
+      <label for="nome_pdf">Digite o nome desejado para o PDF (sem extensão):</label>
+      <input type="text" id="nome_pdf" name="nome_pdf" placeholder="nome_do_pdf" required>
+      <input type="submit" value="Gerar PDF">
+    </form>
+
+    {% if message %}
+      <div class="message {{ 'success' if success else 'error' }}">
+        {{ message }}
+      </div>
+    {% endif %}
+  </div>
+</body>
+</html>
