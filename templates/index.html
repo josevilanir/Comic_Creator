@@ -3,12 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Image Downloader & PDF Creator</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <title>Comic Creator & Reader</title>
+  <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
   <div class="container">
-    <h1>Criador de Quadrinhos e mangás</h1>
+    <h1>Criador e Leitor de Quadrinhos</h1>
+
     <form action="/baixar_imagens" method="POST">
       <label for="url_site">Digite a URL do site para baixar imagens:</label>
       <input type="text" id="url_site" name="url_site" placeholder="https://exemplo.com" required>
@@ -21,11 +22,6 @@
       <input type="submit" value="Gerar PDF">
     </form>
 
-    {% if message %}
-      <div class="message {{ 'success' if success else 'error' }}">
-        {{ message }}
-      </div>
-    {% endif %}
-  </div>
+<h2><a href="/biblioteca">Biblioteca de Quadrinhos</a></h2>
 </body>
 </html>

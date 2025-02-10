@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Biblioteca de Quadrinhos</title>
+  <link rel="stylesheet" href="/static/library.css">
+</head>
+<body>
+  <div class="container">
+    <h1>Biblioteca de Quadrinhos</h1>
+    
+    {% if arquivos_pdf %}
+      <div class="comics-list">
+        {% for pdf in arquivos_pdf %}
+          <div class="comic-card">
+            <a href="{{ url_for('visualizar_pdf', nome_pdf=pdf) }}" target="_blank" title="Visualizar {{ pdf }}">{{ pdf }}</a>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p>Nenhum quadrinho disponível.</p>
+    {% endif %}
+
+    <div class="actions">
+      <a href="/">Voltar para o Início</a>
+    </div>
+  </div>
+</body>
+</html>

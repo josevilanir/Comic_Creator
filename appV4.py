@@ -22,7 +22,9 @@ if not os.path.exists(pasta_imagens):
 
 @appV4.route("/")
 def index():
-    return render_template("index.html")
+    # Lista os PDFs disponíveis na pasta de quadrinhos
+    arquivos_pdf = [f for f in os.listdir(caminho_pasta) if f.endswith('.pdf')]
+    return render_template("index.html", comics=arquivos_pdf)
 
 @appV4.route("/baixar_imagens", methods=["POST"])
 def baixar_imagens():
@@ -131,7 +133,7 @@ def biblioteca():
     arquivos_pdf = [f for f in os.listdir(caminho_pasta) if f.endswith('.pdf')]
     return render_template("biblioteca.html", arquivos_pdf=arquivos_pdf)
 
-@appV4.route("/visualizar/<nome_pdf>")
+@appV4.route("/leitor/<nome_pdf>")
 def visualizar_pdf(nome_pdf):
     caminho_pdf = os.path.join(caminho_pasta, nome_pdf)
     if not os.path.exists(caminho_pdf):
