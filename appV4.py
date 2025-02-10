@@ -1,6 +1,6 @@
 import os
 import re
-from flask import Flask, render_template, request, send_from_directory, redirect, url_for
+from flask import Flask, render_template, request, send_from_directory, redirect, url_for, send_file
 from PIL import Image
 import requests
 from urllib.parse import urljoin
@@ -130,15 +130,45 @@ def gerar_pdf():
 
 @appV4.route("/biblioteca")
 def biblioteca():
-    arquivos_pdf = [f for f in os.listdir(caminho_pasta) if f.endswith('.pdf')]
-    return render_template("biblioteca.html", arquivos_pdf=arquivos_pdf)
+    conteudo = []
+    for item in os.listdir(caminho_pasta):
+        item_caminho = os.path.join(caminho_pasta, item)
+        if os.path.isdir(item_caminho):
+            # Add the directory to the conteudo list
+            conteudo.append({"nome": item, "tipo": "pasta", })
+    return render_template("biblioteca.html", conteudo=conteudo)
 
-@appV4.route("/leitor/<nome_pdf>")
-def visualizar_pdf(nome_pdf):
-    caminho_pdf = os.path.join(caminho_pasta, nome_pdf)
-    if not os.path.exists(caminho_pdf):
-        return "PDF não encontrado.", 404
-    return send_from_directory(caminho_pasta, nome_pdf)
+@appV4.route("/visualizar/<path:caminho_relativo>")
+def visualizar_pdf(caminho_relativo):
+    caminho_pdf = os.path.join(caminho_pasta, caminho_relativo)
+
+    # Normaliza o caminho e verifica se ele existe
+    caminho_pdf = os.path.normpath(caminho_pdf)
+
+    # Evitar problemas de segurança (acesso fora da pasta raiz)
+    if not caminho_pdf.startswith(os.path.abspath(caminho_pasta)):
+        return "Acesso negado.", 403
+
+    if not os.path.isfile(caminho_pdf):
+        return f"PDF não encontrado: {caminho_pdf}", 404
+    print(f"caminho_pdf: {caminho_pdf}")
+    return send_file(caminho_pdf)
+
+
+@appV4.route("/biblioteca/<nome_pasta>")
+def listar_pasta(nome_pasta):
+    caminho_completo = os.path.join(caminho_pasta, nome_pasta)
+    if not os.path.exists(caminho_completo):
+        return "Pasta não encontrada.", 404
+
+    # List all PDFs in the subdirectory
+    arquivos_pdf = [f for f in os.listdir(caminho_completo) if f.endswith('.pdf')]
+    
+    # Create the conteudo list with caminho including the subdirectory
+    conteudo = [{"nome": f, "tipo": "arquivo", "caminho": os.path.join(nome_pasta, f)} for f in arquivos_pdf]
+    
+    return render_template("biblioteca.html", conteudo=conteudo)
+
 
 if __name__ == "__main__":
     appV4.run(debug=True)

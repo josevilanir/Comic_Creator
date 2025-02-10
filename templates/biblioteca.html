@@ -10,16 +10,22 @@
   <div class="container">
     <h1>Biblioteca de Quadrinhos</h1>
     
-    {% if arquivos_pdf %}
-      <div class="comics-list">
-        {% for pdf in arquivos_pdf %}
-          <div class="comic-card">
-            <a href="{{ url_for('visualizar_pdf', nome_pdf=pdf) }}" target="_blank" title="Visualizar {{ pdf }}">{{ pdf }}</a>
-          </div>
-        {% endfor %}
-      </div>
+    {% if conteudo %}
+    <div class="comics-list">
+      {% for item in conteudo %}
+        <div class="comic-card">
+          {% if item.tipo == 'arquivo' %}
+            <!-- Link to view PDF files -->
+            <a href="{{ url_for('visualizar_pdf', caminho_relativo=item.caminho) }}" target="_blank">{{ item.nome }}</a>
+          {% else %}
+            <!-- Link to list PDFs in a subdirectory -->
+            <a href="{{ url_for('listar_pasta', nome_pasta=item.nome) }}">{{ item.nome }}</a>
+          {% endif %}
+        </div>
+      {% endfor %}
+    </div>
     {% else %}
-      <p>Nenhum quadrinho disponível.</p>
+      <p>Nenhum conteúdo disponível.</p>
     {% endif %}
 
     <div class="actions">
