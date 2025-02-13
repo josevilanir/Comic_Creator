@@ -42,7 +42,7 @@
       text-decoration: none;
       padding: 10px 15px;
       background-color: #3498db;
-      color: white;
+      color: black;
       border-radius: 5px;
       margin: 5px;
       display: inline-block;
@@ -51,3 +51,60 @@
       background-color: #2980b9;
     }
     
+/* Dark Mode Styles */
+body.dark-mode {
+  background-color: #121212;
+  color: #ffffff;
+}
+
+body.dark-mode .container {
+  background-color: #1e1e1e;
+  color: #ffffff;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+}
+
+body.dark-mode input,
+body.dark-mode textarea,
+body.dark-mode button {
+  background-color: #333;
+  color: #fff; /* Ensure text is white */
+  border: 1px solid #555;
+}
+
+body.dark-mode input::placeholder {
+  color: #aaa;
+}
+
+body.dark-mode a {
+  color: #1e90ff;
+}
+
+body.dark-mode h1,
+body.dark-mode h2,
+body.dark-mode label {
+  color: #ffffff;
+}
+
+body.dark-mode .actions a {
+  color: #ffffff; /* Ensure link text is white */
+  background-color: #444; /* Darker background for buttons */
+  border: 1px solid #666; /* Add a border for better visibility */
+}
+
+body.dark-mode .actions a:hover {
+  background-color: #555; /* Slightly lighter on hover */
+}
+
+body.dark-mode .comic-card {
+  background-color: #333;
+  border: 1px solid #555;
+  padding: 10px;
+  margin: 10px 0;
+  border-radius: 5px;
+}
+
+body.dark-mode .comic-card a {
+  color: #1e90ff;
+}

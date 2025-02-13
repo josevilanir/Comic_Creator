@@ -167,7 +167,8 @@ def listar_pasta(nome_pasta):
     # Create the conteudo list with caminho including the subdirectory
     conteudo = [{"nome": f, "tipo": "arquivo", "caminho": os.path.join(nome_pasta, f)} for f in arquivos_pdf]
     
-    return render_template("biblioteca.html", conteudo=conteudo)
+    # Pass nome_pasta to the template
+    return render_template("biblioteca.html", conteudo=conteudo, nome_pasta=nome_pasta)
 
 
 if __name__ == "__main__":

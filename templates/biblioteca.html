@@ -9,28 +9,62 @@
 <body>
   <div class="container">
     <h1>Biblioteca de Quadrinhos</h1>
-    
+
+    <!-- Dark Mode Toggle Button -->
+    <button id="theme-toggle">Modo Escuro</button>
+
+    <!-- Back to Library Button (only shown when inside a subdirectory) -->
+    {% if nome_pasta %}
+      <div class="actions">
+        <a href="{{ url_for('biblioteca') }}">Voltar para a biblioteca</a>
+      </div>
+    {% endif %}
+
     {% if conteudo %}
-    <div class="comics-list">
-      {% for item in conteudo %}
-        <div class="comic-card">
-          {% if item.tipo == 'arquivo' %}
-            <!-- Link to view PDF files -->
-            <a href="{{ url_for('visualizar_pdf', caminho_relativo=item.caminho) }}" target="_blank">{{ item.nome }}</a>
-          {% else %}
-            <!-- Link to list PDFs in a subdirectory -->
-            <a href="{{ url_for('listar_pasta', nome_pasta=item.nome) }}">{{ item.nome }}</a>
-          {% endif %}
-        </div>
-      {% endfor %}
-    </div>
+      <div class="comics-list">
+        {% for item in conteudo %}
+          <div class="comic-card">
+            {% if item.tipo == 'arquivo' %}
+              <a href="{{ url_for('visualizar_pdf', caminho_relativo=item.caminho) }}" target="_blank">{{ item.nome }}</a>
+            {% else %}
+              <a href="{{ url_for('listar_pasta', nome_pasta=item.nome) }}">{{ item.nome }}</a>
+            {% endif %}
+          </div>
+        {% endfor %}
+      </div>
     {% else %}
       <p>Nenhum conteúdo disponível.</p>
     {% endif %}
 
+    <!-- Back to Home Button -->
     <div class="actions">
       <a href="/">Voltar para o Início</a>
     </div>
   </div>
+
+  <!-- Dark Mode JavaScript -->
+  <script>
+    const toggleButton = document.getElementById("theme-toggle");
+
+    // Check if dark mode is already enabled (from localStorage)
+    if (localStorage.getItem("dark-mode") === "enabled") {
+      document.body.classList.add("dark-mode");
+      toggleButton.textContent = "Modo Claro";
+    }
+
+    // Toggle dark mode
+    toggleButton.addEventListener("click", () => {
+      document.body.classList.toggle("dark-mode");
+
+      // Save the user's preference in localStorage
+      if (document.body.classList.contains("dark-mode")) {
+        localStorage.setItem("dark-mode", "enabled");
+        toggleButton.textContent = "Modo Claro";
+      } else {
+        localStorage.setItem("dark-mode", "disabled");
+        toggleButton.textContent = "Modo Escuro";
+      }
+    });
+  </script>
 </body>
 </html>
