@@ -25,8 +25,10 @@
         {% for item in conteudo %}
           <div class="comic-card">
             {% if item.tipo == 'arquivo' %}
+              <!-- Link to view PDF files -->
               <a href="{{ url_for('visualizar_pdf', caminho_relativo=item.caminho) }}" target="_blank">{{ item.nome }}</a>
             {% else %}
+              <!-- Link to list PDFs in a subdirectory -->
               <a href="{{ url_for('listar_pasta', nome_pasta=item.nome) }}">{{ item.nome }}</a>
             {% endif %}
           </div>

@@ -10,27 +10,22 @@
   <div class="container">
     <h1>Criador e Leitor de Quadrinhos</h1>
 
+    <!-- Dark Mode Toggle Button -->
     <button id="theme-toggle">Modo Escuro</button>
 
-    <form action="/baixar_imagens" method="POST">
-      <label for="url_site">Digite a URL do site para baixar imagens:</label>
+    <!-- Single Form for URL Input -->
+    <form action="/processar_url" method="POST">
+      <label for="url_site">Digite a URL do site para baixar e gerar o PDF:</label>
       <input type="text" id="url_site" name="url_site" placeholder="https://exemplo.com" required>
-      <input type="submit" value="Baixar Imagens">
-    </form>
-
-    <form action="/gerar_cbr" method="POST">
-      <label for="nome_pdf">Digite o nome desejado para o PDF (sem extensão):</label>
-      <input type="text" id="nome_pdf" name="nome_pdf" placeholder="nome_do_pdf" required>
-      <input type="submit" value="Gerar PDF">
+      <input type="submit" value="Baixar e Gerar PDF">
     </form>
 
     <h2><a href="/biblioteca">Biblioteca de Quadrinhos</a></h2>
 
     <details>
       <summary>Como usar</summary>
-      <p>1. Cole a URL do site no campo acima e clique em "Baixar Imagens".</p>
-      <p>2. Digite o nome do PDF e clique em "Gerar PDF".</p>
-      <p>3. Acesse a biblioteca para visualizar seus quadrinhos.</p>
+      <p>1. Cole a URL do site no campo acima e clique em "Baixar e Gerar PDF".</p>
+      <p>2. Acesse a biblioteca para visualizar seus quadrinhos.</p>
     </details>
 
     <h2>Atividade Recente</h2>
@@ -45,19 +40,20 @@
     </footer>
   </div>
 
+  <!-- Dark Mode JavaScript -->
   <script>
     const toggleButton = document.getElementById("theme-toggle");
-  
+
     // Check if dark mode is already enabled (from localStorage)
     if (localStorage.getItem("dark-mode") === "enabled") {
       document.body.classList.add("dark-mode");
       toggleButton.textContent = "Modo Claro";
     }
-  
+
     // Toggle dark mode
     toggleButton.addEventListener("click", () => {
       document.body.classList.toggle("dark-mode");
-  
+
       // Save the user's preference in localStorage
       if (document.body.classList.contains("dark-mode")) {
         localStorage.setItem("dark-mode", "enabled");
