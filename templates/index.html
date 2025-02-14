@@ -13,10 +13,14 @@
     <!-- Dark Mode Toggle Button -->
     <button id="theme-toggle">Modo Escuro</button>
 
-    <!-- Single Form for URL Input -->
+    <!-- Form for URL and Chapter Count -->
     <form action="/processar_url" method="POST">
       <label for="url_site">Digite a URL do site para baixar e gerar o PDF:</label>
       <input type="text" id="url_site" name="url_site" placeholder="https://exemplo.com" required>
+
+      <label for="num_capitulos">Número de capítulos para baixar:</label>
+      <input type="number" id="num_capitulos" name="num_capitulos" min="1" value="1" required>
+
       <input type="submit" value="Baixar e Gerar PDF">
     </form>
 
@@ -25,7 +29,8 @@
     <details>
       <summary>Como usar</summary>
       <p>1. Cole a URL do site no campo acima e clique em "Baixar e Gerar PDF".</p>
-      <p>2. Acesse a biblioteca para visualizar seus quadrinhos.</p>
+      <p>2. Especifique o número de capítulos que deseja baixar.</p>
+      <p>3. Acesse a biblioteca para visualizar seus quadrinhos.</p>
     </details>
 
     <h2>Atividade Recente</h2>
