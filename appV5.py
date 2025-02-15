@@ -1,10 +1,11 @@
 import os
 import re
-from flask import Flask, render_template, request, send_from_directory, redirect, url_for, send_file, flash
+from flask import Flask, render_template, request, send_from_directory, redirect, url_for, send_file, flash, session
 from PIL import Image
 import requests
 from urllib.parse import urljoin, urlparse
 from bs4 import BeautifulSoup
+
 
 appV5 = Flask(__name__)
 appV5.secret_key = "sua_chave_secreta_aqui"  # Required for flash messages
@@ -151,7 +152,11 @@ def biblioteca():
         if os.path.isdir(item_caminho):
             # Add the directory to the conteudo list
             conteudo.append({"nome": item, "tipo": "pasta"})
-    return render_template("biblioteca.html", conteudo=conteudo)
+
+    # Debug print to verify the conteudo list
+    print(f"Conteudo: {conteudo}")
+
+    return render_template("biblioteca.html", conteudo=conteudo, nome_pasta=None)
 
 @appV5.route("/visualizar/<path:caminho_relativo>")
 def visualizar_pdf(caminho_relativo):
@@ -167,6 +172,18 @@ def visualizar_pdf(caminho_relativo):
     if not os.path.isfile(caminho_pdf):
         return f"PDF não encontrado: {caminho_pdf}", 404
 
+    # Extrai o nome da pasta (subdiretório) do caminho_relativo
+    nome_pasta = os.path.dirname(caminho_relativo)
+
+    # Salva o caminho do último PDF lido na sessão para a pasta específica
+    if "last_read" not in session or not isinstance(session["last_read"], dict):
+        session["last_read"] = {}  # Garante que seja um dicionário
+
+    session["last_read"][nome_pasta] = caminho_relativo
+    session.modified = True  # Garante que a sessão seja salva
+
+    print(f"Last read PDF for folder '{nome_pasta}' saved in session: {caminho_relativo}")  # Debug print
+
     return send_file(caminho_pdf)
 
 @appV5.route("/biblioteca/<nome_pasta>")
@@ -175,8 +192,17 @@ def listar_pasta(nome_pasta):
     if not os.path.exists(caminho_completo):
         return "Pasta não encontrada.", 404
 
+    # List all PDFs in the subdirectory
     arquivos_pdf = [f for f in os.listdir(caminho_completo) if f.endswith('.pdf')]
-    return render_template("biblioteca.html", conteudo=[{"nome": f, "tipo": "arquivo", "caminho": os.path.join(nome_pasta, f)} for f in arquivos_pdf], nome_pasta=nome_pasta)
+    conteudo = [{"nome": f, "tipo": "arquivo", "caminho": os.path.join(nome_pasta, f)} for f in arquivos_pdf]
+
+    # Pass the last read PDF information for the specific folder to the template
+    last_read = None
+    if "last_read" in session and nome_pasta in session["last_read"]:
+        last_read = os.path.normpath(session["last_read"][nome_pasta])  # Normalize the last_read path
+    print(f"Last read PDF for folder '{nome_pasta}' retrieved from session: {last_read}")  # Debug print
+
+    return render_template("biblioteca.html", conteudo=conteudo, nome_pasta=nome_pasta, last_read=last_read)
 
 if __name__ == "__main__":
     appV5.run(debug=True)

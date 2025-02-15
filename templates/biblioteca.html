@@ -10,6 +10,13 @@
   <div class="container">
     <h1>Biblioteca de Quadrinhos</h1>
 
+    <!-- Debug message for last_read -->
+    {% if last_read %}
+      <p>Debug: Last read PDF is {{ last_read }}</p>
+    {% else %}
+      <p>Debug: No last read PDF found.</p>
+    {% endif %}
+
     <!-- Dark Mode Toggle Button -->
     <button id="theme-toggle">Modo Escuro</button>
 
@@ -23,10 +30,15 @@
     {% if conteudo %}
       <div class="comics-list">
         {% for item in conteudo %}
-          <div class="comic-card">
+          <div class="comic-card {% if nome_pasta and last_read == item.caminho %}last-read{% endif %}">
             {% if item.tipo == 'arquivo' %}
               <!-- Link to view PDF files -->
-              <a href="{{ url_for('visualizar_pdf', caminho_relativo=item.caminho) }}" target="_blank">{{ item.nome }}</a>
+              <a href="{{ url_for('visualizar_pdf', caminho_relativo=item.caminho) }}" target="_blank">
+                {{ item.nome }}
+                {% if nome_pasta and last_read == item.caminho %}
+                  <span class="last-read-indicator">(Último lido)</span>
+                {% endif %}
+              </a>
             {% else %}
               <!-- Link to list PDFs in a subdirectory -->
               <a href="{{ url_for('listar_pasta', nome_pasta=item.nome) }}">{{ item.nome }}</a>

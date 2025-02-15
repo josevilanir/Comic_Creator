@@ -108,3 +108,15 @@ body.dark-mode .comic-card {
 body.dark-mode .comic-card a {
   color: #1e90ff;
 }
+
+/* Highlight the last read PDF */
+.comic-card.last-read {
+  background-color: #e0f7fa; /* Light blue background */
+  border: 2px solid #00bcd4; /* Blue border */
+}
+
+.last-read-indicator {
+  color: #00bcd4; /* Blue text */
+  font-weight: bold;
+  margin-left: 10px;
+}
