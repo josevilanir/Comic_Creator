@@ -6,7 +6,7 @@
   <title>Biblioteca de Quadrinhos</title>
   <link rel="stylesheet" href="/static/library.css">
 </head>
-<body>
+<body class="dark-mode">
   <div class="container">
     <h1>Biblioteca de Quadrinhos</h1>
 
@@ -18,7 +18,7 @@
     {% endif %}
 
     <!-- Dark Mode Toggle Button -->
-    <button id="theme-toggle">Modo Escuro</button>
+    <button id="theme-toggle">Modo Claro</button>
 
     <!-- Back to Library Button (only shown when inside a subdirectory) -->
     {% if nome_pasta %}
@@ -28,24 +28,27 @@
     {% endif %}
 
     {% if conteudo %}
-      <div class="comics-list">
-        {% for item in conteudo %}
+    <div class="comics-list">
+      {% for item in conteudo %}
           <div class="comic-card {% if nome_pasta and last_read == item.caminho %}last-read{% endif %}">
-            {% if item.tipo == 'arquivo' %}
-              <!-- Link to view PDF files -->
-              <a href="{{ url_for('visualizar_pdf', caminho_relativo=item.caminho) }}" target="_blank">
-                {{ item.nome }}
-                {% if nome_pasta and last_read == item.caminho %}
-                  <span class="last-read-indicator">(Último lido)</span>
-                {% endif %}
-              </a>
-            {% else %}
-              <!-- Link to list PDFs in a subdirectory -->
-              <a href="{{ url_for('listar_pasta', nome_pasta=item.nome) }}">{{ item.nome }}</a>
-            {% endif %}
+              {% if item.tipo == 'arquivo' %}
+                  <!-- Link to view PDF files -->
+                  <a href="{{ url_for('visualizar_pdf', caminho_relativo=item.caminho) }}" target="_blank">
+                      {{ item.nome }}
+                      {% if nome_pasta and last_read == item.caminho %}
+                          <span class="last-read-indicator">(Último lido)</span>
+                      {% endif %}
+                  </a>
+              {% else %}
+                  <!-- Link to list PDFs in a subdirectory -->
+                  <a href="{{ url_for('listar_pasta', nome_pasta=item.nome) }}" class="folder-cover" 
+                      style="background-image: url('{{ item.cover_image }}');">
+                    <span class="folder-name">{{ item.nome }}</span>
+                  </a>
+              {% endif %}
           </div>
-        {% endfor %}
-      </div>
+      {% endfor %}
+  </div>
     {% else %}
       <p>Nenhum conteúdo disponível.</p>
     {% endif %}
@@ -60,23 +63,23 @@
   <script>
     const toggleButton = document.getElementById("theme-toggle");
 
-    // Check if dark mode is already enabled (from localStorage)
-    if (localStorage.getItem("dark-mode") === "enabled") {
-      document.body.classList.add("dark-mode");
-      toggleButton.textContent = "Modo Claro";
+    // Check if light mode is already enabled (from localStorage)
+    if (localStorage.getItem("dark-mode") === "disabled") {
+      document.body.classList.add("light-mode");
+      toggleButton.textContent = "Modo Escuro";
     }
 
-    // Toggle dark mode
+    // Toggle light mode
     toggleButton.addEventListener("click", () => {
-      document.body.classList.toggle("dark-mode");
+      document.body.classList.toggle("light-mode");
 
       // Save the user's preference in localStorage
-      if (document.body.classList.contains("dark-mode")) {
-        localStorage.setItem("dark-mode", "enabled");
-        toggleButton.textContent = "Modo Claro";
-      } else {
+      if (document.body.classList.contains("light-mode")) {
         localStorage.setItem("dark-mode", "disabled");
         toggleButton.textContent = "Modo Escuro";
+      } else {
+        localStorage.setItem("dark-mode", "enabled");
+        toggleButton.textContent = "Modo Claro";
       }
     });
   </script>

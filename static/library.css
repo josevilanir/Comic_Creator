@@ -1,112 +1,148 @@
-
-    body {
-      font-family: Arial, sans-serif;
-      background-color: #f9f9f9;
-      color: #333;
-      text-align: center;
-      padding: 20px;
-    }
-    .container {
-      max-width: 800px;
-      margin: 0 auto;
-    }
-    h1 {
-      color: #2c3e50;
-    }
-    .comics-list {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-      gap: 15px;
-      margin-top: 20px;
-    }
-    .comic-card {
-      background-color: #ffffff;
-      padding: 10px;
-      border: 1px solid #ddd;
-      border-radius: 8px;
-      box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.1);
-      text-align: center;
-    }
-    .comic-card a {
-      text-decoration: none;
-      color: #2980b9;
-      font-weight: bold;
-    }
-    .comic-card:hover {
-      background-color: #f0f8ff;
-    }
-    .actions {
-      margin-top: 20px;
-    }
-    .actions a {
-      text-decoration: none;
-      padding: 10px 15px;
-      background-color: #3498db;
-      color: black;
-      border-radius: 5px;
-      margin: 5px;
-      display: inline-block;
-    }
-    .actions a:hover {
-      background-color: #2980b9;
-    }
-    
-/* Dark Mode Styles */
-body.dark-mode {
-  background-color: #121212;
-  color: #ffffff;
+/* General body styling */
+body {
+  font-family: 'Arial', sans-serif;
+  background-color: #1e1e1e; /* Dark background for the app */
+  color: #ffffff; /* Light text color */
+  margin: 0;
+  padding: 0;
+  text-align: center;
 }
 
-body.dark-mode .container {
-  background-color: #1e1e1e;
-  color: #ffffff;
+.container {
+  max-width: 800px;
+  margin: 0 auto;
   padding: 20px;
+}
+
+h1 {
+  color: #ffffff; /* White text for the title */
+}
+
+/* Comics list grid */
+.comics-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 15px;
+  margin-top: 20px;
+}
+
+/* Comic card styling */
+.comic-card {
+  background-color: #333333; /* Dark grey for cards */
+  padding: 15px;
   border-radius: 10px;
-  box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+  text-align: center;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
 }
 
-body.dark-mode input,
-body.dark-mode textarea,
-body.dark-mode button {
-  background-color: #333;
-  color: #fff; /* Ensure text is white */
-  border: 1px solid #555;
+.comic-card a {
+  text-decoration: none;
+  color: #1e90ff; /* Light blue for links */
+  font-weight: bold;
 }
 
-body.dark-mode input::placeholder {
-  color: #aaa;
+.comic-card:hover {
+  background-color: #444444; /* Lighter grey on hover */
 }
 
-body.dark-mode a {
-  color: #1e90ff;
+.folder-cover {
+  display: block;
+  width: 100%;
+  height: 200px;
+  background-size: cover;
+  background-position: center;
+  border-radius: 8px;
+  position: relative;
+  overflow: hidden;
+  border: 1px solid white; /* Debugging: Highlight the folder container */
 }
 
-body.dark-mode h1,
-body.dark-mode h2,
-body.dark-mode label {
+.folder-name {
+  position: absolute;
+  bottom: -100%;
+  left: 0;
+  right: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  color: #ffffff;
+  padding: 10px;
+  text-align: center;
+  font-size: 16px;
+  transition: bottom 0.3s ease;
+  z-index: 10; /* Ensure it's above other elements */
+  border: 1px solid black; /* Debugging: Highlight the folder name */
+}
+
+.folder-cover:hover .folder-name {
+  bottom: 0;
+}
+
+/* Actions styling */
+.actions {
+  margin-top: 20px;
+}
+
+.actions a {
+  text-decoration: none;
+  padding: 10px 15px;
+  background-color: #3498db; /* Blue for buttons */
+  color: #ffffff; /* White text */
+  border-radius: 5px;
+  margin: 5px;
+  display: inline-block;
+}
+
+.actions a:hover {
+  background-color: #2980b9; /* Darker blue on hover */
+}
+
+/* Dark Mode Toggle Button */
+#theme-toggle {
+  padding: 10px 15px;
+  background-color: #444444; /* Dark grey for the button */
+  color: #ffffff; /* White text */
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-bottom: 20px;
+}
+
+#theme-toggle:hover {
+  background-color: #555555; /* Lighter grey on hover */
+}
+
+/* Light Mode Styles */
+body.light-mode {
+  background-color: #f9f9f9;
+  color: #333;
+}
+
+body.light-mode .container {
+  background-color: #ffffff;
+  color: #333;
+}
+
+body.light-mode h1 {
+  color: #2c3e50; /* Dark blue for the title */
+}
+
+body.light-mode .comic-card {
+  background-color: #ffffff;
+  border: 1px solid #ddd;
+  color: #333;
+}
+
+body.light-mode .comic-card a {
+  color: #2980b9; /* Blue for links */
+}
+
+body.light-mode .actions a {
+  background-color: #3498db;
   color: #ffffff;
 }
 
-body.dark-mode .actions a {
-  color: #ffffff; /* Ensure link text is white */
-  background-color: #444; /* Darker background for buttons */
-  border: 1px solid #666; /* Add a border for better visibility */
-}
-
-body.dark-mode .actions a:hover {
-  background-color: #555; /* Slightly lighter on hover */
-}
-
-body.dark-mode .comic-card {
-  background-color: #333;
-  border: 1px solid #555;
-  padding: 10px;
-  margin: 10px 0;
-  border-radius: 5px;
-}
-
-body.dark-mode .comic-card a {
-  color: #1e90ff;
+body.light-mode .actions a:hover {
+  background-color: #2980b9;
 }
 
 /* Highlight the last read PDF */

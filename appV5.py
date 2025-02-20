@@ -6,7 +6,6 @@ import requests
 from urllib.parse import urljoin, urlparse
 from bs4 import BeautifulSoup
 
-
 appV5 = Flask(__name__)
 appV5.secret_key = "sua_chave_secreta_aqui"  # Required for flash messages
 
@@ -21,6 +20,18 @@ pasta_imagens = "C:/Users/vilan/COMIC_CREATOR/Images"
 # Certifica que o diretório de imagens existe
 if not os.path.exists(pasta_imagens):
     os.makedirs(pasta_imagens)
+
+def get_cover_image(folder_path):
+    """Get the cover image for the folder."""
+    cover_filenames = ["cover.jpg", "cover.png", "cover.webp"]
+    
+    for filename in cover_filenames:
+        cover_path = os.path.join(folder_path, filename)
+        if os.path.exists(cover_path):
+            # Replace backslashes with forward slashes for URLs
+            return url_for('cover_image', filename=os.path.join(os.path.basename(folder_path), filename).replace("\\", "/"))
+    
+    return None
 
 @appV5.route("/")
 def index():
@@ -40,18 +51,36 @@ def processar_url():
     parsed_url = urlparse(url_site)
     path_parts = parsed_url.path.split("/")
     manga_name = path_parts[2] if len(path_parts) > 2 else "manga"
-    chapter_part = path_parts[3] if len(path_parts) > 3 else "capitulo-0"
 
-    # Extrair o número do capítulo inicial (e.g., "capitulo-11" -> "11")
-    if "-" in chapter_part:
-        start_chapter = int(chapter_part.split("-")[-1])  # Extrai o número (e.g., "11")
+    # Verifica o formato da URL para extrair o número do capítulo
+    if len(path_parts) > 3:
+        chapter_part = path_parts[3]  # Pode ser "capitulo-XX" ou apenas "XX"
+        if chapter_part.startswith("capitulo-"):
+            # Formato 1: "capitulo-XX"
+            start_chapter = int(chapter_part.split("-")[-1])  # Extrai o número (e.g., "11")
+        else:
+            # Formato 2: "XX"
+            start_chapter = int(chapter_part)  # Extrai o número diretamente
     else:
         start_chapter = 0  # Default to 0 if no number is found
+
+    # Verifica se existe um subdiretório com o nome do mangá
+    manga_dir = os.path.join(caminho_pasta, manga_name)
+    if not os.path.exists(manga_dir):
+        os.makedirs(manga_dir)  # Cria o subdiretório se não existir
+        print(f"Subdiretório criado: {manga_dir}")
 
     # Loop para baixar os capítulos
     for i in range(num_capitulos):
         chapter_number = start_chapter + i
-        chapter_url = url_site.replace(f"capitulo-{start_chapter}", f"capitulo-{chapter_number}")
+
+        # Gera a URL do capítulo com base no formato original
+        if "capitulo-" in url_site:
+            # Formato 1: Substitui "capitulo-XX" pelo número do capítulo atual
+            chapter_url = url_site.replace(f"capitulo-{start_chapter}", f"capitulo-{chapter_number}")
+        else:
+            # Formato 2: Substitui "/XX/" pelo número do capítulo atual
+            chapter_url = url_site.replace(f"/{start_chapter}/", f"/{chapter_number}/")
 
         # Faz o request para o site
         try:
@@ -126,11 +155,11 @@ def processar_url():
 
         # Define o caminho completo do PDF
         nome_pdf = f"{manga_name} {chapter_number}.pdf"
-        caminho_completo_pdf = os.path.join(caminho_pasta, nome_pdf)
+        caminho_completo_pdf = os.path.join(manga_dir, nome_pdf)  # Salva o PDF no subdiretório do mangá
 
         # Salvar em PDF
         imagens[0].save(caminho_completo_pdf, save_all=True, append_images=imagens[1:])
-        print(f"PDF '{nome_pdf}' criado com sucesso em '{caminho_pasta}'!")
+        print(f"PDF '{nome_pdf}' criado com sucesso em '{manga_dir}'!")
 
         # Limpar as imagens após criar o PDF
         for arquivo in arquivos:
@@ -150,8 +179,8 @@ def biblioteca():
     for item in os.listdir(caminho_pasta):
         item_caminho = os.path.join(caminho_pasta, item)
         if os.path.isdir(item_caminho):
-            # Add the directory to the conteudo list
-            conteudo.append({"nome": item, "tipo": "pasta"})
+            cover_image = get_cover_image(item_caminho)
+            conteudo.append({"nome": item, "tipo": "pasta", "cover_image": cover_image})
 
     # Debug print to verify the conteudo list
     print(f"Conteudo: {conteudo}")
@@ -203,6 +232,10 @@ def listar_pasta(nome_pasta):
     print(f"Last read PDF for folder '{nome_pasta}' retrieved from session: {last_read}")  # Debug print
 
     return render_template("biblioteca.html", conteudo=conteudo, nome_pasta=nome_pasta, last_read=last_read)
+
+@appV5.route('/covers/<path:filename>')
+def cover_image(filename):
+    return send_from_directory(caminho_pasta, filename)
 
 if __name__ == "__main__":
     appV5.run(debug=True)
