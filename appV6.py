@@ -60,14 +60,16 @@ def processar_url():
         if chapter_part.startswith("capitulo-"):
             # Formato 1: "capitulo-XX"
             start_chapter = int(chapter_part.split("-")[-1])  # Extrai o número (e.g., "11")
-
         elif chapter_part.startswith("chap-"):
             # Formato 2: "chap-XX"
             start_chapter = int(chapter_part.split("-")[-1])  # Extrai o número (e.g., "11")
-
         else:
-            # Formato 3: "XX"
-            start_chapter = int(chapter_part)  # Extrai o número diretamente
+            # Formato 3: "XX" (apenas números)
+            try:
+                start_chapter = int(chapter_part)  # Tenta converter diretamente
+            except ValueError:
+                # Se não for um número válido, define um valor padrão (0)
+                start_chapter = 0
     else:
         start_chapter = 0  # Default to 0 if no number is found
 
@@ -85,11 +87,9 @@ def processar_url():
         if "capitulo-" in url_site:
             # Formato 1: Substitui "capitulo-XX" pelo número do capítulo atual
             chapter_url = url_site.replace(f"capitulo-{start_chapter}", f"capitulo-{chapter_number}")
-
-        if "chap-" in url_site:
+        elif "chap-" in url_site:
             # Formato 2: Substitui "chap-XX" pelo número do capítulo atual
             chapter_url = url_site.replace(f"chap-{start_chapter}", f"chap-{chapter_number}")
-        
         else:
             # Formato 3: Substitui "/XX/" pelo número do capítulo atual
             chapter_url = url_site.replace(f"/{start_chapter}/", f"/{chapter_number}/")
@@ -172,6 +172,11 @@ def processar_url():
         # Salvar em PDF
         imagens[0].save(caminho_completo_pdf, save_all=True, append_images=imagens[1:])
         print(f"PDF '{nome_pdf}' criado com sucesso em '{manga_dir}'!")
+
+        # Gera a capa (thumbnail) para o PDF
+        thumbnail_filename = f"{os.path.splitext(nome_pdf)[0]}.jpg"
+        thumbnail_path = os.path.join("static", "thumbnails", thumbnail_filename)
+        generate_pdf_thumbnail(caminho_completo_pdf, thumbnail_path)
 
         # Limpar as imagens após criar o PDF
         for arquivo in arquivos:
