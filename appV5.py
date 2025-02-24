@@ -5,6 +5,8 @@ from PIL import Image
 import requests
 from urllib.parse import urljoin, urlparse
 from bs4 import BeautifulSoup
+import fitz  # PyMuPDF
+
 
 appV5 = Flask(__name__)
 appV5.secret_key = "sua_chave_secreta_aqui"  # Required for flash messages
@@ -22,16 +24,16 @@ if not os.path.exists(pasta_imagens):
     os.makedirs(pasta_imagens)
 
 def get_cover_image(folder_path):
-    """Get the cover image for the folder."""
-    cover_filenames = ["cover.jpg", "cover.png", "cover.webp"]
+    """Retorna a capa de uma pasta, buscando por um arquivo cover.webp (ou cover.jpg/png como fallback)."""
+    cover_filenames = ["cover.webp", "cover.jpg", "cover.png"]
     
     for filename in cover_filenames:
         cover_path = os.path.join(folder_path, filename)
         if os.path.exists(cover_path):
-            # Replace backslashes with forward slashes for URLs
             return url_for('cover_image', filename=os.path.join(os.path.basename(folder_path), filename).replace("\\", "/"))
     
-    return None
+    return "/static/default_thumbnail.jpg"  # Fallback se não houver capa
+
 
 @appV5.route("/")
 def index():
@@ -58,8 +60,13 @@ def processar_url():
         if chapter_part.startswith("capitulo-"):
             # Formato 1: "capitulo-XX"
             start_chapter = int(chapter_part.split("-")[-1])  # Extrai o número (e.g., "11")
+
+        elif chapter_part.startswith("chap-"):
+            # Formato 2: "chap-XX"
+            start_chapter = int(chapter_part.split("-")[-1])  # Extrai o número (e.g., "11")
+
         else:
-            # Formato 2: "XX"
+            # Formato 3: "XX"
             start_chapter = int(chapter_part)  # Extrai o número diretamente
     else:
         start_chapter = 0  # Default to 0 if no number is found
@@ -78,8 +85,13 @@ def processar_url():
         if "capitulo-" in url_site:
             # Formato 1: Substitui "capitulo-XX" pelo número do capítulo atual
             chapter_url = url_site.replace(f"capitulo-{start_chapter}", f"capitulo-{chapter_number}")
+
+        if "chap-" in url_site:
+            # Formato 2: Substitui "chap-XX" pelo número do capítulo atual
+            chapter_url = url_site.replace(f"chap-{start_chapter}", f"chap-{chapter_number}")
+        
         else:
-            # Formato 2: Substitui "/XX/" pelo número do capítulo atual
+            # Formato 3: Substitui "/XX/" pelo número do capítulo atual
             chapter_url = url_site.replace(f"/{start_chapter}/", f"/{chapter_number}/")
 
         # Faz o request para o site
@@ -173,19 +185,60 @@ def processar_url():
 
     return redirect(url_for("index"))
 
+from PIL import Image
+import fitz  # PyMuPDF
+import os
+
+def generate_pdf_thumbnail(pdf_path, thumbnail_path):
+    """Gera uma thumbnail do PDF, reduzindo a qualidade para carregamento mais rápido."""
+    if os.path.exists(thumbnail_path):  
+        print(f"🔄 Thumbnail já existe: {thumbnail_path}")
+        return True  # Evita recriação
+
+    try:
+        print(f"📄 Gerando thumbnail para: {pdf_path}")
+        doc = fitz.open(pdf_path)  # Abre o PDF
+        page = doc[3]  # Pega a primeira página
+        pix = page.get_pixmap(matrix=fitz.Matrix(2, 2))  # Renderiza a página
+        
+        os.makedirs(os.path.dirname(thumbnail_path), exist_ok=True)  # Garante que a pasta exista
+        
+        # Converte Pixmap para um objeto de imagem do Pillow
+        img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
+        
+        # Salva a imagem em JPEG reduzindo a qualidade
+        img.save(thumbnail_path, "JPEG", quality=50)  # Agora funciona corretamente!
+        
+        print(f"✅ Thumbnail salva: {thumbnail_path}")
+        return True
+    except Exception as e:
+        print(f"❌ Erro ao gerar thumbnail para {pdf_path}: {e}")
+    
+    return False
+
 @appV5.route("/biblioteca")
 def biblioteca():
     conteudo = []
     for item in os.listdir(caminho_pasta):
         item_caminho = os.path.join(caminho_pasta, item)
-        if os.path.isdir(item_caminho):
+
+        if os.path.isdir(item_caminho):  # É uma pasta
             cover_image = get_cover_image(item_caminho)
             conteudo.append({"nome": item, "tipo": "pasta", "cover_image": cover_image})
+        elif item.endswith(".pdf"):  # É um PDF
+            thumbnail_filename = f"{os.path.splitext(item)[0]}.jpg"
+            thumbnail_path = os.path.join("static", "thumbnails", thumbnail_filename)
 
-    # Debug print to verify the conteudo list
-    print(f"Conteudo: {conteudo}")
+            if not os.path.exists(thumbnail_path):  # Gera se estiver faltando
+                success = generate_pdf_thumbnail(item_caminho, thumbnail_path)
+                if not success:
+                    thumbnail_path = "/static/default_thumbnail.jpg"
+
+            thumbnail_url = url_for("static", filename=f"thumbnails/{thumbnail_filename}")
+            conteudo.append({"nome": item, "tipo": "arquivo", "caminho": item, "thumbnail": thumbnail_url})
 
     return render_template("biblioteca.html", conteudo=conteudo, nome_pasta=None)
+
 
 @appV5.route("/visualizar/<path:caminho_relativo>")
 def visualizar_pdf(caminho_relativo):
@@ -221,17 +274,25 @@ def listar_pasta(nome_pasta):
     if not os.path.exists(caminho_completo):
         return "Pasta não encontrada.", 404
 
-    # List all PDFs in the subdirectory
+    # Lista os PDFs dentro da pasta
     arquivos_pdf = [f for f in os.listdir(caminho_completo) if f.endswith('.pdf')]
-    conteudo = [{"nome": f, "tipo": "arquivo", "caminho": os.path.join(nome_pasta, f)} for f in arquivos_pdf]
+    conteudo = []
 
-    # Pass the last read PDF information for the specific folder to the template
-    last_read = None
-    if "last_read" in session and nome_pasta in session["last_read"]:
-        last_read = os.path.normpath(session["last_read"][nome_pasta])  # Normalize the last_read path
-    print(f"Last read PDF for folder '{nome_pasta}' retrieved from session: {last_read}")  # Debug print
+    for pdf in arquivos_pdf:
+        pdf_path = os.path.join(caminho_completo, pdf)
+        thumbnail_filename = f"{nome_pasta}_{os.path.splitext(pdf)[0]}.jpg"
+        thumbnail_path = os.path.join("static", "thumbnails", thumbnail_filename)
 
-    return render_template("biblioteca.html", conteudo=conteudo, nome_pasta=nome_pasta, last_read=last_read)
+        # Gera a thumbnail se não existir
+        if not os.path.exists(thumbnail_path):
+            success = generate_pdf_thumbnail(pdf_path, thumbnail_path)
+            if not success:
+                thumbnail_path = "/static/default_thumbnail.jpg"
+
+        thumbnail_url = url_for("static", filename=f"thumbnails/{thumbnail_filename}")
+        conteudo.append({"nome": pdf, "tipo": "arquivo", "caminho": os.path.join(nome_pasta, pdf), "thumbnail": thumbnail_url})
+
+    return render_template("biblioteca.html", conteudo=conteudo, nome_pasta=nome_pasta)
 
 @appV5.route('/covers/<path:filename>')
 def cover_image(filename):

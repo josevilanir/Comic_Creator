@@ -10,17 +10,14 @@
   <div class="container">
     <h1>Biblioteca de Quadrinhos</h1>
 
-    <!-- Debug message for last_read -->
     {% if last_read %}
       <p>Debug: Last read PDF is {{ last_read }}</p>
     {% else %}
       <p>Debug: No last read PDF found.</p>
     {% endif %}
 
-    <!-- Dark Mode Toggle Button -->
     <button id="theme-toggle">Modo Claro</button>
 
-    <!-- Back to Library Button (only shown when inside a subdirectory) -->
     {% if nome_pasta %}
       <div class="actions">
         <a href="{{ url_for('biblioteca') }}">Voltar para a biblioteca</a>
@@ -32,15 +29,15 @@
       {% for item in conteudo %}
           <div class="comic-card {% if nome_pasta and last_read == item.caminho %}last-read{% endif %}">
               {% if item.tipo == 'arquivo' %}
-                  <!-- Link to view PDF files -->
                   <a href="{{ url_for('visualizar_pdf', caminho_relativo=item.caminho) }}" target="_blank">
+                    <img src="{{ item.thumbnail }}" alt="PDF Thumbnail" class="pdf-thumbnail" onerror="this.onerror=null;this.src='/static/default_thumbnail.jpg';">
+                      <br>
                       {{ item.nome }}
                       {% if nome_pasta and last_read == item.caminho %}
                           <span class="last-read-indicator">(Último lido)</span>
                       {% endif %}
                   </a>
               {% else %}
-                  <!-- Link to list PDFs in a subdirectory -->
                   <a href="{{ url_for('listar_pasta', nome_pasta=item.nome) }}" class="folder-cover" 
                       style="background-image: url('{{ item.cover_image }}');">
                     <span class="folder-name">{{ item.nome }}</span>
@@ -48,32 +45,24 @@
               {% endif %}
           </div>
       {% endfor %}
-  </div>
+    </div>
     {% else %}
       <p>Nenhum conteúdo disponível.</p>
     {% endif %}
 
-    <!-- Back to Home Button -->
     <div class="actions">
       <a href="/">Voltar para o Início</a>
     </div>
   </div>
 
-  <!-- Dark Mode JavaScript -->
   <script>
     const toggleButton = document.getElementById("theme-toggle");
-
-    // Check if light mode is already enabled (from localStorage)
     if (localStorage.getItem("dark-mode") === "disabled") {
       document.body.classList.add("light-mode");
       toggleButton.textContent = "Modo Escuro";
     }
-
-    // Toggle light mode
     toggleButton.addEventListener("click", () => {
       document.body.classList.toggle("light-mode");
-
-      // Save the user's preference in localStorage
       if (document.body.classList.contains("light-mode")) {
         localStorage.setItem("dark-mode", "disabled");
         toggleButton.textContent = "Modo Escuro";

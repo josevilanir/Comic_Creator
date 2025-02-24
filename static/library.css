@@ -77,6 +77,21 @@ h1 {
   bottom: 0;
 }
 
+/* PDF Thumbnail Styling */
+.pdf-thumbnail {
+  width: 100px;
+  height: 140px;
+  object-fit: cover;
+  border-radius: 5px;
+  margin-bottom: 5px;
+  border: 1px solid #ffffff;
+  transition: transform 0.3s ease-in-out;
+}
+
+.pdf-thumbnail:hover {
+  transform: scale(1.2); /* Aumenta o tamanho ao passar o mouse */
+}
+
 /* Actions styling */
 .actions {
   margin-top: 20px;
@@ -155,4 +170,12 @@ body.light-mode .actions a:hover {
   color: #00bcd4; /* Blue text */
   font-weight: bold;
   margin-left: 10px;
+}
+
+.folder-thumbnail {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid white;
 }
