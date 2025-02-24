@@ -46,6 +46,13 @@ h1 {
   background-color: #444444; /* Lighter grey on hover */
 }
 
+.folder-container {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
 .folder-cover {
   display: block;
   width: 100%;
@@ -55,7 +62,7 @@ h1 {
   border-radius: 8px;
   position: relative;
   overflow: hidden;
-  border: 1px solid white; /* Debugging: Highlight the folder container */
+  border: 1px solid white;
 }
 
 .folder-name {
@@ -69,11 +76,11 @@ h1 {
   text-align: center;
   font-size: 16px;
   transition: bottom 0.3s ease;
-  z-index: 10; /* Ensure it's above other elements */
-  border: 1px solid black; /* Debugging: Highlight the folder name */
+  z-index: 10;
+  border: 1px solid black;
 }
 
-.folder-cover:hover .folder-name {
+.folder-container:hover .folder-name {
   bottom: 0;
 }
 
@@ -89,7 +96,42 @@ h1 {
 }
 
 .pdf-thumbnail:hover {
-  transform: scale(1.2); /* Aumenta o tamanho ao passar o mouse */
+  transform: scale(1.2);
+}
+
+/* Upload Form Styling */
+.upload-form {
+  display: none; /* Oculta o formulário por padrão */
+  text-align: center;
+  margin-top: 10px;
+}
+
+.upload-form input {
+  font-size: 14px;
+  margin-bottom: 5px;
+  display: none;
+}
+
+.upload-form button {
+  background-color: #3498db;
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.upload-form button:hover {
+  background-color: #2980b9;
+}
+
+.upload-form button + input {
+  display: none;
+}
+
+.upload-form button:focus + input,
+.upload-form button:active + input {
+  display: block;
 }
 
 /* Actions styling */
@@ -100,22 +142,22 @@ h1 {
 .actions a {
   text-decoration: none;
   padding: 10px 15px;
-  background-color: #3498db; /* Blue for buttons */
-  color: #ffffff; /* White text */
+  background-color: #3498db;
+  color: #ffffff;
   border-radius: 5px;
   margin: 5px;
   display: inline-block;
 }
 
 .actions a:hover {
-  background-color: #2980b9; /* Darker blue on hover */
+  background-color: #2980b9;
 }
 
 /* Dark Mode Toggle Button */
 #theme-toggle {
   padding: 10px 15px;
-  background-color: #444444; /* Dark grey for the button */
-  color: #ffffff; /* White text */
+  background-color: #444444;
+  color: #ffffff;
   border: none;
   border-radius: 5px;
   cursor: pointer;
@@ -123,7 +165,7 @@ h1 {
 }
 
 #theme-toggle:hover {
-  background-color: #555555; /* Lighter grey on hover */
+  background-color: #555555;
 }
 
 /* Light Mode Styles */
@@ -138,7 +180,7 @@ body.light-mode .container {
 }
 
 body.light-mode h1 {
-  color: #2c3e50; /* Dark blue for the title */
+  color: #2c3e50;
 }
 
 body.light-mode .comic-card {
@@ -148,7 +190,7 @@ body.light-mode .comic-card {
 }
 
 body.light-mode .comic-card a {
-  color: #2980b9; /* Blue for links */
+  color: #2980b9;
 }
 
 body.light-mode .actions a {
@@ -162,12 +204,12 @@ body.light-mode .actions a:hover {
 
 /* Highlight the last read PDF */
 .comic-card.last-read {
-  background-color: #e0f7fa; /* Light blue background */
-  border: 2px solid #00bcd4; /* Blue border */
+  background-color: #e0f7fa;
+  border: 2px solid #00bcd4;
 }
 
 .last-read-indicator {
-  color: #00bcd4; /* Blue text */
+  color: #00bcd4;
   font-weight: bold;
   margin-left: 10px;
 }
@@ -178,4 +220,89 @@ body.light-mode .actions a:hover {
   object-fit: cover;
   border-radius: 8px;
   border: 1px solid white;
+}
+
+.folder-container {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.folder-cover {
+  display: block;
+  width: 40%;
+  height: 200px;
+  background-size: cover;
+  background-position: center;
+  border-radius: 8px;
+  position: relative;
+  overflow: hidden;
+  border: 1px solid white;
+}
+
+.folder-name {
+  position: absolute;
+  bottom: -100%;
+  left: 0;
+  right: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  color: #ffffff;
+  padding: 10px;
+  text-align: center;
+  font-size: 16px;
+  transition: bottom 0.3s ease;
+  z-index: 10;
+  border: 1px solid black;
+}
+
+.folder-container:hover .folder-name {
+  bottom: 0;
+}
+
+.upload-form {
+  display: none; /* Esconde o formulário inicialmente */
+  margin-top: 10px;
+  flex-direction: column;
+  align-items: center;
+}
+
+.upload-form input {
+  font-size: 14px;
+  margin-bottom: 5px;
+}
+
+.toggle-upload {
+  background-color: #3498db;
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-top: 5px;
+}
+
+.toggle-upload:hover {
+  background-color: #2980b9;
+}
+
+.upload-form .file-input {
+  display: block;
+  margin: 10px auto;
+  padding: 5px;
+}
+
+.upload-form .submit-btn {
+  display: block;
+  margin: 10px auto;
+  padding: 5px 10px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.upload-form .submit-btn:hover {
+  background-color: #0056b3;
 }

@@ -38,10 +38,17 @@
                       {% endif %}
                   </a>
               {% else %}
-                  <a href="{{ url_for('listar_pasta', nome_pasta=item.nome) }}" class="folder-cover" 
-                      style="background-image: url('{{ item.cover_image }}');">
+              <div class="folder-container">
+                <a href="{{ url_for('listar_pasta', nome_pasta=item.nome) }}" class="folder-cover">
+                    <img src="{{ item.cover_image }}" alt="Thumbnail" class="folder-thumbnail">
                     <span class="folder-name">{{ item.nome }}</span>
-                  </a>
+                </a>
+                <button class="toggle-upload">Alterar Capa</button>
+                <form action="{{ url_for('upload_capa', nome_pasta=item.nome) }}" method="POST" enctype="multipart/form-data" class="upload-form">
+                    <input type="file" name="capa" accept="image/*" class="file-input">
+                    <button type="submit" class="submit-btn">Enviar</button>
+                </form>
+            </div>            
               {% endif %}
           </div>
       {% endfor %}
@@ -71,6 +78,42 @@
         toggleButton.textContent = "Modo Claro";
       }
     });
+  </script>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+      const toggleButtons = document.querySelectorAll(".toggle-upload");
+  
+      toggleButtons.forEach(button => {
+          button.addEventListener("click", function(event) {
+              event.stopPropagation(); // Impede que o clique feche o formulário imediatamente
+              
+              const form = this.nextElementSibling;
+              
+              // Fecha todos os outros forms antes de abrir o clicado
+              document.querySelectorAll(".upload-form").forEach(f => {
+                  if (f !== form) {
+                      f.style.display = "none";
+                  }
+              });
+  
+              // Alterna a visibilidade do formulário associado ao botão clicado
+              form.style.display = form.style.display === "none" || form.style.display === "" ? "block" : "none";
+          });
+      });
+  
+      // Impede que o formulário seja fechado ao clicar dentro dele
+      document.querySelectorAll(".upload-form").forEach(form => {
+          form.addEventListener("click", function(event) {
+              event.stopPropagation();
+          });
+      });
+  
+      // Fecha o formulário se clicar fora dele
+      document.addEventListener("click", function() {
+          document.querySelectorAll(".upload-form").forEach(f => f.style.display = "none");
+      });
+  });
   </script>
 </body>
 </html>
