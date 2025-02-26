@@ -1,137 +1,104 @@
+/* Estilos Gerais */
 body {
   font-family: Arial, sans-serif;
-  background-color: #f9f9f9;
-  padding: 20px;
-  color: #333;
+  margin: 0;
+  padding: 0;
+  background-color: #121212;
+  color: #ffffff;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.light-mode {
+  background-color: #f5f5f5;
+  color: #121212;
 }
 
 .container {
-  max-width: 600px;
-  margin: 0 auto;
-  background: white;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   padding: 20px;
-  border-radius: 10px;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  flex: 1;
 }
 
-h1 {
-  text-align: center;
-  color: #007BFF;
-}
-
-form {
-  margin-top: 20px;
-}
-
-label {
-  font-weight: bold;
-  display: block;
-  margin-bottom: 8px;
-}
-
-input[type="text"], input[type="submit"] {
+.header, .footer {
   width: 100%;
-  padding: 10px;
-  margin: 10px 0;
-  border: 1px solid #ddd;
-  border-radius: 5px;
-  box-sizing: border-box;
+  background-color: #1f1f1f;
+  padding: 15px;
+  text-align: center;
 }
 
-input[type="submit"] {
-  background-color: #007BFF;
-  color: white;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
+.light-mode .header, .light-mode .footer {
+  background-color: #ffffff;
+  color: #121212;
 }
 
-input[type="submit"]:hover {
-  background-color: #0056b3;
-}
-
-.message {
-  margin-top: 10px;
-  padding: 10px;
-  border-radius: 5px;
-}
-
-.success {
-  background-color: #d4edda;
-  color: #155724;
-}
-
-.error {
-  background-color: #f8d7da;
-  color: #721c24;
-}
-
-.comic-list ul {
-  list-style: none;
-  padding: 0;
-}
-
-.comic-list li {
-  margin: 10px 0;
-  background-color: #f1f1f1;
-  padding: 10px;
-  border-radius: 5px;
-  transition: background-color 0.3s;
-}
-
-.comic-list li:hover {
-  background-color: #e0e0e0;
-}
-
-.comic-list a {
-  text-decoration: none;
-  color: #007BFF;
-  font-weight: bold;
-}
-
-.comic-list a:hover {
-  text-decoration: underline;
-}
-
-/* static/style.css */
-body.dark-mode {
-  background-color: #121212;
-  color: #ffffff;
-}
-
-body.dark-mode .container {
-  background-color: #1e1e1e;
-  color: #ffffff;
-  padding: 20px;
-  border-radius: 10px;
-  box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
-}
-
-body.dark-mode input,
-body.dark-mode textarea,
-body.dark-mode button {
+.toggle-mode {
   background-color: #333;
-  color: #fff;
-  border: 1px solid #555;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  cursor: pointer;
 }
 
-body.dark-mode input::placeholder {
-  color: #aaa;
+.light-mode .toggle-mode {
+  background-color: #ddd;
+  color: black;
 }
 
-body.dark-mode a {
-  color: #1e90ff;
+.content {
+  display: grid;
+  grid-template-columns: 1fr 2fr 1fr;
+  gap: 40px;
+  width: 80%;
+  margin: 40px 0; /* Aumentei a margem para centralizar melhor */
+  align-items: center; /* Centraliza os itens verticalmente */
 }
 
-body.dark-mode h1,
-body.dark-mode h2,
-body.dark-mode label {
-  color: #ffffff;
+.predefinidas, .url-form, .biblioteca {
+  background: #1f1f1f;
+  padding: 40px; /* Aumentei o padding para aumentar o tamanho das divs */
+  border-radius: 8px;
+  text-align: center;
+  width: 100%; /* Garante que as divs ocupem toda a largura disponível */
 }
 
-body.dark-mode details summary {
-  color: #ffffff;
+.light-mode .predefinidas, .light-mode .url-form, .light-mode .biblioteca {
+  background: #ffffff;
 }
 
-body.dark-mode footer a {
-  color: #1e90ff;
+.url-form input[type="text"], .url-form input[type="number"] {
+  width: 90%; /* Reduzi a largura para evitar que o campo saia da div */
+  padding: 10px;
+  margin: 10px 0;
+  display: block;
+  margin-left: auto;
+  margin-right: auto; /* Centraliza os campos de entrada */
+}
+
+.url-form input[type="submit"] {
+  background-color: #0011ff;
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  cursor: pointer;
+  width: 100%; /* Faz o botão ocupar toda a largura */
+}
+
+.biblioteca-btn {
+  background-color: #003cff;
+  color: white;
+  padding: 15px 30px; /* Aumentei o padding para tornar o botão maior */
+  border: none;
+  cursor: pointer;
+  width: 100%; /* Faz o botão ocupar toda a largura */
+  font-size: 16px; /* Aumentei o tamanho da fonte */
+}
+
+.footer {
+  margin-top: auto;
+  padding: 15px;
+  text-align: center;
 }
