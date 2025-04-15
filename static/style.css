@@ -1,104 +1,111 @@
-/* Estilos Gerais */
 body {
+  background-color: #121212;
+  color: white;
   font-family: Arial, sans-serif;
   margin: 0;
   padding: 0;
-  background-color: #121212;
-  color: #ffffff;
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
 }
 
-.light-mode {
-  background-color: #f5f5f5;
-  color: #121212;
+header {
+  text-align: center;
+  padding: 20px;
+  background-color: #1e1e1e;
+}
+
+.btn-top {
+  background-color: #0033ff;
+  color: white;
+  padding: 10px 20px;
+  margin-top: 10px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.btn-top:hover {
+  background-color: #0022cc;
 }
 
 .container {
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 20px;
-  flex: 1;
-}
-
-.header, .footer {
-  width: 100%;
-  background-color: #1f1f1f;
-  padding: 15px;
-  text-align: center;
-}
-
-.light-mode .header, .light-mode .footer {
-  background-color: #ffffff;
-  color: #121212;
-}
-
-.toggle-mode {
-  background-color: #333;
-  color: white;
-  border: none;
-  padding: 10px 20px;
-  cursor: pointer;
-}
-
-.light-mode .toggle-mode {
-  background-color: #ddd;
-  color: black;
-}
-
-.content {
-  display: grid;
-  grid-template-columns: 1fr 2fr 1fr;
+  justify-content: center;
   gap: 40px;
-  width: 80%;
-  margin: 40px 0; /* Aumentei a margem para centralizar melhor */
-  align-items: center; /* Centraliza os itens verticalmente */
+  padding: 40px;
+  flex-wrap: wrap;
 }
 
-.predefinidas, .url-form, .biblioteca {
-  background: #1f1f1f;
-  padding: 40px; /* Aumentei o padding para aumentar o tamanho das divs */
-  border-radius: 8px;
+.card {
+  background-color: #1e1e1e;
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: 0 0 10px #00000066;
+  width: 100%;
+  max-width: 400px;
+}
+
+.card h2 {
   text-align: center;
-  width: 100%; /* Garante que as divs ocupem toda a largura disponível */
+  margin-bottom: 20px;
 }
 
-.light-mode .predefinidas, .light-mode .url-form, .light-mode .biblioteca {
-  background: #ffffff;
-}
-
-.url-form input[type="text"], .url-form input[type="number"] {
-  width: 90%; /* Reduzi a largura para evitar que o campo saia da div */
+.card input[type="text"],
+.card input[type="number"] {
+  width: 100%;
   padding: 10px;
-  margin: 10px 0;
+  margin: 10px 0 20px;
+  border-radius: 6px;
+  border: none;
+}
+
+.btn {
   display: block;
-  margin-left: auto;
-  margin-right: auto; /* Centraliza os campos de entrada */
-}
-
-.url-form input[type="submit"] {
-  background-color: #0011ff;
-  color: white;
-  padding: 10px 20px;
+  width: 100%;
+  padding: 12px;
+  margin-top: 10px;
   border: none;
-  cursor: pointer;
-  width: 100%; /* Faz o botão ocupar toda a largura */
-}
-
-.biblioteca-btn {
-  background-color: #003cff;
+  background-color: #0033ff;
   color: white;
-  padding: 15px 30px; /* Aumentei o padding para tornar o botão maior */
-  border: none;
+  border-radius: 6px;
+  font-weight: bold;
   cursor: pointer;
-  width: 100%; /* Faz o botão ocupar toda a largura */
-  font-size: 16px; /* Aumentei o tamanho da fonte */
 }
 
-.footer {
-  margin-top: auto;
-  padding: 15px;
+.btn:hover {
+  background-color: #0022cc;
+}
+
+footer {
   text-align: center;
+  padding: 20px;
+  font-size: 14px;
+  background-color: #1e1e1e;
+  margin-top: 60px;
 }
+
+body[data-tema="escuro"] {
+  background-color: #121212;
+  color: white;
+}
+
+body[data-tema="claro"] {
+  background-color: #f4f4f4;
+  color: #222;
+}
+
+body[data-tema="claro"] header,
+body[data-tema="claro"] footer,
+body[data-tema="claro"] .card {
+  background-color: #ffffff;
+  color: #000;
+  box-shadow: 0 0 10px #ccc;
+}
+
+body[data-tema="escuro"] header,
+body[data-tema="escuro"] footer,
+body[data-tema="escuro"] .card {
+  background-color: #1e1e1e;
+  color: white;
+  box-shadow: 0 0 10px #00000066;
+}
+
