@@ -1,12 +1,17 @@
 import os
 import re
 from flask import Flask, render_template, request, send_from_directory, redirect, url_for, send_file, flash, session
-from PIL import Image
 import requests
 from urllib.parse import urljoin, urlparse
 from bs4 import BeautifulSoup
-import fitz  # PyMuPDF
+import fitz 
 from werkzeug.utils import secure_filename
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.chrome.service import Service
+from webdriver_manager.chrome import ChromeDriverManager
+import time
+
 
 
 appV6 = Flask(__name__)
@@ -191,7 +196,7 @@ def processar_url():
     return redirect(url_for("index"))
 
 from PIL import Image
-import fitz  # PyMuPDF
+import fitz  
 import os
 
 def generate_pdf_thumbnail(pdf_path, thumbnail_path):

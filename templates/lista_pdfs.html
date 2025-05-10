@@ -1,0 +1,22 @@
+
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Capítulos - {{ nome_pasta }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='pdfs.css') }}">
+
+</head>
+<body>
+    <h1>Capítulos de {{ nome_pasta }}</h1>
+    <a href="{{ url_for('biblioteca') }}">← Voltar para a biblioteca</a>
+    <ul>
+        {% for arq in arquivos %}
+        <li>
+            {{ arq }} —
+            <a href="{{ url_for('visualizar_pdf', manga=nome_pasta, arquivo=arq) }}" target="_blank">Visualizar</a>
+        </li>
+        {% endfor %}
+    </ul>
+</body>
+</html>

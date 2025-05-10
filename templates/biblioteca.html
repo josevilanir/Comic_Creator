@@ -1,119 +1,38 @@
+
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-br">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Biblioteca de Quadrinhos</title>
-  <link rel="stylesheet" href="/static/library.css">
+    <meta charset="UTF-8">
+    <title>Biblioteca</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='library.css') }}">
+
 </head>
-<body class="dark-mode">
-  <div class="container">
-    <h1>Biblioteca de Quadrinhos</h1>
+<body>
+    <h1>Biblioteca</h1>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <ul>
+        {% for category, message in messages %}
+          <li><strong>{{ category.title() }}:</strong> {{ message }}</li>
+        {% endfor %}
+        </ul>
+      {% endif %}
+    {% endwith %}
 
-    {% if last_read %}
-      <p>Debug: Last read PDF is {{ last_read }}</p>
-    {% else %}
-      <p>Debug: No last read PDF found.</p>
-    {% endif %}
-
-    <button id="theme-toggle">Modo Claro</button>
-
-    {% if nome_pasta %}
-      <div class="actions">
-        <a href="{{ url_for('biblioteca') }}">Voltar para a biblioteca</a>
-      </div>
-    {% endif %}
-
-    {% if conteudo %}
-    <div class="comics-list">
-      {% for item in conteudo %}
-          <div class="comic-card {% if nome_pasta and last_read == item.caminho %}last-read{% endif %}">
-              {% if item.tipo == 'arquivo' %}
-                  <a href="{{ url_for('visualizar_pdf', caminho_relativo=item.caminho) }}" target="_blank">
-                    <img src="{{ item.thumbnail }}" alt="PDF Thumbnail" class="pdf-thumbnail" onerror="this.onerror=null;this.src='/static/default_thumbnail.jpg';">
-                      <br>
-                      {{ item.nome }}
-                      {% if nome_pasta and last_read == item.caminho %}
-                          <span class="last-read-indicator">(Último lido)</span>
-                      {% endif %}
-                  </a>
-              {% else %}
-              <div class="folder-container">
-                <a href="{{ url_for('listar_pasta', nome_pasta=item.nome) }}" class="folder-cover">
-                    <img src="{{ item.cover_image }}" alt="Thumbnail" class="folder-thumbnail">
-                    <span class="folder-name">{{ item.nome }}</span>
-                </a>
-                <button class="toggle-upload">Alterar Capa</button>
-                <form action="{{ url_for('upload_capa', nome_pasta=item.nome) }}" method="POST" enctype="multipart/form-data" class="upload-form">
-                    <input type="file" name="capa" accept="image/*" class="file-input">
-                    <button type="submit" class="submit-btn">Enviar</button>
-                </form>
-            </div>            
-              {% endif %}
-          </div>
-      {% endfor %}
+    <div>
+        {% for item in pastas %}
+        <div style="margin-bottom: 30px;">
+            <h2>{{ item.nome }}</h2>
+            {% if item.tem_capa %}
+                <img src="{{ item.capa_url }}" alt="Capa" width="200"><br>
+            {% endif %}
+            <form action="{{ url_for('upload_capa', nome_pasta=item.nome) }}" method="POST" enctype="multipart/form-data">
+                <input type="file" name="capa" accept="image/*" required>
+                <button type="submit">Enviar nova capa</button>
+            </form>
+            <a href="{{ url_for('listar_pasta', nome_pasta=item.nome) }}">Ver capítulos</a>
+        </div>
+        {% endfor %}
     </div>
-    {% else %}
-      <p>Nenhum conteúdo disponível.</p>
-    {% endif %}
-
-    <div class="actions">
-      <a href="/">Voltar para o Início</a>
-    </div>
-  </div>
-
-  <script>
-    const toggleButton = document.getElementById("theme-toggle");
-    if (localStorage.getItem("dark-mode") === "disabled") {
-      document.body.classList.add("light-mode");
-      toggleButton.textContent = "Modo Escuro";
-    }
-    toggleButton.addEventListener("click", () => {
-      document.body.classList.toggle("light-mode");
-      if (document.body.classList.contains("light-mode")) {
-        localStorage.setItem("dark-mode", "disabled");
-        toggleButton.textContent = "Modo Escuro";
-      } else {
-        localStorage.setItem("dark-mode", "enabled");
-        toggleButton.textContent = "Modo Claro";
-      }
-    });
-  </script>
-
-<script>
-  document.addEventListener("DOMContentLoaded", function() {
-      const toggleButtons = document.querySelectorAll(".toggle-upload");
-  
-      toggleButtons.forEach(button => {
-          button.addEventListener("click", function(event) {
-              event.stopPropagation(); // Impede que o clique feche o formulário imediatamente
-              
-              const form = this.nextElementSibling;
-              
-              // Fecha todos os outros forms antes de abrir o clicado
-              document.querySelectorAll(".upload-form").forEach(f => {
-                  if (f !== form) {
-                      f.style.display = "none";
-                  }
-              });
-  
-              // Alterna a visibilidade do formulário associado ao botão clicado
-              form.style.display = form.style.display === "none" || form.style.display === "" ? "block" : "none";
-          });
-      });
-  
-      // Impede que o formulário seja fechado ao clicar dentro dele
-      document.querySelectorAll(".upload-form").forEach(form => {
-          form.addEventListener("click", function(event) {
-              event.stopPropagation();
-          });
-      });
-  
-      // Fecha o formulário se clicar fora dele
-      document.addEventListener("click", function() {
-          document.querySelectorAll(".upload-form").forEach(f => f.style.display = "none");
-      });
-  });
-  </script>
 </body>
 </html>
