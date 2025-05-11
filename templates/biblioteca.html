@@ -2,37 +2,44 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-    <meta charset="UTF-8">
-    <title>Biblioteca</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='library.css') }}">
-
+  <meta charset="UTF-8">
+  <title>Biblioteca</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='library.css') }}">
 </head>
 <body>
-    <h1>Biblioteca</h1>
-    {% with messages = get_flashed_messages(with_categories=true) %}
-      {% if messages %}
-        <ul>
-        {% for category, message in messages %}
-          <li><strong>{{ category.title() }}:</strong> {{ message }}</li>
-        {% endfor %}
-        </ul>
-      {% endif %}
-    {% endwith %}
+  <h1>Biblioteca</h1>
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <ul>
+      {% for category, message in messages %}
+        <li><strong>{{ category.title() }}:</strong> {{ message }}</li>
+      {% endfor %}
+      </ul>
+    {% endif %}
+  {% endwith %}
 
-    <div>
-        {% for item in pastas %}
-        <div style="margin-bottom: 30px;">
-            <h2>{{ item.nome }}</h2>
-            {% if item.tem_capa %}
-                <img src="{{ item.capa_url }}" alt="Capa" width="200"><br>
-            {% endif %}
-            <form action="{{ url_for('upload_capa', nome_pasta=item.nome) }}" method="POST" enctype="multipart/form-data">
-                <input type="file" name="capa" accept="image/*" required>
-                <button type="submit">Enviar nova capa</button>
-            </form>
-            <a href="{{ url_for('listar_pasta', nome_pasta=item.nome) }}">Ver capítulos</a>
-        </div>
-        {% endfor %}
+  <div class="manga-grid">
+    {% for item in pastas %}
+    <div class="manga-card">
+      <h2>{{ item.nome }}</h2>
+      {% if item.tem_capa %}
+        <img src="{{ item.capa_url }}" alt="Capa do manga">
+      {% endif %}
+      <a href="{{ url_for('listar_pasta', nome_pasta=item.nome) }}" class="btn-ver">Ver capítulos</a>
+      <button class="edit-btn" onclick="mostrarFormulario('{{ item.nome }}')">Editar capa</button>
+      <form id="form-{{ item.nome }}" class="upload-form" action="{{ url_for('upload_capa', nome_pasta=item.nome) }}" method="POST" enctype="multipart/form-data">
+        <input type="file" name="capa" accept="image/*" required>
+        <button type="submit">Enviar nova capa</button>
+      </form>
     </div>
+    {% endfor %}
+  </div>
+
+  <script>
+    function mostrarFormulario(nome) {
+      const form = document.getElementById('form-' + nome);
+      form.classList.toggle('active');
+    }
+  </script>
 </body>
 </html>
