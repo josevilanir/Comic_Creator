@@ -12,43 +12,64 @@ h1 {
   margin-bottom: 20px;
 }
 
-ul {
-  list-style: none;
-  padding: 0;
-}
-
-li {
-  margin: 15px 0;
-  background-color: #2a2a2a;
-  padding: 15px;
-  border-radius: 10px;
-  max-width: 600px;
-  margin-left: auto;
-  margin-right: auto;
-  box-shadow: 0 0 8px #00000055;
-}
-
-a {
-  text-decoration: none;
-  color: #1e90ff;
-  font-weight: bold;
-  margin-left: 15px;
-}
-
-a:hover {
-  text-decoration: underline;
-}
-
-.back-link {
-  display: inline-block;
-  margin-bottom: 30px;
-  background-color: #3498db;
+a.back-link {
   color: white;
+  background-color: #444;
   padding: 8px 16px;
-  border-radius: 5px;
+  border-radius: 8px;
   text-decoration: none;
+  margin-bottom: 30px;
+  display: inline-block;
 }
 
-.back-link:hover {
-  background-color: #2980b9;
+.manga-grid {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 30px;
+}
+
+.manga-card {
+  background-color: #2a2a2a;
+  border-radius: 10px;
+  padding: 20px;
+  width: 220px;
+  text-align: center;
+  box-shadow: 0 0 10px #00000055;
+  text-decoration: none;
+  color: inherit;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  position: relative;
+}
+
+.manga-card:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 15px #2980b9aa;
+}
+
+.manga-card img {
+  max-width: 100%;
+  border-radius: 5px;
+}
+
+.manga-card h2 {
+  font-size: 18px;
+  margin-bottom: 10px;
+}
+
+/* Destaque se for lido */
+.manga-card.lido {
+  opacity: 0.5;
+}
+
+.lido-badge {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  background-color: limegreen;
+  color: black;
+  font-weight: bold;
+  font-size: 12px;
+  padding: 2px 6px;
+  border-radius: 4px;
 }

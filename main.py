@@ -2,6 +2,7 @@
 import os
 import re
 import requests
+import fitz  # PyMuPDF
 from bs4 import BeautifulSoup
 from PIL import Image
 from urllib.parse import urljoin, urlparse
@@ -10,7 +11,9 @@ from flask import Flask, request, redirect, url_for, render_template, flash, sen
 app = Flask(__name__)
 app.secret_key = "segredo"
 BASE_COMICS = os.path.expanduser("~/Comics")
+THUMBNAILS = os.path.join("static", "thumbnails")
 os.makedirs(BASE_COMICS, exist_ok=True)
+os.makedirs(THUMBNAILS, exist_ok=True)
 
 @app.route("/", methods=["GET", "POST"])
 def index():
@@ -95,6 +98,18 @@ def extrair_dados_da_url(url):
     except IndexError:
         return None, None
 
+def gerar_thumbnail(caminho_pdf, nome_pdf, pasta_manga):
+    try:
+        doc = fitz.open(caminho_pdf)
+        page = doc.load_page(3) if doc.page_count >= 4 else doc.load_page(0)
+        pix = page.get_pixmap(matrix=fitz.Matrix(2, 2))
+        thumb_name = nome_pdf.replace(".pdf", ".jpg")
+        caminho_thumb = os.path.join(pasta_manga, thumb_name)
+        pix.save(caminho_thumb)
+        print(f"✓ Thumbnail salva: {caminho_thumb}")
+    except Exception as e:
+        print(f"Erro ao gerar thumbnail para {nome_pdf}: {e}")
+
 def baixar_capitulo_para_pdf(url, nome_manga, numero_capitulo):
     headers = {
         "User-Agent": "Mozilla/5.0 (X11; Linux x86_64)"
@@ -138,6 +153,9 @@ def baixar_capitulo_para_pdf(url, nome_manga, numero_capitulo):
     nome_pdf = f"capitulo {numero_capitulo}.pdf"
     caminho_pdf = os.path.join(pasta_manga, nome_pdf)
     imagens_pil[0].save(caminho_pdf, save_all=True, append_images=imagens_pil[1:])
+
+    # Gera thumbnail automaticamente
+    gerar_thumbnail(caminho_pdf, nome_pdf, pasta_manga)
 
     for f in imagens:
         os.remove(f)

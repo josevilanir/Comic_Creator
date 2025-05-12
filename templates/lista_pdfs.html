@@ -2,21 +2,56 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-    <meta charset="UTF-8">
-    <title>Capítulos - {{ nome_pasta }}</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='pdfs.css') }}">
-
+  <meta charset="UTF-8">
+  <title>Capítulos de {{ nome_pasta }}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='pdfs.css') }}">
 </head>
 <body>
-    <h1>Capítulos de {{ nome_pasta }}</h1>
-    <a href="{{ url_for('biblioteca') }}">← Voltar para a biblioteca</a>
-    <ul>
-        {% for arq in arquivos %}
-        <li>
-            {{ arq }} —
-            <a href="{{ url_for('visualizar_pdf', manga=nome_pasta, arquivo=arq) }}" target="_blank">Visualizar</a>
-        </li>
-        {% endfor %}
-    </ul>
+  <h1>Capítulos de {{ nome_pasta }}</h1>
+  <a class="back-link" href="{{ url_for('biblioteca') }}">← Voltar para a biblioteca</a>
+  <div class="manga-grid">
+    {% for arq in arquivos %}
+    <a href="{{ url_for('visualizar_pdf', manga=nome_pasta, arquivo=arq) }}"
+       class="manga-card {% if arq in lidos %}lido{% endif %}"
+       target="_blank"
+       onclick="marcarComoLido('{{ nome_pasta }}', '{{ arq }}')">
+      <h2>{{ arq.replace('.pdf', '') }}</h2>
+      {% if arq in lidos %}
+      <div class="lido-badge">Lido</div>
+      {% endif %}
+      <img src="{{ url_for('visualizar_pdf', manga=nome_pasta, arquivo=arq.replace('.pdf', '.jpg')) }}" alt="Capa do capítulo">
+    </a>
+    {% endfor %}
+  </div>
+
+  <script>
+    function marcarComoLido(manga, capitulo) {
+      const key = "lidos_" + manga;
+      let lidos = JSON.parse(localStorage.getItem(key)) || [];
+      if (!lidos.includes(capitulo)) {
+        lidos.push(capitulo);
+        localStorage.setItem(key, JSON.stringify(lidos));
+      }
+    }
+
+    // aplica classe "lido" dinamicamente após carregar
+    document.addEventListener("DOMContentLoaded", () => {
+      document.querySelectorAll(".manga-card").forEach(card => {
+        const title = card.querySelector("h2").innerText;
+        const manga = "{{ nome_pasta }}";
+        const key = "lidos_" + manga;
+        const lidos = JSON.parse(localStorage.getItem(key)) || [];
+        if (lidos.includes(title + ".pdf")) {
+          card.classList.add("lido");
+          if (!card.querySelector(".lido-badge")) {
+            const badge = document.createElement("div");
+            badge.className = "lido-badge";
+            badge.textContent = "Lido";
+            card.appendChild(badge);
+          }
+        }
+      });
+    });
+  </script>
 </body>
 </html>

@@ -26,7 +26,12 @@ h1 {
   width: 220px;
   text-align: center;
   box-shadow: 0 0 10px #00000055;
-  position: relative;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.manga-card:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 15px #e67e22aa;
 }
 
 .manga-card img {
