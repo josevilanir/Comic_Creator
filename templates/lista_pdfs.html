@@ -9,6 +9,16 @@
 <body>
   <h1>Capítulos de {{ nome_pasta }}</h1>
   <a class="back-link" href="{{ url_for('biblioteca') }}">← Voltar para a biblioteca</a>
+
+  <div class="ordenar-wrapper">
+    <form method="get" style="display: inline;">
+      <input type="hidden" name="ordem" value="{{ 'desc' if ordem != 'desc' else 'asc' }}">
+      <button type="submit" class="ordenar-botao">
+        Mostrar em ordem {{ 'decrescente' if ordem != 'desc' else 'crescente' }}
+      </button>
+    </form>
+  </div>
+
   <div class="manga-grid">
     {% for arq in arquivos %}
     <a href="{{ url_for('visualizar_pdf', manga=nome_pasta, arquivo=arq) }}"
@@ -34,7 +44,6 @@
       }
     }
 
-    // aplica classe "lido" dinamicamente após carregar
     document.addEventListener("DOMContentLoaded", () => {
       document.querySelectorAll(".manga-card").forEach(card => {
         const title = card.querySelector("h2").innerText;

@@ -30,8 +30,10 @@
                     <small>{{ url }}</small><br/>
                     <form method="POST" action="/" style="margin-top: 5px;">
                         <input type="hidden" name="base_url" value="{{ url }}">
+                        <input type="hidden" name="nome_manga" value="{{ nome }}">
                         <input type="number" name="capitulo" placeholder="Capítulo" required style="width: 80px;" />
                         <button type="submit" name="acao" value="baixar_predefinida">Baixar</button>
+                        <button type="submit" name="acao" value="remover_url" style="background-color: #cc3333;">Remover</button>
                     </form>
                 </li>
                 {% endfor %}

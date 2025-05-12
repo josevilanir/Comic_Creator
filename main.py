@@ -1,4 +1,3 @@
-
 import os
 import re
 import json
@@ -44,18 +43,42 @@ def index():
                 salvar_urls(urls_salvas)
                 flash(f"URL para '{nome_manga}' salva com sucesso!", "success")
 
+        elif acao == "remover_url":
+            nome_manga = request.form.get("nome_manga").strip()
+            if nome_manga in urls_salvas:
+                urls_salvas.pop(nome_manga)
+                salvar_urls(urls_salvas)
+                flash(f"URL de '{nome_manga}' removida com sucesso!", "success")
+
         elif acao == "baixar_manual" or acao == "baixar_predefinida":
             base_url = request.form.get("base_url").strip()
             capitulo = request.form.get("capitulo").strip()
+            
+            # Determine the pattern
+            padrao = "capitulo"  # default value
+            if base_url in [v if isinstance(v, str) else v.get("url") for v in urls_salvas.values()]:
+                for nome, dados in urls_salvas.items():
+                    if isinstance(dados, dict) and dados.get("url") == base_url:
+                        padrao = dados.get("padrao", "capitulo")
+                        break
+            elif "chap" in base_url:
+                padrao = "chap"
 
             if not base_url.endswith("-") and not base_url.endswith("/"):
                 base_url += "-"
 
-            if not base_url.startswith("http") or not capitulo.isdigit():
+            if ("{{" not in base_url and not base_url.startswith("http")) or not capitulo.isdigit():
                 flash("Dados inválidos. Verifique a URL e o número do capítulo.", "error")
                 return render_template("index.html", urls_salvas=urls_salvas)
 
-            full_url = f"{base_url}{capitulo}/"
+            # Build URL based on pattern
+            if padrao == "capitulo":
+                full_url = f"{base_url}{capitulo}/"
+            elif padrao == "chap":
+                full_url = f"{base_url}{capitulo}-missao-{str(capitulo).zfill(2)}/"
+            else:
+                full_url = f"{base_url}{capitulo}/"
+
             nome_manga = extrair_nome_manga(base_url)
             resultado = baixar_capitulo_para_pdf(full_url, nome_manga, capitulo)
 
@@ -88,8 +111,15 @@ def listar_pasta(nome_pasta):
     pasta = os.path.join(BASE_COMICS, nome_pasta)
     if not os.path.isdir(pasta):
         return "Pasta não encontrada", 404
-    arquivos = [f for f in os.listdir(pasta) if f.endswith(".pdf")]
-    return render_template("lista_pdfs.html", nome_pasta=nome_pasta, arquivos=arquivos)
+
+    ordem = request.args.get("ordem", "asc")
+
+    arquivos = sorted(
+        [f for f in os.listdir(pasta) if f.endswith(".pdf")],
+        key=lambda nome: int("".join(filter(str.isdigit, nome))),
+        reverse=(ordem == "desc")
+    )
+    return render_template("lista_pdfs.html", nome_pasta=nome_pasta, arquivos=arquivos, ordem=ordem)
 
 @app.route("/visualizar/<manga>/<arquivo>")
 def visualizar_pdf(manga, arquivo):
@@ -122,7 +152,7 @@ def upload_capa(nome_pasta):
 def extrair_nome_manga(base_url):
     partes = urlparse(base_url).path.strip("/").split("/")
     for i in partes[::-1]:
-        if i and "capitulo" not in i:
+        if i and "capitulo" not in i and "chap" not in i:
             return i.replace("-", " ").title()
     return "Manga Desconhecido"
 
