@@ -8,6 +8,10 @@
 </head>
 <body>
   <h1>Biblioteca</h1>
+
+  <input type="text" id="busca" placeholder="Buscar mangá..." onkeyup="filtrarMangas()"
+         style="margin: 20px auto; display: block; padding: 10px; width: 300px; border-radius: 5px; border: none; text-align: center;">
+
   {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
       <ul>
@@ -18,9 +22,9 @@
     {% endif %}
   {% endwith %}
 
-  <div class="manga-grid">
+  <div class="manga-grid" id="mangaGrid">
     {% for item in pastas %}
-    <div class="manga-card">
+    <div class="manga-card" data-nome="{{ item.nome | lower }}">
       <h2>{{ item.nome }}</h2>
       {% if item.tem_capa %}
         <img src="{{ item.capa_url }}" alt="Capa do manga">
@@ -39,6 +43,16 @@
     function mostrarFormulario(nome) {
       const form = document.getElementById('form-' + nome);
       form.classList.toggle('active');
+    }
+
+    function filtrarMangas() {
+      const filtro = document.getElementById('busca').value.toLowerCase();
+      const cards = document.querySelectorAll('.manga-card');
+
+      cards.forEach(card => {
+        const nome = card.getAttribute('data-nome');
+        card.style.display = nome.includes(filtro) ? "block" : "none";
+      });
     }
   </script>
 </body>

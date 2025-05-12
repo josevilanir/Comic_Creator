@@ -26,7 +26,11 @@ h1 {
   width: 220px;
   text-align: center;
   box-shadow: 0 0 10px #00000055;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.3s ease, max-height 0.3s ease;
+  position: relative;
+  opacity: 1;
+  overflow: hidden;
+  max-height: 1000px;
 }
 
 .manga-card:hover {
@@ -80,4 +84,14 @@ h1 {
 
 .upload-form.active {
   display: block;
+}
+
+/* Animações de filtragem */
+.manga-card[style*="display: none"] {
+  opacity: 0 !important;
+  max-height: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: none !important;
+  transition: all 0.3s ease;
 }

@@ -1,3 +1,4 @@
+
 body {
   background-color: #121212;
   color: white;
@@ -12,7 +13,7 @@ header {
   background-color: #1e1e1e;
 }
 
-.btn-top {
+.toggle-btn {
   background-color: #0033ff;
   color: white;
   padding: 10px 20px;
@@ -23,19 +24,20 @@ header {
   font-weight: bold;
 }
 
-.btn-top:hover {
+.toggle-btn:hover {
   background-color: #0022cc;
 }
 
-.container {
+.grid-container {
   display: flex;
-  justify-content: center;
-  gap: 40px;
-  padding: 40px;
   flex-wrap: wrap;
+  justify-content: center;
+  padding: 40px;
+  gap: 40px;
 }
 
-.card {
+.left-box,
+.right-box {
   background-color: #1e1e1e;
   padding: 30px;
   border-radius: 12px;
@@ -44,13 +46,14 @@ header {
   max-width: 400px;
 }
 
-.card h2 {
+.left-box h2,
+.right-box h3 {
   text-align: center;
   margin-bottom: 20px;
 }
 
-.card input[type="text"],
-.card input[type="number"] {
+.left-box form input,
+.right-box form input {
   width: 100%;
   padding: 10px;
   margin: 10px 0 20px;
@@ -58,7 +61,8 @@ header {
   border: none;
 }
 
-.btn {
+.left-box form button,
+.right-box form button {
   display: block;
   width: 100%;
   padding: 12px;
@@ -71,8 +75,20 @@ header {
   cursor: pointer;
 }
 
-.btn:hover {
+.left-box form button:hover,
+.right-box form button:hover {
   background-color: #0022cc;
+}
+
+.lista-predefinidas {
+  list-style: none;
+  padding: 0;
+}
+
+.lista-predefinidas li {
+  margin-bottom: 20px;
+  border-top: 1px solid #444;
+  padding-top: 10px;
 }
 
 footer {
@@ -83,11 +99,6 @@ footer {
   margin-top: 60px;
 }
 
-body[data-tema="escuro"] {
-  background-color: #121212;
-  color: white;
-}
-
 body[data-tema="claro"] {
   background-color: #f4f4f4;
   color: #222;
@@ -95,7 +106,8 @@ body[data-tema="claro"] {
 
 body[data-tema="claro"] header,
 body[data-tema="claro"] footer,
-body[data-tema="claro"] .card {
+body[data-tema="claro"] .left-box,
+body[data-tema="claro"] .right-box {
   background-color: #ffffff;
   color: #000;
   box-shadow: 0 0 10px #ccc;
@@ -103,9 +115,9 @@ body[data-tema="claro"] .card {
 
 body[data-tema="escuro"] header,
 body[data-tema="escuro"] footer,
-body[data-tema="escuro"] .card {
+body[data-tema="escuro"] .left-box,
+body[data-tema="escuro"] .right-box {
   background-color: #1e1e1e;
   color: white;
   box-shadow: 0 0 10px #00000066;
 }
-

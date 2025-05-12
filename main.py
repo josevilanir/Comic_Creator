@@ -1,8 +1,9 @@
 
 import os
 import re
+import json
 import requests
-import fitz  # PyMuPDF
+import fitz
 from bs4 import BeautifulSoup
 from PIL import Image
 from urllib.parse import urljoin, urlparse
@@ -12,29 +13,60 @@ app = Flask(__name__)
 app.secret_key = "segredo"
 BASE_COMICS = os.path.expanduser("~/Comics")
 THUMBNAILS = os.path.join("static", "thumbnails")
+URLS_JSON = "urls_salvas.json"
+
 os.makedirs(BASE_COMICS, exist_ok=True)
 os.makedirs(THUMBNAILS, exist_ok=True)
 
+def carregar_urls():
+    if os.path.exists(URLS_JSON):
+        with open(URLS_JSON, "r") as f:
+            return json.load(f)
+    return {}
+
+def salvar_urls(urls):
+    with open(URLS_JSON, "w") as f:
+        json.dump(urls, f)
+
 @app.route("/", methods=["GET", "POST"])
 def index():
+    urls_salvas = carregar_urls()
+    base_url = ""
+
     if request.method == "POST":
-        url = request.form.get("url")
-        if not url:
-            flash("URL inválida", "error")
-            return redirect(url_for("index"))
+        acao = request.form.get("acao")
 
-        nome_manga, numero_capitulo = extrair_dados_da_url(url)
-        if not nome_manga or not numero_capitulo:
-            flash("Não foi possível extrair dados da URL", "error")
-            return redirect(url_for("index"))
+        if acao == "salvar_url":
+            nova_url = request.form.get("nova_url").strip()
+            nome_manga = request.form.get("nome_manga").strip()
+            if nova_url and nome_manga:
+                urls_salvas[nome_manga] = nova_url
+                salvar_urls(urls_salvas)
+                flash(f"URL para '{nome_manga}' salva com sucesso!", "success")
 
-        resultado = baixar_capitulo_para_pdf(url, nome_manga, numero_capitulo)
-        if resultado:
-            flash(f"PDF salvo em: {resultado}", "success")
-        else:
-            flash("Nenhuma imagem encontrada.", "error")
-        return redirect(url_for("index"))
-    return render_template("index.html")
+        elif acao == "baixar_manual" or acao == "baixar_predefinida":
+            base_url = request.form.get("base_url").strip()
+            capitulo = request.form.get("capitulo").strip()
+
+            if not base_url.endswith("-") and not base_url.endswith("/"):
+                base_url += "-"
+
+            if not base_url.startswith("http") or not capitulo.isdigit():
+                flash("Dados inválidos. Verifique a URL e o número do capítulo.", "error")
+                return render_template("index.html", urls_salvas=urls_salvas)
+
+            full_url = f"{base_url}{capitulo}/"
+            nome_manga = extrair_nome_manga(base_url)
+            resultado = baixar_capitulo_para_pdf(full_url, nome_manga, capitulo)
+
+            if resultado:
+                flash(f"PDF salvo em: {resultado}", "success")
+            else:
+                flash("Nenhuma imagem encontrada ou erro ao baixar.", "error")
+
+        return render_template("index.html", base_url=base_url, urls_salvas=urls_salvas)
+
+    return render_template("index.html", base_url=base_url, urls_salvas=urls_salvas)
 
 @app.route("/biblioteca")
 def biblioteca():
@@ -87,16 +119,12 @@ def upload_capa(nome_pasta):
     flash(f"Capa atualizada para {nome_pasta}.", "success")
     return redirect(url_for("biblioteca"))
 
-def extrair_dados_da_url(url):
-    parsed = urlparse(url)
-    partes = parsed.path.strip("/").split("/")
-    try:
-        nome_manga = partes[1].replace("-", " ").title()
-        capitulo = re.search(r"(\d+)", partes[-1])
-        numero = capitulo.group(1) if capitulo else "000"
-        return nome_manga, numero
-    except IndexError:
-        return None, None
+def extrair_nome_manga(base_url):
+    partes = urlparse(base_url).path.strip("/").split("/")
+    for i in partes[::-1]:
+        if i and "capitulo" not in i:
+            return i.replace("-", " ").title()
+    return "Manga Desconhecido"
 
 def gerar_thumbnail(caminho_pdf, nome_pdf, pasta_manga):
     try:
@@ -154,7 +182,6 @@ def baixar_capitulo_para_pdf(url, nome_manga, numero_capitulo):
     caminho_pdf = os.path.join(pasta_manga, nome_pdf)
     imagens_pil[0].save(caminho_pdf, save_all=True, append_images=imagens_pil[1:])
 
-    # Gera thumbnail automaticamente
     gerar_thumbnail(caminho_pdf, nome_pdf, pasta_manga)
 
     for f in imagens:

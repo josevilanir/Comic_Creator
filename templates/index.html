@@ -1,53 +1,72 @@
+
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Criador e Leitor de Quadrinhos</title>
-  <link rel="stylesheet" href="/static/style.css">
-  <script>
-    function alternarModo() {
-      const body = document.body;
-      const atual = body.getAttribute('data-tema');
-      const novoTema = atual === 'claro' ? 'escuro' : 'claro';
-      body.setAttribute('data-tema', novoTema);
-      localStorage.setItem('tema', novoTema);
-    }
-
-    window.onload = () => {
-      const temaSalvo = localStorage.getItem('tema') || 'escuro';
-      document.body.setAttribute('data-tema', temaSalvo);
-    };
-  </script>
+    <meta charset="UTF-8" />
+    <title>Criador e Leitor de Quadrinhos e Mangás</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
-<body data-tema="escuro">
-  <header>
-    <h1>Criador e Leitor de Quadrinhos e Mangás</h1>
-    <button class="btn-top" onclick="alternarModo()">Alternar Modo</button>
-  </header>
+<body>
+    <header>
+        <h1>Criador e Leitor de Quadrinhos e Mangás</h1>
+        <button class="toggle-btn">Alternar Modo</button>
+    </header>
 
-  <div class="container">
-    <div class="card">
-      <h2>URLs Predefinidas</h2>
-      <p>Em breve: URLs predefinidas para facilitar o download de mangás.</p>
-    </div>
+    <main class="grid-container">
+        <!-- Seção de URLs Predefinidas -->
+        <section class="left-box">
+            <h2>URLs Predefinidas</h2>
+            <form method="POST" action="/" class="predefinida-form">
+                <input type="text" name="nova_url" placeholder="URL base do mangá" required />
+                <input type="text" name="nome_manga" placeholder="Nome do mangá" required />
+                <button type="submit" name="acao" value="salvar_url">Salvar</button>
+            </form>
 
-    <div class="card">
-      <form method="POST" action="/">
-        <label for="url">Digite a URL do site para baixar e gerar o PDF:</label>
-        <input type="text" id="url" name="url" placeholder="https://exemplo.com" required>
+            {% if urls_salvas %}
+            <ul class="lista-predefinidas">
+                {% for nome, url in urls_salvas.items() %}
+                <li>
+                    <strong>{{ nome }}</strong><br/>
+                    <small>{{ url }}</small><br/>
+                    <form method="POST" action="/" style="margin-top: 5px;">
+                        <input type="hidden" name="base_url" value="{{ url }}">
+                        <input type="number" name="capitulo" placeholder="Capítulo" required style="width: 80px;" />
+                        <button type="submit" name="acao" value="baixar_predefinida">Baixar</button>
+                    </form>
+                </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <p style="margin-top: 20px;">Nenhuma URL salva ainda.</p>
+            {% endif %}
+        </section>
 
-        <label for="capitulos">Número de capítulos para baixar:</label>
-        <input type="number" id="capitulos" name="capitulos" value="1" min="1">
+        <!-- Seção de Inserção Manual -->
+        <section class="right-box">
+            <h3>Digite a URL do site para baixar e gerar o PDF:</h3>
+            <form method="POST" action="/">
+                <input type="text" name="base_url" placeholder="https://exemplo.com" required />
+                <label for="capitulo">Número de capítulos para baixar:</label>
+                <input type="number" name="capitulo" value="1" required />
+                <button type="submit" name="acao" value="baixar_manual">Baixar e Gerar PDF</button>
+            </form>
+            <form action="{{ url_for('biblioteca') }}" method="get">
+                <button type="submit">Acessar Biblioteca</button>
+            </form>
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <ul class="messages">
+                {% for category, message in messages %}
+                    <li class="{{ category }}">{{ message }}</li>
+                {% endfor %}
+                </ul>
+            {% endif %}
+            {% endwith %}
+        </section>
+    </main>
 
-        <button type="submit" class="btn">Baixar e Gerar PDF</button>
-        <a href="/biblioteca"><button type="button" class="btn">Acessar Biblioteca</button></a>
-      </form>
-    </div>
-  </div>
-
-  <footer>
-    © 2023 Criador e Leitor de Quadrinhos. Todos os direitos reservados.
-  </footer>
+    <footer>
+        <p>© 2023 Criador e Leitor de Quadrinhos. Todos os direitos reservados.</p>
+    </footer>
 </body>
 </html>
