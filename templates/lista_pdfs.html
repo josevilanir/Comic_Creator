@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
@@ -26,6 +25,9 @@
        target="_blank"
        onclick="marcarComoLido('{{ nome_pasta }}', '{{ arq }}')">
       <h2>{{ arq.replace('.pdf', '') }}</h2>
+    <label style="display:flex; align-items:center; justify-content:center; gap:6px; font-size: 0.9em; margin: 6px 0;">
+      <input type="checkbox" onchange="toggleLido('{{ nome_pasta }}', '{{ arq }}', this.checked)"> Marcar como lido
+    </label>
       {% if arq in lidos %}
       <div class="lido-badge">Lido</div>
       {% endif %}
@@ -45,6 +47,18 @@
     }
 
     document.addEventListener("DOMContentLoaded", () => {
+
+    document.querySelectorAll(".manga-card").forEach(card => {
+      const checkbox = card.querySelector("input[type=checkbox]");
+      const title = card.querySelector("h2").innerText;
+      const manga = "{{ nome_pasta }}";
+      const key = "lidos_" + manga;
+      const lidos = JSON.parse(localStorage.getItem(key)) || [];
+      if (checkbox) {
+        checkbox.checked = lidos.includes(title + ".pdf");
+      }
+    });
+
       document.querySelectorAll(".manga-card").forEach(card => {
         const title = card.querySelector("h2").innerText;
         const manga = "{{ nome_pasta }}";
@@ -61,6 +75,33 @@
         }
       });
     });
+  
+    function toggleLido(manga, capitulo, marcado) {
+      const key = "lidos_" + manga;
+      let lidos = JSON.parse(localStorage.getItem(key)) || [];
+      if (marcado && !lidos.includes(capitulo)) {
+        lidos.push(capitulo);
+      } else if (!marcado && lidos.includes(capitulo)) {
+        lidos = lidos.filter(item => item !== capitulo);
+      }
+      localStorage.setItem(key, JSON.stringify(lidos));
+      
+      // Atualiza a classe lido no card correspondente
+      document.querySelectorAll(".manga-card").forEach(card => {
+        const cardCapitulo = card.querySelector("h2").textContent.trim() + ".pdf";
+        if (cardCapitulo === capitulo) {
+          card.classList.toggle("lido", marcado);
+          if (marcado && !card.querySelector(".lido-badge")) {
+            const badge = document.createElement("div");
+            badge.className = "lido-badge";
+            badge.textContent = "Lido";
+            card.appendChild(badge);
+          } else if (!marcado && card.querySelector(".lido-badge")) {
+            card.querySelector(".lido-badge").remove();
+          }
+        }
+      });
+    }
   </script>
 </body>
 </html>
