@@ -72,12 +72,14 @@ def index():
                 return render_template("index.html", urls_salvas=urls_salvas)
 
             # Build URL based on pattern
+            nome_manga = next((k for k, v in urls_salvas.items() if v == base_url), "")
+            sufixo = "-pt-br" if nome_manga.lower().endswith("pt-br") else ""
             if padrao == "capitulo":
-                full_url = f"{base_url}{capitulo}/"
+                full_url = f"{base_url}{capitulo}{sufixo}/"
             elif padrao == "chap":
-                full_url = f"{base_url}{capitulo}-missao-{str(capitulo).zfill(2)}/"
+                full_url = f"{base_url}{capitulo}{sufixo}/"
             else:
-                full_url = f"{base_url}{capitulo}/"
+                full_url = f"{base_url}{capitulo}{sufixo}/"
 
             nome_manga = extrair_nome_manga(base_url)
             resultado = baixar_capitulo_para_pdf(full_url, nome_manga, capitulo)
