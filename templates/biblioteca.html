@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
@@ -8,23 +7,9 @@
 </head>
 <body>
   <h1>Biblioteca</h1>
-
-  <input type="text" id="busca" placeholder="Buscar mangá..." onkeyup="filtrarMangas()"
-         style="margin: 20px auto; display: block; padding: 10px; width: 300px; border-radius: 5px; border: none; text-align: center;">
-
-  {% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-      <ul>
-      {% for category, message in messages %}
-        <li><strong>{{ category.title() }}:</strong> {{ message }}</li>
-      {% endfor %}
-      </ul>
-    {% endif %}
-  {% endwith %}
-
   <div class="manga-grid" id="mangaGrid">
     {% for item in pastas %}
-    <div class="manga-card" data-nome="{{ item.nome | lower }}">
+    <div class="manga-card" data-nome="{{ item.nome | lower }}" id="manga-card-{{ item.nome | replace(' ', '_') }}">
       <h2>{{ item.nome }}</h2>
       {% if item.tem_capa %}
         <img src="{{ item.capa_url }}" alt="Capa do manga">
@@ -35,6 +20,12 @@
         <input type="file" name="capa" accept="image/*" required>
         <button type="submit">Enviar nova capa</button>
       </form>
+      {# Novo Botão de Excluir Mangá #}
+      <button class="btn-excluir-manga" 
+              data-manga="{{ item.nome }}"
+              style="background-color: #9e2a2b; color: white; border: none; padding: 8px; margin-top: 5px; border-radius: 4px; cursor: pointer; width: 100%;">
+        Excluir Mangá
+      </button>
     </div>
     {% endfor %}
   </div>
@@ -54,6 +45,37 @@
         card.style.display = nome.includes(filtro) ? "block" : "none";
       });
     }
+
+    // Nova função para excluir mangá
+    document.querySelectorAll('.btn-excluir-manga').forEach(button => {
+      button.addEventListener('click', function() {
+        const mangaNome = this.dataset.manga;
+        const cardId = `manga-card-${mangaNome.replace(' ', '_')}`;
+
+        if (confirm(`Tem certeza que deseja excluir o mangá "${mangaNome}" e todos os seus capítulos? Esta ação não pode ser desfeita.`)) {
+          fetch(`/excluir_manga/${encodeURIComponent(mangaNome)}`, {
+            method: 'DELETE',
+          })
+          .then(response => response.json())
+          .then(data => {
+            if (data.success) {
+              alert(data.message); // Ou uma notificação mais elegante
+              // Remove o card do mangá da interface
+              const cardElement = document.getElementById(cardId);
+              if (cardElement) {
+                cardElement.remove();
+              }
+            } else {
+              alert('Erro ao excluir mangá: ' + data.message);
+            }
+          })
+          .catch(error => {
+            console.error('Erro na requisição:', error);
+            alert('Ocorreu um erro na comunicação com o servidor.');
+          });
+        }
+      });
+    });
   </script>
 </body>
 </html>

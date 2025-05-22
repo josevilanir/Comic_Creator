@@ -9,58 +9,95 @@
   <h1>Capítulos de {{ nome_pasta }}</h1>
   <a class="back-link" href="{{ url_for('biblioteca') }}">← Voltar para a biblioteca</a>
 
-  <div class="ordenar-wrapper">
-    <form method="get" style="display: inline;">
-      <input type="hidden" name="ordem" value="{{ 'desc' if ordem != 'desc' else 'asc' }}">
-      <button type="submit" class="ordenar-botao">
-        Mostrar em ordem {{ 'decrescente' if ordem != 'desc' else 'crescente' }}
-      </button>
-    </form>
-  </div>
-
   <div class="manga-grid">
     {% for arq in arquivos %}
-    <a href="{{ url_for('visualizar_pdf', manga=nome_pasta, arquivo=arq) }}"
-       class="manga-card {% if arq in lidos %}lido{% endif %}"
-       target="_blank"
-       onclick="marcarComoLido('{{ nome_pasta }}', '{{ arq }}')">
-      <h2>{{ arq.replace('.pdf', '') }}</h2>
-    <label style="display:flex; align-items:center; justify-content:center; gap:6px; font-size: 0.9em; margin: 6px 0;">
-      <input type="checkbox" onchange="toggleLido('{{ nome_pasta }}', '{{ arq }}', this.checked)"> Marcar como lido
-    </label>
-      {% if arq in lidos %}
-      <div class="lido-badge">Lido</div>
-      {% endif %}
-      <img src="{{ url_for('visualizar_pdf', manga=nome_pasta, arquivo=arq.replace('.pdf', '.jpg')) }}" alt="Capa do capítulo">
-    </a>
+    <div class="manga-card-container" id="capitulo-container-{{ arq.replace('.pdf', '') | replace(' ', '_') }}"> {# Adiciona um ID ao container do card #}
+      <a href="{{ url_for('visualizar_pdf', manga=nome_pasta, arquivo=arq) }}"
+         class="manga-card {% if arq in lidos %}lido{% endif %}"
+         target="_blank"
+         onclick="marcarComoLido('{{ nome_pasta }}', '{{ arq }}')">
+        <h2>{{ arq.replace('.pdf', '') }}</h2>
+        <label style="display:flex; align-items:center; justify-content:center; gap:6px; font-size: 0.9em; margin: 6px 0;">
+          <input type="checkbox" onchange="toggleLido('{{ nome_pasta }}', '{{ arq }}', this.checked)"> Marcar como lido
+        </label>
+        {% if arq in lidos %}
+        <div class="lido-badge">Lido</div>
+        {% endif %}
+        <img src="{{ url_for('visualizar_pdf', manga=nome_pasta, arquivo=arq.replace('.pdf', '.jpg')) }}" alt="Capa do capítulo">
+      </a>
+      {# Novo Botão de Excluir Capítulo #}
+      <button class="btn-excluir-capitulo" 
+              data-manga="{{ nome_pasta }}" 
+              data-arquivo="{{ arq }}"
+              style="background-color: #cc3333; color: white; border: none; padding: 8px; margin-top: 5px; border-radius: 4px; cursor: pointer; width: 100%;">
+        Excluir Capítulo
+      </button>
+    </div>
     {% endfor %}
   </div>
 
   <script>
-    function marcarComoLido(manga, capitulo) {
-      const key = "lidos_" + manga;
-      let lidos = JSON.parse(localStorage.getItem(key)) || [];
-      if (!lidos.includes(capitulo)) {
-        lidos.push(capitulo);
-        localStorage.setItem(key, JSON.stringify(lidos));
-      }
+  function marcarComoLido(manga, capitulo) {
+    const key = "lidos_" + manga;
+    let lidos = JSON.parse(localStorage.getItem(key)) || [];
+    if (!lidos.includes(capitulo)) {
+      lidos.push(capitulo);
+      localStorage.setItem(key, JSON.stringify(lidos));
     }
+  }
 
-    document.addEventListener("DOMContentLoaded", () => {
+  function toggleLido(manga, capitulo, marcado) {
+    const key = "lidos_" + manga;
+    let lidos = JSON.parse(localStorage.getItem(key)) || [];
+    if (marcado && !lidos.includes(capitulo)) {
+      lidos.push(capitulo);
+    } else if (!marcado && lidos.includes(capitulo)) {
+      lidos = lidos.filter(item => item !== capitulo);
+    }
+    localStorage.setItem(key, JSON.stringify(lidos));
+    
+    // Bloco movido para DENTRO da função toggleLido
+    // Atualiza a classe lido no card correspondente
+    document.querySelectorAll(".manga-card").forEach(card => {
+      const h2Element = card.querySelector("h2");
+      if (h2Element) { // Adicionada verificação para segurança
+        const cardCapituloNome = h2Element.textContent.trim() + ".pdf";
+        if (cardCapituloNome === capitulo) { // 'capitulo' e 'marcado' são os parâmetros da função toggleLido
+          card.classList.toggle("lido", marcado);
+          if (marcado && !card.querySelector(".lido-badge")) {
+            const badge = document.createElement("div");
+            badge.className = "lido-badge";
+            badge.textContent = "Lido";
+            card.appendChild(badge);
+          } else if (!marcado && card.querySelector(".lido-badge")) {
+            const badgeElement = card.querySelector(".lido-badge");
+            if (badgeElement) { // Adicionada verificação
+                badgeElement.remove();
+            }
+          }
+        }
+      }
+    });
+  } // Fim da função toggleLido
 
+  document.addEventListener("DOMContentLoaded", () => {
+    // Configuração inicial dos checkboxes e badges ao carregar a página
     document.querySelectorAll(".manga-card").forEach(card => {
       const checkbox = card.querySelector("input[type=checkbox]");
-      const title = card.querySelector("h2").innerText;
-      const manga = "{{ nome_pasta }}";
-      const key = "lidos_" + manga;
-      const lidos = JSON.parse(localStorage.getItem(key)) || [];
-      if (checkbox) {
+      const titleElement = card.querySelector("h2"); // Pega o elemento h2
+      if (checkbox && titleElement) { // Verifica se ambos os elementos existem
+        const title = titleElement.innerText.trim();
+        const manga = "{{ nome_pasta }}";
+        const key = "lidos_" + manga;
+        const lidos = JSON.parse(localStorage.getItem(key)) || [];
         checkbox.checked = lidos.includes(title + ".pdf");
       }
     });
 
-      document.querySelectorAll(".manga-card").forEach(card => {
-        const title = card.querySelector("h2").innerText;
+    document.querySelectorAll(".manga-card").forEach(card => {
+      const titleElement = card.querySelector("h2");
+      if (titleElement) { // Verifica se o elemento de título existe
+        const title = titleElement.innerText.trim();
         const manga = "{{ nome_pasta }}";
         const key = "lidos_" + manga;
         const lidos = JSON.parse(localStorage.getItem(key)) || [];
@@ -73,35 +110,46 @@
             card.appendChild(badge);
           }
         }
-      });
-    });
-  
-    function toggleLido(manga, capitulo, marcado) {
-      const key = "lidos_" + manga;
-      let lidos = JSON.parse(localStorage.getItem(key)) || [];
-      if (marcado && !lidos.includes(capitulo)) {
-        lidos.push(capitulo);
-      } else if (!marcado && lidos.includes(capitulo)) {
-        lidos = lidos.filter(item => item !== capitulo);
       }
-      localStorage.setItem(key, JSON.stringify(lidos));
-      
-      // Atualiza a classe lido no card correspondente
-      document.querySelectorAll(".manga-card").forEach(card => {
-        const cardCapitulo = card.querySelector("h2").textContent.trim() + ".pdf";
-        if (cardCapitulo === capitulo) {
-          card.classList.toggle("lido", marcado);
-          if (marcado && !card.querySelector(".lido-badge")) {
-            const badge = document.createElement("div");
-            badge.className = "lido-badge";
-            badge.textContent = "Lido";
-            card.appendChild(badge);
-          } else if (!marcado && card.querySelector(".lido-badge")) {
-            card.querySelector(".lido-badge").remove();
-          }
+    });
+
+    // Adiciona listeners para os botões de exclusão
+    document.querySelectorAll('.btn-excluir-capitulo').forEach(button => {
+      button.addEventListener('click', function() {
+        const mangaNome = this.dataset.manga;
+        const arquivoNome = this.dataset.arquivo;
+        const cardContainerId = `capitulo-container-${arquivoNome.replace('.pdf', '').replace(' ', '_')}`;
+
+        if (confirm(`Tem certeza que deseja excluir o capítulo "${arquivoNome.replace('.pdf', '')}" de "${mangaNome}"? Esta ação não pode ser desfeita.`)) {
+          fetch(`/excluir_capitulo/${encodeURIComponent(mangaNome)}/${encodeURIComponent(arquivoNome)}`, {
+            method: 'DELETE',
+          })
+          .then(response => response.json())
+          .then(data => {
+            if (data.success) {
+              alert(data.message);
+              const cardElement = document.getElementById(cardContainerId);
+              if (cardElement) {
+                cardElement.remove();
+              }
+              const key = "lidos_" + mangaNome;
+              let lidos = JSON.parse(localStorage.getItem(key)) || [];
+              if (lidos.includes(arquivoNome)) {
+                lidos = lidos.filter(item => item !== arquivoNome);
+                localStorage.setItem(key, JSON.stringify(lidos));
+              }
+            } else {
+              alert('Erro ao excluir capítulo: ' + data.message);
+            }
+          })
+          .catch(error => {
+            console.error('Erro na requisição:', error);
+            alert('Ocorreu um erro na comunicação com o servidor.');
+          });
         }
       });
-    }
-  </script>
+    });
+  }); // Fim do DOMContentLoaded
+</script>
 </body>
 </html>
