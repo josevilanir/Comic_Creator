@@ -1,13 +1,17 @@
+/* static/pdfs.css */
+
 body {
   font-family: 'Arial', sans-serif;
   background-color: #1e1e1e;
   color: #ffffff;
   margin: 0;
   padding: 20px;
-  text-align: center;
+  /* text-align: center; /* Removido para evitar centralização global excessiva,
+                         já que .manga-card-container terá seu próprio text-align */
 }
 
 h1 {
+  text-align: center; /* Adicionado para centralizar o H1 especificamente */
   margin-bottom: 20px;
 }
 
@@ -18,65 +22,116 @@ a.back-link {
   border-radius: 8px;
   text-decoration: none;
   margin-bottom: 30px;
-  display: inline-block;
+  display: inline-block; /* Permite margem e padding, mas flui com o texto se houver */
 }
 
 .manga-grid {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: 30px;
+  gap: 25px; /* Espaçamento entre os containers dos cards */
 }
 
-.manga-card {
+/* ESTILOS PARA O NOVO CONTAINER DO CARD */
+.manga-card-container {
+  width: 200px;  /* LARGURA DO CARD: Ajuste conforme desejado */
   background-color: #2a2a2a;
   border-radius: 10px;
-  padding: 20px;
-  width: 220px;
-  text-align: center;
+  padding: 15px;
   box-shadow: 0 0 10px #00000055;
-  text-decoration: none;
-  color: inherit;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-  position: relative;
+  display: flex;
+  flex-direction: column;
+  text-align: center; /* Centraliza o texto dentro do container */
+  transition: transform 0.2s ease, box-shadow 0.2s ease; /* Movido o hover para o container */
 }
 
-.manga-card:hover {
+.manga-card-container:hover {
   transform: scale(1.05);
   box-shadow: 0 0 15px #2980b9aa;
 }
 
-.manga-card img {
-  max-width: 100%;
+/* O link <a> que antes era o .manga-card */
+.manga-card-container a.manga-card {
+  text-decoration: none;
+  color: inherit;
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1; /* Faz o link ocupar o espaço vertical disponível antes do botão */
+  position: relative; /* Necessário para o posicionamento absoluto do .lido-badge */
+}
+
+/* Título do capítulo dentro do link <a> */
+.manga-card-container a.manga-card h2 {
+  font-size: 0.95em; /* Ajustado para card menor */
+  margin-bottom: 8px;
+  word-wrap: break-word;
+  line-height: 1.3;
+  min-height: 2.6em; /* Aproximadamente 2 linhas, para consistência de altura */
+  color: #ffffff; /* Garantir cor do texto */
+}
+
+/* Label do checkbox dentro do link <a> */
+.manga-card-container a.manga-card label {
+  font-size: 0.8em;
+  margin: 6px 0 10px 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  color: #ccc; /* Garantir cor do texto */
+}
+
+/* Imagem dentro do link <a> */
+.manga-card-container a.manga-card img {
+  display: block;
+  width: 100%;
+  height: 220px; /* ALTURA DA IMAGEM: Ajuste este valor conforme sua preferência! */
+  object-fit: cover; /* 'cover' preenche, 'contain' mostra tudo com possíveis barras */
   border-radius: 5px;
+  margin-top: auto; /* Ajuda a empurrar a imagem para baixo se houver espaço flexível */
 }
 
-.manga-card h2 {
-  font-size: 18px;
-  margin-bottom: 10px;
+/* Botão de exclusão (irmão do link <a>, dentro do .manga-card-container) */
+.manga-card-container .btn-excluir-capitulo {
+  background-color: #cc3333;
+  color: white;
+  border: none;
+  padding: 8px 10px; /* Ajuste o padding do botão se necessário */
+  margin-top: 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  width: 100%;
+  font-weight: bold;
+  font-size: 0.85em; /* Ajuste o tamanho da fonte do botão */
 }
 
-/* Destaque se for lido */
-.manga-card.lido {
-  opacity: 0.5;
+.manga-card-container .btn-excluir-capitulo:hover {
+  background-color: #a72828;
 }
 
-.lido-badge {
+/* Destaque se for lido (aplicado ao link <a>) */
+.manga-card-container a.manga-card.lido {
+  opacity: 0.6; /* Opacidade para indicar que foi lido */
+}
+
+/* Badge "Lido" (dentro do link <a>) */
+.manga-card-container a.manga-card .lido-badge {
   position: absolute;
-  top: 8px;
-  right: 10px;
+  top: 5px;
+  right: 5px;
   background-color: limegreen;
   color: black;
   font-weight: bold;
-  font-size: 12px;
+  font-size: 0.7em; /* Ajustado para ser um pouco menor */
   padding: 2px 6px;
   border-radius: 4px;
 }
 
-ordenar-wrapper {
+.ordenar-wrapper {
   text-align: center;
   margin: 10px 0 30px;
 }
+
 .ordenar-botao {
   background-color: #444;
   color: white;
@@ -86,41 +141,40 @@ ordenar-wrapper {
   cursor: pointer;
   font-weight: bold;
 }
+
 .ordenar-botao:hover {
   background-color: #666;
 }
-/* Estilo do checkbox de leitura */
-.manga-card label {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  font-size: 0.85em;
-  margin-top: 8px;
-  color: #ccc;
-}
 
-.manga-card input[type="checkbox"] {
-  transform: scale(1.2);
+/* Estilo do checkbox de leitura (dentro do link <a>) */
+.manga-card-container a.manga-card input[type="checkbox"] {
+  transform: scale(1.1);
   accent-color: #00c853;
   cursor: pointer;
 }
 
-/* Opacidade aplicada apenas quando marcado */
+/*
+  As regras CSS abaixo (usando o seletor de irmão geral '~') provavelmente
+  não funcionam como esperado com a estrutura HTML atual para o .lido-badge,
+  pois o badge não é um irmão direto do checkbox dessa forma.
+  A visibilidade do badge e a opacidade do card são controladas pelo JavaScript
+  (adicionando/removendo a classe 'lido' e o elemento badge).
+  Os seletores .pdf-cover e .pdf-title não parecem ser usados no HTML fornecido.
+  Comentando-os para evitar confusão.
+
 input[type="checkbox"]:checked ~ .pdf-cover,
 input[type="checkbox"]:checked ~ .pdf-title,
 input[type="checkbox"]:checked ~ .lido-badge {
   opacity: 0.4;
 }
 
-/* Oculta o badge "Lido" se o checkbox não estiver marcado */
 .manga-card input[type="checkbox"]:not(:checked) ~ .lido-badge {
   display: none;
 }
 
-/* Animação suave ao aplicar/remover opacidade */
 .manga-card .pdf-cover,
 .manga-card .pdf-title,
 .manga-card .lido-badge {
   transition: opacity 0.3s ease, filter 0.3s ease;
 }
+*/
