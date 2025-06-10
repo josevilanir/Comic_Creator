@@ -192,6 +192,8 @@ def baixar_capitulo_para_pdf(url, nome_manga, numero_capitulo):
     def get_img_url_from_tag(tag_element, base_chapter_url):
         attributes_to_check = ["data-src", "src", "data-lazy-src", "data-original", "data-lazyload"]
         img_src_url = None
+    
+    # Verificar atributos da tag img
         for attr in attributes_to_check:
             src_candidate = tag_element.get(attr)
             if src_candidate and isinstance(src_candidate, str):
@@ -199,14 +201,39 @@ def baixar_capitulo_para_pdf(url, nome_manga, numero_capitulo):
                 if src_candidate and not src_candidate.startswith("data:image"):
                     img_src_url = src_candidate
                     break
-        if not img_src_url:
-            return None
-        
+    
+            if not img_src_url:
+                return None
+    
         full_img_url = urljoin(base_chapter_url, img_src_url)
-        
-        parsed_path = urlparse(full_img_url).path.lower()
-        if any(parsed_path.endswith(ext) for ext in ['.jpg', '.jpeg', '.png', '.webp', '.gif']) or not os.path.splitext(parsed_path)[1]:
+        parsed_path = full_img_url.lower()
+    
+    # 1. Padrão específico para mugiwarasoficial.com (WP-Manga)
+        if 'wp-content/uploads/wp-manga/data/manga_' in parsed_path and '_image.jpeg' in parsed_path:
             return full_img_url
+    
+    # 2. Verificar se é uma imagem do leitor (pode ter parâmetros)
+        if 'wp-manga' in parsed_path and ('/data/' in parsed_path or '/content/' in parsed_path):
+            return full_img_url
+    
+    # 3. Padrão numérico direto (1.jpg, 002.png, etc.)
+        filename = os.path.basename(urlparse(full_img_url).path)
+        name_part = os.path.splitext(filename)[0].lower()
+    
+        if name_part.isdigit() and (1 <= len(name_part) <= 4):
+            return full_img_url
+    
+    # 4. Padrões de nomeação (page01, img_1, scan-1, etc.)
+        app.logger.debug(f"Analisando nome: '{filename}' -> '{name_part}'")
+        if re.search(r'(^\d+[_-]image$)|(^\d+$)|((page|p|img|scan|pagina|capitulo|chapter|ch)[\W_]*\d+)', name_part, re.IGNORECASE):
+            return full_img_url
+    
+    # 5. Verificar extensões válidas
+        valid_extensions = ['.jpg', '.jpeg', '.png', '.webp']
+        if not any(filename.lower().endswith(ext) for ext in valid_extensions):
+            return None
+    
+    # Se nenhum padrão for encontrado
         return None
 
     app.logger.info(f"Encontradas {len(tags)} tags <img>. Filtrando e baixando imagens para {nome_manga_seguro} Cap. {numero_capitulo}...")
@@ -214,9 +241,17 @@ def baixar_capitulo_para_pdf(url, nome_manga, numero_capitulo):
 
     for tag in tags:
         img_url = get_img_url_from_tag(tag, url)
-        
+    
         if img_url:
+            app.logger.debug(f"Imagem candidata encontrada: {img_url}")
             try:
+            # Tratamento especial para imagens WP-Manga
+                if '/wp-manga/data/manga_' in img_url.lower():
+                # Extrair número da página do padrão "[NÚMERO]_image.jpeg"
+                    page_match = re.search(r'/(\d+)_image\.jpeg', img_url, re.IGNORECASE)
+                    if page_match:
+                        img_save_counter = int(page_match.group(1)) - 1  # Para manter ordenação
+            
                 img_filename = os.path.basename(urlparse(img_url).path)
                 name_part, ext_part = os.path.splitext(img_filename)
                 ext_part = ext_part.lower()
@@ -227,7 +262,7 @@ def baixar_capitulo_para_pdf(url, nome_manga, numero_capitulo):
                     app.logger.debug(f"Imagem '{img_filename}' corresponde ao padrão numérico direto.")
                 
                 if not is_potential_page:
-                    if re.search(r'(page|p|img|scan|pagina|capitulo|chapter|ch)[\W_]*(\d+)|(\b\d{1,3}\b)', name_part, re.IGNORECASE):
+                    if re.search(r'(^\d+[_-]image$)|(^\d+$)|((page|p|img|scan|pagina|capitulo|chapter|ch)[\W_]*\d+)', name_part, re.IGNORECASE):
                         is_potential_page = True
                         app.logger.debug(f"Imagem '{img_filename}' corresponde ao padrão de nomeação de página.")
                 
@@ -270,6 +305,10 @@ def baixar_capitulo_para_pdf(url, nome_manga, numero_capitulo):
                 app.logger.warning(f"Erro de request ao baixar/verificar imagem {img_url}: {e_req}")
             except Exception as e_gen:
                 app.logger.warning(f"Erro geral ao processar imagem candidata {img_url}: {e_gen}")
+            except Exception as e:
+                app.logger.warning(f"Erro ao processar imagem {img_url}: {e}")
+        else:
+            app.logger.debug(f"Imagem ignorada - Tag: {tag}")
 
     if not imagens_baixadas_paths:
         app.logger.warning(f"Nenhuma imagem de capítulo foi baixada de {url}.")
