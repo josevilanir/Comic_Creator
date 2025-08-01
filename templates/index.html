@@ -10,6 +10,12 @@
     <header>
         <h1>Criador e Leitor de Quadrinhos e Mangás</h1>
         <button class="toggle-btn">Alternar Modo</button>
+        {% if g.user %}
+            <span>Olá, {{ g.user['username'] }}!</span>
+            <a href="{{ url_for('logout') }}">Sair</a>
+        {% else %}
+            <a href="{{ url_for('login') }}">Login</a>
+        {% endif %}
     </header>
 
     <main class="grid-container">
