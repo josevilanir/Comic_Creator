@@ -4,17 +4,19 @@ import json
 import requests
 import fitz
 from bs4 import BeautifulSoup
-from PIL import Image, UnidentifiedImageError 
+from PIL import Image, UnidentifiedImageError
 from urllib.parse import urljoin, urlparse
 from flask import Flask, request, redirect, url_for, render_template, flash, send_file, jsonify
 import shutil
 import logging # Adicionado na correção anterior
+from config import Config
 
 
 app = Flask(__name__)
-app.secret_key = "segredo"
-BASE_COMICS = os.path.expanduser("~/Comics")
-THUMBNAILS = os.path.join("static", "thumbnails")
+app.config.from_object(Config)
+app.secret_key = app.config["SECRET_KEY"]
+BASE_COMICS = app.config["BASE_COMICS"]
+THUMBNAILS = app.config["THUMBNAIL_DIR"]
 URLS_JSON = "urls_salvas.json"
 
 os.makedirs(BASE_COMICS, exist_ok=True)
