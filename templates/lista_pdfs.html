@@ -7,6 +7,11 @@
 </head>
 <body>
   <h1>Capítulos de {{ nome_pasta }}</h1>
+  {% if g.user %}
+    <p>Usuário: {{ g.user['username'] }} | <a href="{{ url_for('logout') }}">Sair</a></p>
+  {% else %}
+    <p><a href="{{ url_for('login') }}">Login</a></p>
+  {% endif %}
   <a class="back-link" href="{{ url_for('biblioteca') }}">← Voltar para a biblioteca</a>
 
   <div class="manga-grid">
@@ -14,8 +19,7 @@
     <div class="manga-card-container" id="capitulo-container-{{ arq.replace('.pdf', '') | replace(' ', '_') }}"> {# Adiciona um ID ao container do card #}
       <a href="{{ url_for('visualizar_pdf', manga=nome_pasta, arquivo=arq) }}"
          class="manga-card {% if arq in lidos %}lido{% endif %}"
-         target="_blank"
-         onclick="marcarComoLido('{{ nome_pasta }}', '{{ arq }}')">
+         target="_blank">
         <h2>{{ arq.replace('.pdf', '') }}</h2>
         <label style="display:flex; align-items:center; justify-content:center; gap:6px; font-size: 0.9em; margin: 6px 0;">
           <input type="checkbox" onchange="toggleLido('{{ nome_pasta }}', '{{ arq }}', this.checked)"> Marcar como lido
@@ -37,83 +41,33 @@
   </div>
 
   <script>
-  function marcarComoLido(manga, capitulo) {
-    const key = "lidos_" + manga;
-    let lidos = JSON.parse(localStorage.getItem(key)) || [];
-    if (!lidos.includes(capitulo)) {
-      lidos.push(capitulo);
-      localStorage.setItem(key, JSON.stringify(lidos));
-    }
+  function toggleLido(manga, capitulo, marcado) {
+    fetch('/toggle_lido', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ manga: manga, capitulo: capitulo, lido: marcado })
+    });
+
+    document.querySelectorAll('.manga-card').forEach(card => {
+      const h2Element = card.querySelector('h2');
+      if (h2Element) {
+        const cardCapituloNome = h2Element.textContent.trim() + '.pdf';
+        if (cardCapituloNome === capitulo) {
+          card.classList.toggle('lido', marcado);
+          if (marcado && !card.querySelector('.lido-badge')) {
+            const badge = document.createElement('div');
+            badge.className = 'lido-badge';
+            badge.textContent = 'Lido';
+            card.appendChild(badge);
+          } else if (!marcado && card.querySelector('.lido-badge')) {
+            card.querySelector('.lido-badge').remove();
+          }
+        }
+      }
+    });
   }
 
-  function toggleLido(manga, capitulo, marcado) {
-    const key = "lidos_" + manga;
-    let lidos = JSON.parse(localStorage.getItem(key)) || [];
-    if (marcado && !lidos.includes(capitulo)) {
-      lidos.push(capitulo);
-    } else if (!marcado && lidos.includes(capitulo)) {
-      lidos = lidos.filter(item => item !== capitulo);
-    }
-    localStorage.setItem(key, JSON.stringify(lidos));
-    
-    // Bloco movido para DENTRO da função toggleLido
-    // Atualiza a classe lido no card correspondente
-    document.querySelectorAll(".manga-card").forEach(card => {
-      const h2Element = card.querySelector("h2");
-      if (h2Element) { // Adicionada verificação para segurança
-        const cardCapituloNome = h2Element.textContent.trim() + ".pdf";
-        if (cardCapituloNome === capitulo) { // 'capitulo' e 'marcado' são os parâmetros da função toggleLido
-          card.classList.toggle("lido", marcado);
-          if (marcado && !card.querySelector(".lido-badge")) {
-            const badge = document.createElement("div");
-            badge.className = "lido-badge";
-            badge.textContent = "Lido";
-            card.appendChild(badge);
-          } else if (!marcado && card.querySelector(".lido-badge")) {
-            const badgeElement = card.querySelector(".lido-badge");
-            if (badgeElement) { // Adicionada verificação
-                badgeElement.remove();
-            }
-          }
-        }
-      }
-    });
-  } // Fim da função toggleLido
-
-  document.addEventListener("DOMContentLoaded", () => {
-    // Configuração inicial dos checkboxes e badges ao carregar a página
-    document.querySelectorAll(".manga-card").forEach(card => {
-      const checkbox = card.querySelector("input[type=checkbox]");
-      const titleElement = card.querySelector("h2"); // Pega o elemento h2
-      if (checkbox && titleElement) { // Verifica se ambos os elementos existem
-        const title = titleElement.innerText.trim();
-        const manga = "{{ nome_pasta }}";
-        const key = "lidos_" + manga;
-        const lidos = JSON.parse(localStorage.getItem(key)) || [];
-        checkbox.checked = lidos.includes(title + ".pdf");
-      }
-    });
-
-    document.querySelectorAll(".manga-card").forEach(card => {
-      const titleElement = card.querySelector("h2");
-      if (titleElement) { // Verifica se o elemento de título existe
-        const title = titleElement.innerText.trim();
-        const manga = "{{ nome_pasta }}";
-        const key = "lidos_" + manga;
-        const lidos = JSON.parse(localStorage.getItem(key)) || [];
-        if (lidos.includes(title + ".pdf")) {
-          card.classList.add("lido");
-          if (!card.querySelector(".lido-badge")) {
-            const badge = document.createElement("div");
-            badge.className = "lido-badge";
-            badge.textContent = "Lido";
-            card.appendChild(badge);
-          }
-        }
-      }
-    });
-
-    // Adiciona listeners para os botões de exclusão
+  document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('.btn-excluir-capitulo').forEach(button => {
       button.addEventListener('click', function() {
         const mangaNome = this.dataset.manga;
@@ -122,7 +76,7 @@
 
         if (confirm(`Tem certeza que deseja excluir o capítulo "${arquivoNome.replace('.pdf', '')}" de "${mangaNome}"? Esta ação não pode ser desfeita.`)) {
           fetch(`/excluir_capitulo/${encodeURIComponent(mangaNome)}/${encodeURIComponent(arquivoNome)}`, {
-            method: 'DELETE',
+            method: 'DELETE'
           })
           .then(response => response.json())
           .then(data => {
@@ -131,12 +85,6 @@
               const cardElement = document.getElementById(cardContainerId);
               if (cardElement) {
                 cardElement.remove();
-              }
-              const key = "lidos_" + mangaNome;
-              let lidos = JSON.parse(localStorage.getItem(key)) || [];
-              if (lidos.includes(arquivoNome)) {
-                lidos = lidos.filter(item => item !== arquivoNome);
-                localStorage.setItem(key, JSON.stringify(lidos));
               }
             } else {
               alert('Erro ao excluir capítulo: ' + data.message);
@@ -149,7 +97,7 @@
         }
       });
     });
-  }); // Fim do DOMContentLoaded
+  });
 </script>
 </body>
 </html>

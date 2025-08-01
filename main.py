@@ -6,7 +6,8 @@ import fitz
 from bs4 import BeautifulSoup
 from PIL import Image, UnidentifiedImageError 
 from urllib.parse import urljoin, urlparse
-from flask import Flask, request, redirect, url_for, render_template, flash, send_file, jsonify
+from flask import Flask, request, redirect, url_for, render_template, flash, send_file, jsonify, session, g
+import db
 import shutil
 import logging # Adicionado na correção anterior
 
@@ -16,10 +17,24 @@ app.secret_key = "segredo"
 BASE_COMICS = os.path.expanduser("~/Comics")
 THUMBNAILS = os.path.join("static", "thumbnails")
 URLS_JSON = "urls_salvas.json"
+DATABASE = os.path.join(os.path.dirname(__file__), "database.db")
+app.config["DATABASE"] = DATABASE
 
 os.makedirs(BASE_COMICS, exist_ok=True)
 if not os.path.exists(THUMBNAILS):
     os.makedirs(THUMBNAILS, exist_ok=True)
+db.init_db(app)
+app.teardown_appcontext(db.close_db)
+
+@app.before_request
+def load_logged_in_user():
+    user_id = session.get('user_id')
+    if user_id is None:
+        g.user = None
+    else:
+        g.user = db.get_db().execute(
+            'SELECT id, username FROM users WHERE id=?', (user_id,)
+        ).fetchone()
 
 def carregar_urls():
     if os.path.exists(URLS_JSON):
@@ -156,6 +171,31 @@ def index():
         return render_template("index.html", urls_salvas=urls_salvas, base_url=base_url_for_template)
 
     return render_template("index.html", urls_salvas=urls_salvas, base_url=base_url_for_template)
+
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        username = request.form.get('username', '').strip()
+        if not username:
+            flash('Nome de usuário é obrigatório.', 'error')
+        else:
+            db_conn = db.get_db()
+            user = db_conn.execute('SELECT id FROM users WHERE username=?', (username,)).fetchone()
+            if user is None:
+                db_conn.execute('INSERT INTO users (username) VALUES (?)', (username,))
+                db_conn.commit()
+                user = db_conn.execute('SELECT id FROM users WHERE username=?', (username,)).fetchone()
+            session.clear()
+            session['user_id'] = user['id']
+            return redirect(url_for('biblioteca'))
+    return render_template('login.html')
+
+
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect(url_for('login'))
 
 # --- Sua função baixar_capitulo_para_pdf (versão robusta mais recente) ---
 # (Cole aqui a versão completa e mais recente da sua função baixar_capitulo_para_pdf)
@@ -370,6 +410,8 @@ def baixar_capitulo_para_pdf(url, nome_manga, numero_capitulo):
 # (Cole aqui o restante das suas funções: biblioteca, listar_pasta, visualizar_pdf, upload_capa, excluir_capitulo, excluir_manga, gerar_thumbnail)
 @app.route("/biblioteca")
 def biblioteca():
+    if g.user is None:
+        return redirect(url_for('login'))
     pastas = []
     for item in os.listdir(BASE_COMICS):
         caminho_completo_item = os.path.join(BASE_COMICS, item)
@@ -386,6 +428,8 @@ def biblioteca():
 
 @app.route("/pasta/<path:nome_pasta>")
 def listar_pasta(nome_pasta):
+    if g.user is None:
+        return redirect(url_for('login'))
     pasta = os.path.join(BASE_COMICS, nome_pasta)
     if not os.path.isdir(pasta):
         flash(f"Pasta '{nome_pasta}' não encontrada.", "error")
@@ -406,7 +450,21 @@ def listar_pasta(nome_pasta):
             reverse=(ordem == "desc")
         )
         
-    return render_template("lista_pdfs.html", nome_pasta=nome_pasta, arquivos=arquivos, ordem=ordem)
+    lidos = []
+    if g.user is not None:
+        rows = db.get_db().execute(
+            'SELECT chapter FROM reads WHERE user_id=? AND manga=?',
+            (g.user['id'], nome_pasta)
+        ).fetchall()
+        lidos = [r['chapter'] for r in rows]
+
+    return render_template(
+        "lista_pdfs.html",
+        nome_pasta=nome_pasta,
+        arquivos=arquivos,
+        ordem=ordem,
+        lidos=lidos,
+    )
 
 
 @app.route("/visualizar/<path:manga>/<path:arquivo>")
@@ -560,6 +618,29 @@ def excluir_manga(nome_manga):
     except Exception as e:
         app.logger.error(f"Erro ao excluir o mangá '{manga_seguro}': {e}")
         return jsonify({"success": False, "message": f"Erro interno ao excluir o mangá: {str(e)}"}), 500
+
+
+@app.route('/toggle_lido', methods=['POST'])
+def toggle_lido():
+    if g.user is None:
+        return jsonify({'success': False, 'message': 'Não autenticado'}), 401
+    data = request.get_json() or {}
+    manga = data.get('manga')
+    capitulo = data.get('capitulo')
+    marcado = bool(data.get('lido'))
+    db_conn = db.get_db()
+    if marcado:
+        db_conn.execute(
+            'INSERT OR IGNORE INTO reads (user_id, manga, chapter) VALUES (?,?,?)',
+            (g.user['id'], manga, capitulo)
+        )
+    else:
+        db_conn.execute(
+            'DELETE FROM reads WHERE user_id=? AND manga=? AND chapter=?',
+            (g.user['id'], manga, capitulo)
+        )
+    db_conn.commit()
+    return jsonify({'success': True})
 
 
 def gerar_thumbnail(caminho_pdf, nome_pdf, pasta_manga):
