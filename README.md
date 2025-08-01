@@ -8,3 +8,7 @@
 - Possibilita a exportação das histórias em formatos de imagem populares.
 
 A interface é projetada para ser amigável, oferecendo uma experiência criativa e divertida para a criação de histórias.
+
+## Estrutura do projeto
+
+O código mantido atualmente encontra-se no diretório `app/`. Versões antigas foram arquivadas em `legacy/` apenas para referência.
