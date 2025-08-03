@@ -81,4 +81,3 @@ Biblioteca
 ```
 
 Este exemplo resume a aparência geral da página, servindo como referência quando não é possível visualizar capturas de tela.
-
