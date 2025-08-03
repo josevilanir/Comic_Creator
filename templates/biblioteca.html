@@ -7,6 +7,11 @@
 </head>
 <body>
   <h1>Biblioteca</h1>
+  {% if g.user %}
+    <p>Usuário: {{ g.user['username'] }} | <a href="{{ url_for('logout') }}">Sair</a></p>
+  {% else %}
+    <p><a href="{{ url_for('login') }}">Login</a></p>
+  {% endif %}
   <div class="manga-grid" id="mangaGrid">
     {% for item in pastas %}
     <div class="manga-card" data-nome="{{ item.nome | lower }}" id="manga-card-{{ item.nome | replace(' ', '_') }}">
