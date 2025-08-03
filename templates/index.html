@@ -58,7 +58,7 @@
                 <input type="number" name="capitulo" value="1" required />
                 <button type="submit" name="acao" value="baixar_manual">Baixar e Gerar PDF</button>
             </form>
-            <form action="{{ url_for('biblioteca') }}" method="get">
+            <form action="{{ url_for('main.biblioteca') }}" method="get">
                 <button type="submit">Acessar Biblioteca</button>
             </form>
             {% with messages = get_flashed_messages(with_categories=true) %}
