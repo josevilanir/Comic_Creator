@@ -12,12 +12,12 @@
   {% else %}
     <p><a href="{{ url_for('login') }}">Login</a></p>
   {% endif %}
-  <a class="back-link" href="{{ url_for('biblioteca') }}">← Voltar para a biblioteca</a>
+  <a class="back-link" href="{{ url_for('main.biblioteca') }}">← Voltar para a biblioteca</a>
 
   <div class="manga-grid">
     {% for arq in arquivos %}
     <div class="manga-card-container" id="capitulo-container-{{ arq.replace('.pdf', '') | replace(' ', '_') }}"> {# Adiciona um ID ao container do card #}
-      <a href="{{ url_for('visualizar_pdf', manga=nome_pasta, arquivo=arq) }}"
+      <a href="{{ url_for('main.visualizar_pdf', manga=nome_pasta, arquivo=arq) }}"
          class="manga-card {% if arq in lidos %}lido{% endif %}"
          target="_blank">
         <h2>{{ arq.replace('.pdf', '') }}</h2>
@@ -27,7 +27,7 @@
         {% if arq in lidos %}
         <div class="lido-badge">Lido</div>
         {% endif %}
-        <img src="{{ url_for('visualizar_pdf', manga=nome_pasta, arquivo=arq.replace('.pdf', '.jpg')) }}" alt="Capa do capítulo">
+        <img src="{{ url_for('main.visualizar_pdf', manga=nome_pasta, arquivo=arq.replace('.pdf', '.jpg')) }}" alt="Capa do capítulo">
       </a>
       {# Novo Botão de Excluir Capítulo #}
       <button class="btn-excluir-capitulo" 

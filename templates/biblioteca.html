@@ -19,9 +19,9 @@
       {% if item.tem_capa %}
         <img src="{{ item.capa_url }}" alt="Capa do manga">
       {% endif %}
-      <a href="{{ url_for('listar_pasta', nome_pasta=item.nome) }}" class="btn-ver">Ver capítulos</a>
+      <a href="{{ url_for('main.listar_pasta', nome_pasta=item.nome) }}" class="btn-ver">Ver capítulos</a>
       <button class="edit-btn" onclick="mostrarFormulario('{{ item.nome }}')">Editar capa</button>
-      <form id="form-{{ item.nome }}" class="upload-form" action="{{ url_for('upload_capa', nome_pasta=item.nome) }}" method="POST" enctype="multipart/form-data">
+      <form id="form-{{ item.nome }}" class="upload-form" action="{{ url_for('main.upload_capa', nome_pasta=item.nome) }}" method="POST" enctype="multipart/form-data">
         <input type="file" name="capa" accept="image/*" required>
         <button type="submit">Enviar nova capa</button>
       </form>
