@@ -7,11 +7,14 @@
 </head>
 <body>
   <h1>Biblioteca</h1>
-  {% if g.user %}
-    <p>Usuário: {{ g.user['username'] }} | <a href="{{ url_for('logout') }}">Sair</a></p>
+  {% if session.get('username') %}
+    <p>Usuário: {{ session['username'] }} | <a href="{{ url_for('auth.logout') }}">Sair</a></p>
   {% else %}
-    <p><a href="{{ url_for('login') }}">Login</a></p>
+    <p><a href="{{ url_for('auth.login') }}">Login</a></p>
   {% endif %}
+  
+  <a href="{{ url_for('download.index') }}" style="color: white; margin: 20px 0; display: inline-block;">← Voltar para Home</a>
+  
   <div class="manga-grid" id="mangaGrid">
     {% for item in pastas %}
     <div class="manga-card" data-nome="{{ item.nome | lower }}" id="manga-card-{{ item.nome | replace(' ', '_') }}">
@@ -19,9 +22,9 @@
       {% if item.tem_capa %}
         <img src="{{ item.capa_url }}" alt="Capa do manga">
       {% endif %}
-      <a href="{{ url_for('main.listar_pasta', nome_pasta=item.nome) }}" class="btn-ver">Ver capítulos</a>
+      <a href="{{ url_for('capitulo.listar_capitulos', nome_manga=item.nome) }}" class="btn-ver">Ver capítulos</a>
       <button class="edit-btn" onclick="mostrarFormulario('{{ item.nome }}')">Editar capa</button>
-      <form id="form-{{ item.nome }}" class="upload-form" action="{{ url_for('main.upload_capa', nome_pasta=item.nome) }}" method="POST" enctype="multipart/form-data">
+      <form id="form-{{ item.nome }}" class="upload-form" action="{{ url_for('manga.upload_capa', nome_manga=item.nome) }}" method="POST" enctype="multipart/form-data">
         <input type="file" name="capa" accept="image/*" required>
         <button type="submit">Enviar nova capa</button>
       </form>
@@ -58,14 +61,13 @@
         const cardId = `manga-card-${mangaNome.replace(' ', '_')}`;
 
         if (confirm(`Tem certeza que deseja excluir o mangá "${mangaNome}" e todos os seus capítulos? Esta ação não pode ser desfeita.`)) {
-          fetch(`/excluir_manga/${encodeURIComponent(mangaNome)}`, {
+          fetch(`/manga/excluir/${encodeURIComponent(mangaNome)}`, {
             method: 'DELETE',
           })
           .then(response => response.json())
           .then(data => {
             if (data.success) {
-              alert(data.message); // Ou uma notificação mais elegante
-              // Remove o card do mangá da interface
+              alert(data.message);
               const cardElement = document.getElementById(cardId);
               if (cardElement) {
                 cardElement.remove();

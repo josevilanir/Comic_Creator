@@ -7,17 +7,17 @@
 </head>
 <body>
   <h1>Capítulos de {{ nome_pasta }}</h1>
-  {% if g.user %}
-    <p>Usuário: {{ g.user['username'] }} | <a href="{{ url_for('logout') }}">Sair</a></p>
+  {% if session.get('username') %}
+    <p>Usuário: {{ session['username'] }} | <a href="{{ url_for('auth.logout') }}">Sair</a></p>
   {% else %}
-    <p><a href="{{ url_for('login') }}">Login</a></p>
+    <p><a href="{{ url_for('auth.login') }}">Login</a></p>
   {% endif %}
-  <a class="back-link" href="{{ url_for('main.biblioteca') }}">← Voltar para a biblioteca</a>
+  <a class="back-link" href="{{ url_for('manga.biblioteca') }}">← Voltar para a biblioteca</a>
 
   <div class="manga-grid">
     {% for arq in arquivos %}
-    <div class="manga-card-container" id="capitulo-container-{{ arq.replace('.pdf', '') | replace(' ', '_') }}"> {# Adiciona um ID ao container do card #}
-      <a href="{{ url_for('main.visualizar_pdf', manga=nome_pasta, arquivo=arq) }}"
+    <div class="manga-card-container" id="capitulo-container-{{ arq.replace('.pdf', '') | replace(' ', '_') }}">
+      <a href="{{ url_for('capitulo.visualizar_pdf', nome_manga=nome_pasta, nome_arquivo=arq) }}"
          class="manga-card {% if arq in lidos %}lido{% endif %}"
          target="_blank">
         <h2>{{ arq.replace('.pdf', '') }}</h2>
@@ -27,7 +27,7 @@
         {% if arq in lidos %}
         <div class="lido-badge">Lido</div>
         {% endif %}
-        <img src="{{ url_for('main.visualizar_pdf', manga=nome_pasta, arquivo=arq.replace('.pdf', '.jpg')) }}" alt="Capa do capítulo">
+        <img src="{{ url_for('capitulo.visualizar_thumbnail', nome_manga=nome_pasta, nome_arquivo=arq) }}" alt="Capa do capítulo">
       </a>
       {# Novo Botão de Excluir Capítulo #}
       <button class="btn-excluir-capitulo" 
@@ -42,11 +42,8 @@
 
   <script>
   function toggleLido(manga, capitulo, marcado) {
-    fetch('/toggle_lido', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ manga: manga, capitulo: capitulo, lido: marcado })
-    });
+    // TODO: Implementar backend para marcar como lido
+    console.log('Toggle lido:', manga, capitulo, marcado);
 
     document.querySelectorAll('.manga-card').forEach(card => {
       const h2Element = card.querySelector('h2');
@@ -75,7 +72,7 @@
         const cardContainerId = `capitulo-container-${arquivoNome.replace('.pdf', '').replace(' ', '_')}`;
 
         if (confirm(`Tem certeza que deseja excluir o capítulo "${arquivoNome.replace('.pdf', '')}" de "${mangaNome}"? Esta ação não pode ser desfeita.`)) {
-          fetch(`/excluir_capitulo/${encodeURIComponent(mangaNome)}/${encodeURIComponent(arquivoNome)}`, {
+          fetch(`/capitulo/excluir/${encodeURIComponent(mangaNome)}/${encodeURIComponent(arquivoNome)}`, {
             method: 'DELETE'
           })
           .then(response => response.json())
