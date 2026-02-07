@@ -1,9 +1,9 @@
-Flask
-Pillow
-requests
+
+Flask>=2.0
+Pillow>=9.0
+requests>=2.0
 beautifulsoup4
-pymupdf
+PyMuPDF
 werkzeug
-
-
 fpdf
+pytest

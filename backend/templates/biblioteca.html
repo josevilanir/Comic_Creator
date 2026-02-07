@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Biblioteca</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='library.css') }}">
+</head>
+<body>
+  <h1>Biblioteca</h1>
+  {% if g.user %}
+    <p>Usuário: {{ g.user['username'] }} | <a href="{{ url_for('logout') }}">Sair</a></p>
+  {% else %}
+    <p><a href="{{ url_for('login') }}">Login</a></p>
+  {% endif %}
+  <div class="manga-grid" id="mangaGrid">
+    {% for item in pastas %}
+    <div class="manga-card" data-nome="{{ item.nome | lower }}" id="manga-card-{{ item.nome | replace(' ', '_') }}">
+      <h2>{{ item.nome }}</h2>
+      {% if item.tem_capa %}
+        <img src="{{ item.capa_url }}" alt="Capa do manga">
+      {% endif %}
+      <a href="{{ url_for('main.listar_pasta', nome_pasta=item.nome) }}" class="btn-ver">Ver capítulos</a>
+      <button class="edit-btn" onclick="mostrarFormulario('{{ item.nome }}')">Editar capa</button>
+      <form id="form-{{ item.nome }}" class="upload-form" action="{{ url_for('main.upload_capa', nome_pasta=item.nome) }}" method="POST" enctype="multipart/form-data">
+        <input type="file" name="capa" accept="image/*" required>
+        <button type="submit">Enviar nova capa</button>
+      </form>
+      {# Novo Botão de Excluir Mangá #}
+      <button class="btn-excluir-manga" 
+              data-manga="{{ item.nome }}"
+              style="background-color: #9e2a2b; color: white; border: none; padding: 8px; margin-top: 5px; border-radius: 4px; cursor: pointer; width: 100%;">
+        Excluir Mangá
+      </button>
+    </div>
+    {% endfor %}
+  </div>
+
+  <script>
+    function mostrarFormulario(nome) {
+      const form = document.getElementById('form-' + nome);
+      form.classList.toggle('active');
+    }
+
+    function filtrarMangas() {
+      const filtro = document.getElementById('busca').value.toLowerCase();
+      const cards = document.querySelectorAll('.manga-card');
+
+      cards.forEach(card => {
+        const nome = card.getAttribute('data-nome');
+        card.style.display = nome.includes(filtro) ? "block" : "none";
+      });
+    }
+
+    // Nova função para excluir mangá
+    document.querySelectorAll('.btn-excluir-manga').forEach(button => {
+      button.addEventListener('click', function() {
+        const mangaNome = this.dataset.manga;
+        // Replace all spaces with underscores to match Jinja's behavior
+        const cardId = `manga-card-${mangaNome.replace(/ /g, '_')}`;
+        const originalText = this.innerText;
+
+        if (confirm(`Tem certeza que deseja excluir o mangá "${mangaNome}" e todos os seus capítulos? Esta ação não pode ser desfeita.`)) {
+          this.disabled = true;
+          this.innerText = 'Excluindo...';
+          fetch(`/excluir_manga/${encodeURIComponent(mangaNome)}`, {
+            method: 'DELETE',
+          })
+          .then(response => response.json())
+          .then(data => {
+            if (data.success) {
+              alert(data.message); // Ou uma notificação mais elegante
+              // Remove o card do mangá da interface
+              const cardElement = document.getElementById(cardId);
+              if (cardElement) {
+                cardElement.remove();
+              }
+            } else {
+              alert('Erro ao excluir mangá: ' + data.message);
+              this.disabled = false;
+              this.innerText = originalText;
+            }
+          })
+          .catch(error => {
+            console.error('Erro na requisição:', error);
+            alert('Ocorreu um erro na comunicação com o servidor.');
+            this.disabled = false;
+            this.innerText = originalText;
+          });
+        }
+      });
+    });
+  </script>
+</body>
+</html>

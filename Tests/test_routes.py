@@ -21,7 +21,7 @@ class TestRoutes(unittest.TestCase):
     def tearDown(self):
         self.tmpdir.cleanup()
 
-    @patch('main.baixar_capitulo_para_pdf')
+    @patch('comic_creator.routes.baixar_capitulo_para_pdf')
     def test_download_route(self, mock_download):
         mock_download.return_value = os.path.join(self.tmpdir.name, 'capitulo_001.pdf')
         response = self.client.post('/', data={

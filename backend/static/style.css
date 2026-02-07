@@ -1,0 +1,123 @@
+
+body {
+  background-color: #121212;
+  color: white;
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+}
+
+header {
+  text-align: center;
+  padding: 20px;
+  background-color: #1e1e1e;
+}
+
+.toggle-btn {
+  background-color: #0033ff;
+  color: white;
+  padding: 10px 20px;
+  margin-top: 10px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.toggle-btn:hover {
+  background-color: #0022cc;
+}
+
+.grid-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  padding: 40px;
+  gap: 40px;
+}
+
+.left-box,
+.right-box {
+  background-color: #1e1e1e;
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: 0 0 10px #00000066;
+  width: 100%;
+  max-width: 400px;
+}
+
+.left-box h2,
+.right-box h3 {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.left-box form input,
+.right-box form input {
+  width: 100%;
+  padding: 10px;
+  margin: 10px 0 20px;
+  border-radius: 6px;
+  border: none;
+}
+
+.left-box form button,
+.right-box form button {
+  display: block;
+  width: 100%;
+  padding: 12px;
+  margin-top: 10px;
+  border: none;
+  background-color: #0033ff;
+  color: white;
+  border-radius: 6px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.left-box form button:hover,
+.right-box form button:hover {
+  background-color: #0022cc;
+}
+
+.lista-predefinidas {
+  list-style: none;
+  padding: 0;
+}
+
+.lista-predefinidas li {
+  margin-bottom: 20px;
+  border-top: 1px solid #444;
+  padding-top: 10px;
+}
+
+footer {
+  text-align: center;
+  padding: 20px;
+  font-size: 14px;
+  background-color: #1e1e1e;
+  margin-top: 60px;
+}
+
+body[data-tema="claro"] {
+  background-color: #f4f4f4;
+  color: #222;
+}
+
+body[data-tema="claro"] header,
+body[data-tema="claro"] footer,
+body[data-tema="claro"] .left-box,
+body[data-tema="claro"] .right-box {
+  background-color: #ffffff;
+  color: #000;
+  box-shadow: 0 0 10px #ccc;
+}
+
+body[data-tema="escuro"] header,
+body[data-tema="escuro"] footer,
+body[data-tema="escuro"] .left-box,
+body[data-tema="escuro"] .right-box {
+  background-color: #1e1e1e;
+  color: white;
+  box-shadow: 0 0 10px #00000066;
+}

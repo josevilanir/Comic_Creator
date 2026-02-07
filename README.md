@@ -1,83 +1,91 @@
 # Comic Creator
 
-**Comic Creator** é uma aplicação web em Flask que auxilia no download e na organização de capítulos de quadrinhos e mangás em formato PDF. O sistema mantém uma biblioteca simples, onde cada série possui sua própria pasta e capa opcional.
+**Comic Creator** é uma aplicação web full-stack para download e organização de mangás em PDF.
 
-## O que a aplicação faz
-- Permite baixar capítulos a partir de uma URL base.
-- Guarda os capítulos em `~/Comics`, criando uma pasta para cada série.
-- Gera miniaturas para visualização rápida dos capítulos.
-- Possibilita excluir capítulos ou mangás completos pela interface.
+- **Backend**: Flask + SQLite  
+- **Frontend**: React + Vite
+- **Funcionalidades**: Downloads via URL, biblioteca visual, marcar lidos, gerenciar séries
+
+---
+
+## Setup Rápido
+
+### 1. Dependências do Backend
+```bash
+python -m pip install -r requirements.txt
+```
+
+### 2. Dependências do Frontend
+```bash
+cd frontend && npm install
+```
+
+---
+
+## Rodando a Aplicação
+
+### Backend (Flask)
+```bash
+python main.py
+```
+Acessa: `http://localhost:5000`
+
+### Frontend (React + Vite)
+```bash
+cd frontend && npm run dev
+```
+Acessa: `http://localhost:5173`
+
+---
+
+## Testes
+
+```bash
+python -m pytest Tests/ -q
+```
+
+---
+
+## Estrutura
+
+```
+backend/               # API Flask
+├── comic_creator/    # Módulo principal
+│   ├── __init__.py
+│   ├── routes.py
+│   ├── downloader.py
+│   ├── db.py
+│   ├── config.py
+│   └── utils.py
+├── config.py
+└── db.py
+
+frontend/              # Cliente React
+├── src/
+├── package.json
+└── vite.config.js
+
+Tests/                 # Testes unitários
+└── test_routes.py
+```
 
 ---
 
 ## Configuração
 
-1. Tenha o Python 3 instalado em sua máquina.
-2. (Opcional) Crie e ative um ambiente virtual:
+O diretório padrão de mangás é `~/Comics`. Para alterar, edite em `backend/comic_creator/config.py`:
 
-   ```bash
-   python3 -m venv venv
-   source venv/bin/activate
-   ```
-
-3. Instale as dependências:
-
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-   Para executar os testes presentes na pasta `Tests`, é necessário instalar também o pacote `fpdf`.
+```python
+BASE_COMICS = '/seu/caminho/aqui'
+```
 
 ---
 
-## Variáveis de ambiente
+## Funcionalidades
 
-- `SECRET_KEY` – chave usada pelo Flask para assinar sessões. Defina antes de iniciar o servidor:
-
-  ```bash
-  export SECRET_KEY="uma_string_secreta"
-  ```
-
-O diretório onde os mangás são salvos é `~/Comics` por padrão. Caso deseje alterar, modifique a variável `base_dir` em `app/__init__.py`.
-
----
-
-## Executando a aplicação
-
-Execute o servidor com o Flask CLI:
-
-```bash
-flask --app app run
-```
-
-Ou inicie diretamente pelo arquivo principal:
-
-```bash
-python main.py
-```
-
-O aplicativo ficará disponível em `http://localhost:5000`.
-
----
-
-## Uso básico
-
-### Baixar capítulos
-
-1. Abra a página inicial.
-2. Informe a URL base do mangá e a quantidade de capítulos.
-3. Opcionalmente salve URLs para reutilizar depois.
-4. Após o download, clique em **Acessar Biblioteca** para visualizar as séries salvas.
-
-### Biblioteca
-
-Na biblioteca cada mangá aparece como um cartão com sua capa (se houver). É possível abrir os capítulos, marcar como lidos, enviar uma nova capa ou remover arquivos.
-
-```
-Biblioteca
-----------
-[Capa] Nome do Mangá          [Ver capítulos]
-[Capa] Outro Mangá            [Ver capítulos]
-```
-
-Este exemplo resume a aparência geral da página, servindo como referência quando não é possível visualizar capturas de tela.
+✅ Download de capítulos por URL  
+✅ Biblioteca visual com covers  
+✅ Marcar capítulos como lido  
+✅ Deletar capítulos/séries  
+✅ API REST para frontend  
+✅ Geração automática de thumbnails  
