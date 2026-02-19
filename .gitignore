@@ -20,6 +20,7 @@ build/
 # Uploads e dados
 urls_salvas.json
 urls_salvas.json.backup
+frontend/node_modules/
 
 # OS
 .DS_Store
