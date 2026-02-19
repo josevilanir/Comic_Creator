@@ -2,11 +2,15 @@
 Criação da aplicação Flask
 """
 from flask import Flask
-from config.dependencies import DependencyContainer
+from flask_cors import CORS
 from config.settings import config
+from config.dependencies import DependencyContainer
+from src.presentation.api.error_handlers import register_error_handlers
+from src.presentation.middlewares.logging_middleware import setup_request_logging
+from config.logging_config import setup_logging
 
 
-def create_app(config_name='default'):
+def create_app(env='development'):
     """
     Factory da aplicação Flask
     
@@ -16,31 +20,41 @@ def create_app(config_name='default'):
     Returns:
         Aplicação Flask configurada
     """
-    app = Flask(
-        __name__,
-        template_folder='../../templates',
-        static_folder='../../static'
-    )
-    
-    # Carrega configurações no Flask
-    config_class = config[config_name]
-    app.config.from_object(config_class)
-    config_class.init_app(app)
+    app = Flask(__name__, template_folder='../../templates', static_folder='../../static')
 
-    # Instância do seu Config (pra DI/container)
-    domain_config = config_class()          # <- isso aqui é o pulo do gato
-    app.container = DependencyContainer(domain_config)
+    # Carregar configurações
+    app.config.from_object(config[env])
+    config[env].init_app(app)
 
-    
-    # Registra blueprints
-    from .controllers.download_controller import download_bp
-    from .controllers.manga_controller import manga_bp
-    from .controllers.capitulo_controller import capitulo_bp
-    from .controllers.auth_controller import auth_bp
-    
+    # CORS
+    CORS(app, resources={r"/api/*": {"origins": "*"}})
+
+    # Dependency Injection
+    container = DependencyContainer(config[env])
+    app.config['DI_CONTAINER'] = container
+    # backward compatibility for older code expecting app.container
+    app.container = container
+
+    # Registrar Error Handlers
+    register_error_handlers(app)
+
+    # Setup Logging
+    setup_request_logging(app)
+
+    # Registrar Blueprints (controladores existentes)
+    from src.presentation.controllers.download_controller import download_bp
+    from src.presentation.controllers.manga_controller import manga_bp
+    from src.presentation.controllers.capitulo_controller import capitulo_bp
+    from src.presentation.controllers.auth_controller import auth_bp
+
     app.register_blueprint(download_bp)
     app.register_blueprint(manga_bp, url_prefix='/manga')
     app.register_blueprint(capitulo_bp, url_prefix='/capitulo')
-    app.register_blueprint(auth_bp, url_prefix='/auth') 
-    
+    app.register_blueprint(auth_bp, url_prefix='/auth')
+
+    # Rota de health check
+    @app.route('/health')
+    def health():
+        return {'status': 'ok', 'ambiente': env}, 200
+
     return app

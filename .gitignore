@@ -34,3 +34,17 @@ Thumbs.db
 
 # Logs
 *.log
+# Código legado (mantido para referência)
+Legado/
+
+# Flask
+instance/
+.webassets-cache
+
+# Frontend
+frontend/dist/
+frontend/.vite/
+
+# Comics
+Comics/
+*.pdf
