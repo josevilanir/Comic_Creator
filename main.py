@@ -1,13 +1,14 @@
+"""
+Entry point da aplicação Comic Creator
+"""
+from src.presentation.app import create_app
 import os
-import sys
 
-# Ensure backend folder is on sys.path so we can import the moved package
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'backend'))
+# Determina ambiente
+env = os.environ.get('FLASK_ENV', 'development')
 
-from comic_creator import create_app
-from comic_creator.downloader import baixar_capitulo_para_pdf
-
-app = create_app()
+# Cria aplicação
+app = create_app(env)
 
 # Expose config variables for tests
 BASE_COMICS = app.config.get('BASE_COMICS', os.path.expanduser('~/Comics'))
@@ -18,4 +19,8 @@ URLS_JSON = os.path.join(os.path.dirname(__file__), 'urls_salvas.json')
 app.config['URLS_JSON'] = URLS_JSON
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(
+        host='0.0.0.0',
+        port=5000,
+        debug=app.config['DEBUG']
+    )

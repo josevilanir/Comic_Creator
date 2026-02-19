@@ -1,47 +1,35 @@
 # Python
 __pycache__/
 *.py[cod]
+*$py.class
 *.so
-*.egg-info/
-.pytest_cache/
-
-# Virtualenv
+.Python
+.venv/
 venv/
-.env
+ENV/
 env/
-
-# IDEs
-.vscode/
-.idea/
-
-# OS files
-.DS_Store
-Thumbs.db
-
-# Node
-node_modules/
-frontend/node_modules/
-frontend/dist/
-
-# Build
+*.egg-info/
 dist/
 build/
 
-# Logs
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# Databases and local state
+# Database
 *.db
+*.sqlite
 *.sqlite3
-comic_creator.db
+
+# Uploads e dados
 urls_salvas.json
+urls_salvas.json.backup
 
-# Misc
-*.lock
-coverage/
-coverage.*
+# OS
+.DS_Store
+Thumbs.db
 
-# Vite
-.env.local
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
