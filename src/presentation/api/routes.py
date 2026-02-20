@@ -127,6 +127,99 @@ def download_chapter():
         current_app.logger.exception(f"Erro no download: {e}")
         return jsonify({'success': False, 'message': f'Erro: {str(e)}'}), 500
 
+@api_bp.route('/library/<nome_manga>', methods=['DELETE'])
+def delete_manga(nome_manga):
+    """
+    Deleta um mangá e todos os seus capítulos.
+
+    Params:
+        nome_manga: Nome do mangá (URL encoded)
+    """
+    from urllib.parse import unquote
+    nome_decodificado = unquote(nome_manga)
+
+    try:
+        container = current_app.container
+
+        if not container.manga_repository.existe(nome_decodificado):
+            return jsonify({'success': False, 'message': 'Mangá não encontrado.'}), 404
+
+        if container.manga_repository.deletar(nome_decodificado):
+            # Remove URL salva associada, se existir
+            try:
+                container.url_repository.deletar(nome_decodificado)
+            except Exception:
+                pass  # URL pode não existir — não é erro crítico
+
+            current_app.logger.info(f"Mangá deletado via API: {nome_decodificado}")
+            return jsonify({
+                'success': True,
+                'message': f"Mangá '{nome_decodificado}' e todos os seus capítulos foram excluídos."
+            })
+        else:
+            return jsonify({'success': False, 'message': 'Erro ao excluir mangá.'}), 500
+
+    except Exception as e:
+        current_app.logger.exception(f"Erro ao deletar mangá '{nome_decodificado}': {e}")
+        return jsonify({'success': False, 'message': f'Erro: {str(e)}'}), 500
+
+
+@api_bp.route('/library/<nome_manga>/capa', methods=['POST'])
+def upload_capa(nome_manga):
+    """
+    Faz upload de imagem de capa para um mangá.
+
+    Body: multipart/form-data com campo 'capa' (arquivo de imagem)
+    Params:
+        nome_manga: Nome do mangá (URL encoded)
+    """
+    from urllib.parse import unquote
+    from PIL import Image
+
+    nome_decodificado = unquote(nome_manga)
+
+    try:
+        container = current_app.container
+
+        manga = container.manga_repository.buscar_por_nome(nome_decodificado)
+        if not manga:
+            return jsonify({'success': False, 'message': 'Mangá não encontrado.'}), 404
+
+        if 'capa' not in request.files:
+            return jsonify({'success': False, 'message': 'Nenhum arquivo enviado.'}), 400
+
+        file = request.files['capa']
+
+        if file.filename == '':
+            return jsonify({'success': False, 'message': 'Arquivo sem nome.'}), 400
+
+        extensoes_permitidas = {'png', 'jpg', 'jpeg', 'webp'}
+        ext = file.filename.rsplit('.', 1)[-1].lower() if '.' in file.filename else ''
+        if ext not in extensoes_permitidas:
+            return jsonify({
+                'success': False,
+                'message': 'Formato inválido. Use PNG, JPG, JPEG ou WEBP.'
+            }), 400
+
+        # Converte para JPEG e salva como capa.jpg
+        import os
+        img = Image.open(file.stream).convert('RGB')
+        caminho_capa = os.path.join(manga.caminho, 'capa.jpg')
+        img.save(caminho_capa, 'JPEG', quality=90)
+
+        current_app.logger.info(f"Capa atualizada via API: {nome_decodificado}")
+
+        # Retorna a nova URL da capa para atualização imediata no frontend
+        nova_url = url_for('manga.visualizar_capa', nome_manga=nome_decodificado, _external=True)
+        return jsonify({
+            'success': True,
+            'message': f"Capa de '{nome_decodificado}' atualizada com sucesso!",
+            'capa_url': nova_url
+        })
+
+    except Exception as e:
+        current_app.logger.exception(f"Erro ao fazer upload de capa para '{nome_decodificado}': {e}")
+        return jsonify({'success': False, 'message': f'Erro ao processar imagem: {str(e)}'}), 500
 
 def construir_url_capitulo_correta(base_url: str, numero_capitulo: int) -> str:
     """
