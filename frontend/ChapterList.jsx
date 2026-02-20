@@ -1,124 +1,184 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import Pagination from './Pagination';
 
+const ITEMS_PER_PAGE = 20;
+
+/**
+ * ChapterRow - linha de capítulo individual (componente base)
+ */
+function ChapterRow({ chapter, onDelete }) {
+  return (
+    <div className="chapter-row animate-in">
+      {/* Thumbnail */}
+      {chapter.thumbnail ? (
+        <img
+          className="chapter-thumb"
+          src={chapter.thumbnail}
+          alt={chapter.title}
+          loading="lazy"
+        />
+      ) : (
+        <div className="chapter-thumb-placeholder">📄</div>
+      )}
+
+      {/* Info */}
+      <div className="chapter-info">
+        <a
+          href={chapter.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="chapter-title"
+        >
+          {chapter.title}
+        </a>
+        {chapter.read && (
+          <span className="chapter-read-badge">✓ Lido</span>
+        )}
+      </div>
+
+      {/* Actions */}
+      <div className="chapter-actions">
+        <button
+          className="btn btn-danger"
+          onClick={() => onDelete(chapter.filename)}
+          aria-label={`Deletar ${chapter.title}`}
+        >
+          🗑
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * ChapterList - página de detalhes de um mangá com seus capítulos
+ */
 function ChapterList() {
   const { mangaName } = useParams();
   const navigate = useNavigate();
+  const decodedName = decodeURIComponent(mangaName);
+
   const [chapters, setChapters] = useState([]);
   const [loading, setLoading] = useState(true);
   const [sortOrder, setSortOrder] = useState('asc');
+  const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
-    const decodedName = decodeURIComponent(mangaName);
-    fetch(`http://localhost:5000/api/library/${encodeURIComponent(decodedName)}?ordem=${sortOrder}`)
+    fetch(`http://localhost:5000/api/library/${encodeURIComponent(decodedName)}`)
       .then(res => res.json())
       .then(data => {
-        setChapters(data.chapters || []);
+        // A API retorna { manga, total, chapters: [...] }
+        const lista = data.chapters ?? data.capitulos ?? [];
+        setChapters(Array.isArray(lista) ? lista : []);
         setLoading(false);
       })
       .catch(err => {
         console.error('Erro ao carregar capítulos:', err);
         setLoading(false);
       });
-  }, [mangaName, sortOrder]);
+  }, [decodedName]);
 
-  const handleDelete = (filename) => {
-    if (!window.confirm(`Deletar capítulo "${filename}"?`)) return;
+  // Ordena capítulos
+  const sorted = useMemo(() => {
+    return [...chapters].sort((a, b) => {
+      const numA = parseInt(a.title?.match(/\d+/)?.[0] || 0);
+      const numB = parseInt(b.title?.match(/\d+/)?.[0] || 0);
+      return sortOrder === 'asc' ? numA - numB : numB - numA;
+    });
+  }, [chapters, sortOrder]);
 
-    const decodedName = decodeURIComponent(mangaName);
-    fetch(`http://localhost:5000/excluir_capitulo/${encodeURIComponent(decodedName)}/${encodeURIComponent(filename)}`, {
+  // Paginação
+  const totalPages = Math.ceil(sorted.length / ITEMS_PER_PAGE);
+  const paginated = useMemo(() => {
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    return sorted.slice(start, start + ITEMS_PER_PAGE);
+  }, [sorted, currentPage]);
+
+  function handlePageChange(page) {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function handleDelete(filename) {
+    if (!window.confirm('Deletar este capítulo?')) return;
+    fetch(`http://localhost:5000/api/library/${encodeURIComponent(decodedName)}/${filename}`, {
       method: 'DELETE',
     })
       .then(res => res.json())
-      .then(() => {
-        setChapters(chapters.filter(ch => ch.filename !== filename));
+      .then(data => {
+        if (data.success) {
+          setChapters(prev => prev.filter(c => c.filename !== filename));
+        }
       })
       .catch(err => console.error('Erro ao deletar:', err));
-  };
+  }
+
+  function toggleSort() {
+    setSortOrder(prev => (prev === 'asc' ? 'desc' : 'asc'));
+    setCurrentPage(1);
+  }
+
+  // ---- RENDER ----
 
   if (loading) {
     return (
       <div className="container">
-        <button onClick={() => navigate('/library')} style={{ marginBottom: '20px' }}>
-          ← Voltar
-        </button>
-        <p>Carregando capítulos...</p>
+        <div style={{ padding: '60px 0', textAlign: 'center', color: 'var(--text-muted)' }}>
+          Carregando capítulos...
+        </div>
       </div>
     );
   }
 
   return (
     <div className="container">
-      <button onClick={() => navigate('/library')} style={{ marginBottom: '20px' }}>
-        ← Voltar
-      </button>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-        <h2 style={{ margin: 0 }}>{decodeURIComponent(mangaName)}</h2>
-        <button onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}>
-          Ordenar: {sortOrder === 'asc' ? 'Crescente' : 'Decrescente'}
+      {/* Hero do mangá */}
+      <div className="page-hero">
+        <button className="back-btn" onClick={() => navigate('/library')}>
+          ← Voltar
         </button>
+        <h1 style={{ marginTop: '20px' }}>{decodedName.toUpperCase()}</h1>
+        <p>{chapters.length} {chapters.length === 1 ? 'capítulo disponível' : 'capítulos disponíveis'}</p>
       </div>
 
-      {chapters.length === 0 ? (
-        <p>Nenhum capítulo disponível.</p>
-      ) : (
-        <div style={{ display: 'grid', gap: '10px' }}>
-          {chapters.map(chapter => (
-            <div
-              key={chapter.filename}
-              style={{
-                display: 'flex',
-                padding: '15px',
-                backgroundColor: '#2a2a2a',
-                borderRadius: '8px',
-                alignItems: 'center',
-                gap: '15px',
-              }}
-            >
-              {chapter.thumbnail && (
-                <img
-                  src={chapter.thumbnail}
-                  alt={chapter.title}
-                  style={{
-                    width: '60px',
-                    height: '80px',
-                    objectFit: 'cover',
-                    borderRadius: '4px',
-                  }}
-                />
-              )}
-              <div style={{ flex: 1 }}>
-                <a
-                  href={chapter.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{
-                    fontSize: '1.1em',
-                    color: '#3498db',
-                    textDecoration: 'none',
-                  }}
-                >
-                  {chapter.title}
-                </a>
-                {chapter.read && <span style={{ marginLeft: '10px', color: '#2ecc71' }}>✓ Lido</span>}
-              </div>
-              <button
-                onClick={() => handleDelete(chapter.filename)}
-                style={{
-                  backgroundColor: '#e74c3c',
-                  color: 'white',
-                  border: 'none',
-                  padding: '8px 12px',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                }}
-              >
-                Deletar
-              </button>
-            </div>
-          ))}
+      {/* Header da lista */}
+      <div className="section-header">
+        <h2 className="section-title">Capítulos</h2>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          {totalPages > 1 && (
+            <span className="section-count">Pág. {currentPage}/{totalPages}</span>
+          )}
+          <button className="sort-btn" onClick={toggleSort}>
+            {sortOrder === 'asc' ? '↑ Crescente' : '↓ Decrescente'}
+          </button>
+        </div>
+      </div>
+
+      {/* Empty */}
+      {chapters.length === 0 && (
+        <div className="empty-state">
+          <span className="empty-state-emoji">📂</span>
+          <h3>Sem capítulos</h3>
+          <p>Baixe capítulos de {decodedName} na aba Baixar.</p>
         </div>
       )}
+
+      {/* Lista */}
+      {paginated.map(chapter => (
+        <ChapterRow
+          key={chapter.filename}
+          chapter={chapter}
+          onDelete={handleDelete}
+        />
+      ))}
+
+      {/* Paginação */}
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={handlePageChange}
+      />
     </div>
   );
 }
