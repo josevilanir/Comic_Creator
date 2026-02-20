@@ -7,19 +7,10 @@ from config.settings import config
 from config.dependencies import DependencyContainer
 from src.presentation.api.error_handlers import register_error_handlers
 from src.presentation.middlewares.logging_middleware import setup_request_logging
-from config.logging_config import setup_logging
 
 
 def create_app(env='development'):
-    """
-    Factory da aplicação Flask
-    
-    Args:
-        config_name: Nome da configuração ('development', 'production', 'default')
-        
-    Returns:
-        Aplicação Flask configurada
-    """
+    """Factory da aplicação Flask"""
     app = Flask(__name__, template_folder='../../templates', static_folder='../../static')
 
     # Carregar configurações
@@ -32,7 +23,6 @@ def create_app(env='development'):
     # Dependency Injection
     container = DependencyContainer(config[env])
     app.config['DI_CONTAINER'] = container
-    # backward compatibility for older code expecting app.container
     app.container = container
 
     # Registrar Error Handlers
@@ -41,7 +31,10 @@ def create_app(env='development'):
     # Setup Logging
     setup_request_logging(app)
 
-    # Registrar Blueprints (controladores existentes)
+    from src.presentation.api.routes import api_bp
+    app.register_blueprint(api_bp)
+
+    # Registrar Controllers (templates Jinja2)
     from src.presentation.controllers.download_controller import download_bp
     from src.presentation.controllers.manga_controller import manga_bp
     from src.presentation.controllers.capitulo_controller import capitulo_bp
