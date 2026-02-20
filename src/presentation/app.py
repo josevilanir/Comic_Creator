@@ -1,7 +1,7 @@
 """
 Criação da aplicação Flask
 """
-from flask import Flask
+from flask import Flask, jsonify  
 from flask_cors import CORS
 from config.settings import config
 from config.dependencies import DependencyContainer
@@ -31,6 +31,7 @@ def create_app(env='development'):
     # Setup Logging
     setup_request_logging(app)
 
+    # Registrar API REST
     from src.presentation.api.routes import api_bp
     app.register_blueprint(api_bp)
 
@@ -40,14 +41,132 @@ def create_app(env='development'):
     from src.presentation.controllers.capitulo_controller import capitulo_bp
     from src.presentation.controllers.auth_controller import auth_bp
 
-    app.register_blueprint(download_bp)
+    app.register_blueprint(download_bp, url_prefix='/legacy')
     app.register_blueprint(manga_bp, url_prefix='/manga')
     app.register_blueprint(capitulo_bp, url_prefix='/capitulo')
     app.register_blueprint(auth_bp, url_prefix='/auth')
 
-    # Rota de health check
+    # ========================================
+    # ✅ ADICIONE ESTAS ROTAS AQUI:
+    # ========================================
+    
+    @app.route('/')
+    def index():
+        """Rota raiz - Informações da API"""
+        return jsonify({
+            'application': 'Comic Creator API',
+            'version': '2.0.0',
+            'status': 'running',
+            'environment': env,
+            'endpoints': {
+                'health': '/health',
+                'api_root': '/api',
+                'library': '/api/library',
+                'manga_details': '/api/library/<manga_name>',
+                'urls': '/api/urls',
+                'download': '/api/download'
+            },
+            'frontend': {
+                'url': 'http://localhost:5173',
+                'description': 'Acesse o frontend React para usar a aplicação completa'
+            },
+            'documentation': {
+                'readme': 'https://github.com/seu-usuario/Comic_Creator',
+                'endpoints': 'Acesse /api para ver lista completa de endpoints'
+            },
+            'server_info': {
+                'debug': app.config['DEBUG'],
+                'testing': app.config['TESTING']
+            }
+        })
+    
+    @app.route('/api')
+    def api_root():
+        """Rota raiz da API - Documentação de endpoints"""
+        return jsonify({
+            'message': 'Comic Creator REST API',
+            'version': '1.0.0',
+            'base_url': '/api/v1',
+            'endpoints': [
+                {
+                    'method': 'GET',
+                    'path': '/api/library',
+                    'description': 'Lista todos os mangás da biblioteca',
+                    'response': 'Array de objetos Manga'
+                },
+                {
+                    'method': 'GET',
+                    'path': '/api/library/<manga_name>',
+                    'description': 'Lista capítulos de um mangá específico',
+                    'params': {'manga_name': 'Nome do mangá', 'ordem': 'asc ou desc'},
+                    'response': 'Objeto com manga e array de capítulos'
+                },
+                {
+                    'method': 'GET',
+                    'path': '/api/urls',
+                    'description': 'Lista todas as URLs salvas',
+                    'response': 'Objeto {nome_manga: url_base}'
+                },
+                {
+                    'method': 'POST',
+                    'path': '/api/urls',
+                    'description': 'Salva uma nova URL base',
+                    'body': {'nome': 'string', 'url': 'string'},
+                    'response': 'Objeto com success e message'
+                },
+                {
+                    'method': 'DELETE',
+                    'path': '/api/urls',
+                    'description': 'Remove uma URL salva',
+                    'body': {'nome': 'string'},
+                    'response': 'Objeto com success e message'
+                },
+                {
+                    'method': 'POST',
+                    'path': '/api/download',
+                    'description': 'Inicia o download de um capítulo',
+                    'body': {
+                        'base_url': 'string',
+                        'capitulo': 'number',
+                        'nome_manga': 'string'
+                    },
+                    'response': 'Objeto com success e message'
+                },
+                {
+                    'method': 'GET',
+                    'path': '/health',
+                    'description': 'Verifica o status da API',
+                    'response': 'Objeto com status e ambiente'
+                }
+            ],
+            'authentication': 'Não requerida atualmente',
+            'rate_limits': 'Não implementado'
+        })
+    
     @app.route('/health')
     def health():
-        return {'status': 'ok', 'ambiente': env}, 200
+        """Health check endpoint"""
+        return jsonify({
+            'status': 'ok',
+            'ambiente': env,
+            'timestamp': __import__('datetime').datetime.now().isoformat()
+        }), 200
+    
+    # Handler customizado para 404
+    @app.errorhandler(404)
+    def not_found(error):
+        """Handler customizado para 404 - Recurso não encontrado"""
+        return jsonify({
+            'codigo': 'NOT_FOUND',
+            'erro': 'Recurso não encontrado',
+            'status': 404,
+            'path': __import__('flask').request.path,
+            'sugestoes': [
+                'Verifique a URL digitada',
+                'Veja os endpoints disponíveis em /',
+                'Consulte a documentação da API em /api',
+                'Acesse o frontend em http://localhost:5173'
+            ]
+        }), 404
 
     return app
