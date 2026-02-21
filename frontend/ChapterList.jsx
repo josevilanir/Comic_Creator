@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import Pagination from './Pagination';
 
 const ITEMS_PER_PAGE = 20;
@@ -10,7 +10,7 @@ const API = 'http://localhost:5000';
  * ChapterRow — linha individual de capítulo.
  * UI pura, recebe dados e callbacks via props.
  */
-function ChapterRow({ chapter, onDelete, isDeleting }) {
+function ChapterRow({ chapter, onDelete, onRead, isDeleting }) {
   return (
     <div
       className="chapter-row animate-in"
@@ -30,21 +30,21 @@ function ChapterRow({ chapter, onDelete, isDeleting }) {
 
       {/* Info */}
       <div className="chapter-info">
-        <a
-          href={chapter.url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="chapter-title"
-        >
-          {chapter.title}
-        </a>
+        <span className="chapter-title">{chapter.title}</span>
         {chapter.read && (
           <span className="chapter-read-badge">✓ Lido</span>
         )}
       </div>
 
       {/* Ações */}
-      <div className="chapter-actions">
+      <div className="chapter-actions" style={{ display: 'flex', gap: '8px' }}>
+        <button
+          className="btn btn-sm btn-coral"
+          onClick={() => onRead(chapter)}
+          title="Ler capítulo"
+        >
+          📖 Ler
+        </button>
         <button
           className="btn btn-sm btn-danger"
           onClick={() => onDelete(chapter.filename)}
@@ -52,7 +52,7 @@ function ChapterRow({ chapter, onDelete, isDeleting }) {
           title="Excluir capítulo"
           aria-label={`Excluir ${chapter.title}`}
         >
-          {isDeleting ? '⏳' : '🗑 Excluir'}
+          {isDeleting ? '⏳' : '🗑'}
         </button>
       </div>
     </div>
@@ -119,6 +119,15 @@ function ChapterList() {
   function toggleSort() {
     setSortOrder(prev => (prev === 'asc' ? 'desc' : 'asc'));
     setCurrentPage(1);
+  }
+
+  function handleRead(chapter) {
+    // Passa a lista COMPLETA de capítulos ordenados para o reader
+    // permitir navegação prev/next entre capítulos sem voltar para esta tela
+    navigate(
+      `/manga/${encodeURIComponent(decodedName)}/ler/${encodeURIComponent(chapter.filename)}`,
+      { state: { chapters: sorted } }
+    );
   }
 
   async function handleDelete(filename) {
@@ -238,6 +247,7 @@ function ChapterList() {
             key={chapter.filename}
             chapter={chapter}
             onDelete={handleDelete}
+            onRead={handleRead}
             isDeleting={deletingFile === chapter.filename}
           />
         ))}

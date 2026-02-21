@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react
 import LandingPage from './LandingPage';
 import Library from './Library';
 import ChapterList from './ChapterList';
+import MangaReader from './Mangareader';
 import Downloader from './Downloader';
 
 const NAV_LINKS = [
@@ -58,16 +59,32 @@ function Navbar() {
 function App() {
   return (
     <Router>
-      <Navbar />
+      <AppContent />
+    </Router>
+  );
+}
+
+/**
+ * AppContent — separado para poder usar useLocation dentro do Router
+ * e ocultar a navbar na página de leitura (reader ocupa tela toda)
+ */
+function AppContent() {
+  const { pathname } = useLocation();
+  const isReader = pathname.includes('/ler/');
+
+  return (
+    <>
+      {!isReader && <Navbar />}
       <main>
         <Routes>
-          <Route path="/"                       element={<LandingPage />} />
-          <Route path="/library"                element={<Library />} />
-          <Route path="/manga/:mangaName"       element={<ChapterList />} />
-          <Route path="/download"               element={<Downloader />} />
+          <Route path="/"                                    element={<LandingPage />} />
+          <Route path="/library"                            element={<Library />} />
+          <Route path="/manga/:mangaName"                   element={<ChapterList />} />
+          <Route path="/manga/:mangaName/ler/:filename"     element={<MangaReader />} />
+          <Route path="/download"                           element={<Downloader />} />
         </Routes>
       </main>
-    </Router>
+    </>
   );
 }
 
