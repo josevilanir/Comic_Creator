@@ -18,8 +18,11 @@ def create_app(env='development'):
     config[env].init_app(app)
 
     # CORS
-    CORS(app, resources={r"/api/*": {"origins": "*"}})
-
+    CORS(app, resources={
+        r"/api/*":      {"origins": "*", "supports_credentials": False},
+        r"/capitulo/*": {"origins": "*", "supports_credentials": False},
+        r"/manga/*":    {"origins": "*", "supports_credentials": False},
+    })
     # Dependency Injection
     container = DependencyContainer(config[env])
     app.config['DI_CONTAINER'] = container
