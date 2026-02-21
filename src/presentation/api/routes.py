@@ -163,6 +163,51 @@ def delete_manga(nome_manga):
         current_app.logger.exception(f"Erro ao deletar mangá '{nome_decodificado}': {e}")
         return jsonify({'success': False, 'message': f'Erro: {str(e)}'}), 500
 
+@api_bp.route('/library/<nome_manga>/<nome_arquivo>', methods=['DELETE'])
+def delete_capitulo(nome_manga, nome_arquivo):
+    """
+    Deleta um capítulo específico de um mangá.
+
+    Params:
+        nome_manga:   Nome do mangá (URL encoded)
+        nome_arquivo: Nome do arquivo PDF (URL encoded)
+    """
+    from urllib.parse import unquote
+
+    nome_decodificado  = unquote(nome_manga)
+    arquivo_decodificado = unquote(nome_arquivo)
+
+    # Bloqueia path traversal
+    if '..' in nome_decodificado or '..' in arquivo_decodificado:
+        return jsonify({'success': False, 'message': 'Acesso negado.'}), 403
+
+    try:
+        container = current_app.container
+
+        # Verifica se o mangá existe antes de tentar deletar
+        if not container.manga_repository.existe(nome_decodificado):
+            return jsonify({'success': False, 'message': 'Mangá não encontrado.'}), 404
+
+        # Deleta via repositório (remove PDF + thumbnail automaticamente)
+        if container.capitulo_repository.deletar(nome_decodificado, arquivo_decodificado):
+            current_app.logger.info(
+                f"Capítulo deletado via API: {nome_decodificado}/{arquivo_decodificado}"
+            )
+            return jsonify({
+                'success': True,
+                'message': f"Capítulo '{arquivo_decodificado.replace('.pdf', '')}' excluído com sucesso!"
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'message': 'Capítulo não encontrado no disco.'
+            }), 404
+
+    except Exception as e:
+        current_app.logger.exception(
+            f"Erro ao deletar capítulo '{arquivo_decodificado}' de '{nome_decodificado}': {e}"
+        )
+        return jsonify({'success': False, 'message': f'Erro interno: {str(e)}'}), 500
 
 @api_bp.route('/library/<nome_manga>/capa', methods=['POST'])
 def upload_capa(nome_manga):

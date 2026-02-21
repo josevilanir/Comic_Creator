@@ -7,9 +7,9 @@ const ITEMS_PER_PAGE = 20;
 /**
  * ChapterRow - linha de capítulo individual (componente base)
  */
-function ChapterRow({ chapter, onDelete }) {
+function ChapterRow({ chapter, onDelete, isDeleting }) {
   return (
-    <div className="chapter-row animate-in">
+    <div className="chapter-row animate-in" style={{ opacity: isDeleting ? 0.5 : 1, transition: 'opacity 0.2s' }}>
       {/* Thumbnail */}
       {chapter.thumbnail ? (
         <img
@@ -42,9 +42,11 @@ function ChapterRow({ chapter, onDelete }) {
         <button
           className="btn btn-danger"
           onClick={() => onDelete(chapter.filename)}
+          disabled={isDeleting}
           aria-label={`Deletar ${chapter.title}`}
+          title="Excluir capítulo"
         >
-          🗑
+          {isDeleting ? '⏳' : '🗑'}
         </button>
       </div>
     </div>
@@ -63,6 +65,13 @@ function ChapterList() {
   const [loading, setLoading] = useState(true);
   const [sortOrder, setSortOrder] = useState('asc');
   const [currentPage, setCurrentPage] = useState(1);
+  const [deletingFile, setDeletingFile] = useState(null);
+  const [alert, setAlert] = useState({ message: '', type: '' });
+
+  function showAlert(message, type = 'success') {
+    setAlert({ message, type });
+    setTimeout(() => setAlert({ message: '', type: '' }), 4000);
+  }
 
   useEffect(() => {
     fetch(`http://localhost:5000/api/library/${encodeURIComponent(decodedName)}`)
@@ -100,18 +109,30 @@ function ChapterList() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
-  function handleDelete(filename) {
-    if (!window.confirm('Deletar este capítulo?')) return;
-    fetch(`http://localhost:5000/api/library/${encodeURIComponent(decodedName)}/${filename}`, {
-      method: 'DELETE',
-    })
-      .then(res => res.json())
-      .then(data => {
-        if (data.success) {
-          setChapters(prev => prev.filter(c => c.filename !== filename));
-        }
-      })
-      .catch(err => console.error('Erro ao deletar:', err));
+  async function handleDelete(filename) {
+    if (!window.confirm(`Deletar o capítulo "${filename.replace('.pdf', '')}"?\n\nEsta ação não pode ser desfeita.`)) return;
+
+    // Marca capítulo como "deletando" para feedback visual imediato
+    setDeletingFile(filename);
+    try {
+      const res = await fetch(
+        `http://localhost:5000/api/library/${encodeURIComponent(decodedName)}/${encodeURIComponent(filename)}`,
+        { method: 'DELETE' }
+      );
+      const data = await res.json();
+
+      if (data.success) {
+        // Remove da lista local — sem precisar recarregar a página
+        setChapters(prev => prev.filter(c => c.filename !== filename));
+        showAlert(data.message || 'Capítulo excluído!', 'success');
+      } else {
+        showAlert(data.message || 'Erro ao excluir capítulo.', 'error');
+      }
+    } catch (err) {
+      showAlert(`Erro de conexão: ${err.message}`, 'error');
+    } finally {
+      setDeletingFile(null);
+    }
   }
 
   function toggleSort() {
@@ -155,6 +176,14 @@ function ChapterList() {
         </div>
       </div>
 
+      {/* Alert de feedback */}
+      {alert.message && (
+        <div className={`alert alert-${alert.type}`}>
+          <span>{alert.type === 'success' ? '✓' : '✕'}</span>
+          {alert.message}
+        </div>
+      )}
+
       {/* Empty */}
       {chapters.length === 0 && (
         <div className="empty-state">
@@ -170,6 +199,7 @@ function ChapterList() {
           key={chapter.filename}
           chapter={chapter}
           onDelete={handleDelete}
+          isDeleting={deletingFile === chapter.filename}
         />
       ))}
 
