@@ -1,33 +1,47 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
+import LandingPage from './LandingPage';
 import Library from './Library';
 import ChapterList from './ChapterList';
 import Downloader from './Downloader';
 
+const NAV_LINKS = [
+  { to: '/',         label: 'Home' },
+  { to: '/library',  label: 'Biblioteca' },
+  { to: '/download', label: 'Downloads' },
+];
+
 /**
- * Navbar - componente de navegação separado (responsabilidade única)
+ * Navbar — componente separado com responsabilidade única de navegação
  */
 function Navbar() {
-  const location = useLocation();
+  const { pathname } = useLocation();
 
-  const links = [
-    { to: '/', label: 'Baixar' },
-    { to: '/library', label: 'Biblioteca' },
-  ];
+  // Verifica se o link está ativo (exact para '/', prefix para o resto)
+  function isActive(to) {
+    if (to === '/') return pathname === '/';
+    return pathname.startsWith(to);
+  }
 
   return (
     <header className="navbar">
       <div className="navbar-inner">
-        <Link to="/library" className="navbar-logo">
-          Comic<span>Creator</span>
+        {/* Logo */}
+        <Link to="/" className="navbar-logo" style={{ textDecoration: 'none' }}>
+          <div className="navbar-logo-icon">📖</div>
+          <div className="navbar-logo-text">
+            <span className="navbar-logo-title">Comic Creator</span>
+            <span className="navbar-logo-sub">Manga Library</span>
+          </div>
         </Link>
 
+        {/* Links */}
         <nav className="navbar-links">
-          {links.map(link => (
+          {NAV_LINKS.map(link => (
             <Link
               key={link.to}
               to={link.to}
-              className={`nav-link ${location.pathname === link.to ? 'active' : ''}`}
+              className={`nav-link ${isActive(link.to) ? 'active' : ''}`}
             >
               {link.label}
             </Link>
@@ -39,7 +53,7 @@ function Navbar() {
 }
 
 /**
- * App - componente raiz; apenas composição e roteamento
+ * App — composição de rotas e layout global
  */
 function App() {
   return (
@@ -47,9 +61,10 @@ function App() {
       <Navbar />
       <main>
         <Routes>
-          <Route path="/" element={<Downloader />} />
-          <Route path="/library" element={<Library />} />
-          <Route path="/manga/:mangaName" element={<ChapterList />} />
+          <Route path="/"                       element={<LandingPage />} />
+          <Route path="/library"                element={<Library />} />
+          <Route path="/manga/:mangaName"       element={<ChapterList />} />
+          <Route path="/download"               element={<Downloader />} />
         </Routes>
       </main>
     </Router>
