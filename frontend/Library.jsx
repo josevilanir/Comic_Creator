@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Pagination from './Pagination';
+import { api } from './src/services/api';
 
 const ITEMS_PER_PAGE = 18;
-const API = 'http://localhost:5000';
 
 // ─── Skeleton ─────────────────────────────────────────────────────────────────
 function SkeletonCard() {
@@ -140,8 +140,7 @@ function Library() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetch(`${API}/api/library`)
-      .then(res => res.json())
+    api.getLibrary()
       .then(data => { setMangas(Array.isArray(data) ? data : []); setLoading(false); })
       .catch(() => setLoading(false));
   }, []);
@@ -155,8 +154,7 @@ function Library() {
 
   async function handleDelete(nomeManga) {
     try {
-      const res  = await fetch(`${API}/api/library/${encodeURIComponent(nomeManga)}`, { method: 'DELETE' });
-      const data = await res.json();
+      const data = await api.deleteManga(nomeManga);
       if (data.success) {
         setMangas(prev => prev.filter(m => m.nome !== nomeManga));
         showToast(`"${nomeManga}" excluído com sucesso.`);
@@ -172,8 +170,7 @@ function Library() {
     const formData = new FormData();
     formData.append('capa', file);
     try {
-      const res  = await fetch(`${API}/api/library/${encodeURIComponent(nomeManga)}/capa`, { method: 'POST', body: formData });
-      const data = await res.json();
+      const data = await api.uploadCover(nomeManga, formData);
       if (data.success) {
         showToast(`Capa de "${nomeManga}" atualizada!`);
         return data.capa_url;

@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-
-const API = 'http://localhost:5000';
+import { BASE_URL } from './src/services/api';
 
 // ─── PDF.js lazy loader ────────────────────────────────────────────────────────
 let _pdfjsLib = null;
@@ -52,7 +51,7 @@ function MangaReader() {
   const prevChapter = currentIdx > 0                       ? allChapters[currentIdx - 1] : null;
   const nextChapter = currentIdx < allChapters.length - 1  ? allChapters[currentIdx + 1] : null;
 
-  const pdfUrl = `${API}/capitulo/visualizar/${encodeURIComponent(decodedManga)}/${encodeURIComponent(decodedFile)}`;
+  const pdfUrl = `${BASE_URL}/capitulo/visualizar/${encodeURIComponent(decodedManga)}/${encodeURIComponent(decodedFile)}`;
 
   // ── Estado ─────────────────────────────────────────────────────────────────
   const canvasRef  = useRef(null);
