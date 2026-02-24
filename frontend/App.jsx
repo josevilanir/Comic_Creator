@@ -1,10 +1,10 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
-import LandingPage from './LandingPage';
-import Library from './Library';
-import ChapterList from './ChapterList';
-import MangaReader from './Mangareader';
-import Downloader from './Downloader';
+import LandingPage from './src/features/landing/LandingPage';
+import Library from './src/features/library/Library';
+import ChapterList from './src/features/library/ChapterList';
+import MangaReader from './src/features/reader/MangaReader';
+import Downloader from './src/features/downloader/Downloader';
 
 const NAV_LINKS = [
   { to: '/',         label: 'Home' },
