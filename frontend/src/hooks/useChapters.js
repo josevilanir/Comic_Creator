@@ -1,20 +1,16 @@
 import { useState, useEffect, useMemo } from 'react';
 import { api } from '../services/api';
+import { useAlert } from './useAlert';
 
 const ITEMS_PER_PAGE = 20;
 
 export function useChapters(mangaName) {
+  const { alert, showAlert } = useAlert(4000);
   const [chapters, setChapters] = useState([]);
   const [loading, setLoading] = useState(true);
   const [sortOrder, setSortOrder] = useState('asc');
   const [currentPage, setCurrentPage] = useState(1);
   const [deletingFile, setDeletingFile] = useState(null);
-  const [alert, setAlert] = useState({ message: '', type: '' });
-
-  function showAlert(message, type = 'success') {
-    setAlert({ message, type });
-    setTimeout(() => setAlert({ message: '', type: '' }), 4000);
-  }
 
   useEffect(() => {
     setLoading(true);
@@ -29,6 +25,7 @@ export function useChapters(mangaName) {
       .finally(() => setLoading(false));
   }, [mangaName, sortOrder]);
 
+  // Usamos useState para chapters, loading etc. que já estão importados
   const sorted = useMemo(() => {
     return [...chapters].sort((a, b) => {
       const numA = parseInt(a.title?.match(/\d+/)?.[0] ?? 0, 10);

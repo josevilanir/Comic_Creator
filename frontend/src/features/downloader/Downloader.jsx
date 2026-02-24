@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useUrls } from '../../hooks/useUrls';
 import { useDownload } from '../../hooks/useDownload';
+import { useAlert } from '../../hooks/useAlert';
 import UrlManager from '../../components/downloader/UrlManager';
 import SingleDownload from '../../components/downloader/SingleDownload';
 import RangeDownload from '../../components/downloader/RangeDownload';
@@ -10,13 +11,7 @@ import Alert from '../../components/ui/Alert';
  * Página de downloads que apenas compõe hooks e subcomponentes.
  */
 function Downloader() {
-  // alerta global da página
-  const [alert, setAlert] = useState({ message: '', type: '' });
-
-  function showAlert(message, type = 'success') {
-    setAlert({ message, type });
-    setTimeout(() => setAlert({ message: '', type: '' }), 6000);
-  }
+  const { alert, showAlert } = useAlert(6000);
 
   // hooks de domínio
   const {
