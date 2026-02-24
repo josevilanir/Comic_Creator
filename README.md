@@ -1,83 +1,70 @@
-# Comic Creator
+# 📖 Comic Creator
 
-**Comic Creator** é uma aplicação web em Flask que auxilia no download e na organização de capítulos de quadrinhos e mangás em formato PDF. O sistema mantém uma biblioteca simples, onde cada série possui sua própria pasta e capa opcional.
+**Comic Creator** é uma solução completa para download, organização e leitura de mangás e quadrinhos. Com um backend robusto em Python e um frontend moderno em React, você pode gerenciar sua coleção local com facilidade.
 
-## O que a aplicação faz
-- Permite baixar capítulos a partir de uma URL base.
-- Guarda os capítulos em `~/Comics`, criando uma pasta para cada série.
-- Gera miniaturas para visualização rápida dos capítulos.
-- Possibilita excluir capítulos ou mangás completos pela interface.
+## 🚀 Guia Rápido de Instalação
 
----
-
-## Configuração
-
-1. Tenha o Python 3 instalado em sua máquina.
-2. (Opcional) Crie e ative um ambiente virtual:
-
-   ```bash
-   python3 -m venv venv
-   source venv/bin/activate
-   ```
-
-3. Instale as dependências:
-
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-   Para executar os testes presentes na pasta `Tests`, é necessário instalar também o pacote `fpdf`.
+### Pré-requisitos
+- **Python 3.10+**
+- **Node.js 18+** e npm
 
 ---
 
-## Variáveis de ambiente
-
-- `SECRET_KEY` – chave usada pelo Flask para assinar sessões. Defina antes de iniciar o servidor:
-
-  ```bash
-  export SECRET_KEY="uma_string_secreta"
-  ```
-
-O diretório onde os mangás são salvos é `~/Comics` por padrão. Caso deseje alterar, modifique a variável `base_dir` em `app/__init__.py`.
-
----
-
-## Executando a aplicação
-
-Execute o servidor com o Flask CLI:
-
+### 1. Preparar o Backend
+Na raiz do projeto:
 ```bash
-flask --app app run
-```
+# Criar e ativar ambiente virtual
+python3 -m venv .venv
+source .venv/bin/activate  # Linux/macOS
+# .venv\Scripts\activate   # Windows
 
-Ou inicie diretamente pelo arquivo principal:
+# Instalar dependências
+pip install -r requirements.txt
 
-```bash
+# Iniciar o servidor (Porta 5000)
 python main.py
 ```
 
-O aplicativo ficará disponível em `http://localhost:5000`.
+### 2. Preparar o Frontend
+Em um novo terminal, entre na pasta `frontend`:
+```bash
+cd frontend
+
+# Instalar dependências
+npm install
+
+# Iniciar em modo desenvolvimento
+npm run dev
+```
+O frontend ficará disponível em `http://localhost:5173`.
 
 ---
 
-## Uso básico
+## 🛠️ Como usar
 
-### Baixar capítulos
+1.  **Downloads**: Cole a URL base do capítulo de um mangá compatível. Você pode baixar um capítulo único ou um intervalo (ex: cap 1 ao 50).
+2.  **Biblioteca**: Veja todos os seus mangás baixados. Cada um tem sua capa e lista de capítulos.
+3.  **Leitor**: Clique em um capítulo para abrir o leitor integrado.
+4.  **Gerenciamento**: Você pode trocar a capa de qualquer mangá fazendo o upload de uma imagem local e excluir títulos indesejados.
 
-1. Abra a página inicial.
-2. Informe a URL base do mangá e a quantidade de capítulos.
-3. Opcionalmente salve URLs para reutilizar depois.
-4. Após o download, clique em **Acessar Biblioteca** para visualizar as séries salvas.
+---
 
-### Biblioteca
+## 📂 Organização de Arquivos
+- **Caminho padrão**: Os mangás são salvos em `~/Comics` (na sua pasta de usuário).
+- **Estrutura**: Cada mangá tem sua própria pasta contendo os capítulos em formato PDF.
+- **Configurações**: Para mudar o local de salvamento ou outras opções, veja `config/settings.py`.
 
-Na biblioteca cada mangá aparece como um cartão com sua capa (se houver). É possível abrir os capítulos, marcar como lidos, enviar uma nova capa ou remover arquivos.
+---
 
+## 🧪 Testes
+Para garantir a estabilidade do sistema, você pode rodar a suíte de testes:
+```bash
+# Backend
+pytest
+
+# Ou use os scripts automatizados
+./run_tests.sh
 ```
-Biblioteca
-----------
-[Capa] Nome do Mangá          [Ver capítulos]
-[Capa] Outro Mangá            [Ver capítulos]
-```
 
-Este exemplo resume a aparência geral da página, servindo como referência quando não é possível visualizar capturas de tela.
+---
+*Desenvolvido seguindo os padrões de Clean Architecture e as boas práticas da Imersão42.*
