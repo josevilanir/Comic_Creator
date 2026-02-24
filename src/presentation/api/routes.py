@@ -2,6 +2,8 @@
 API REST Routes - Endpoints JSON para o frontend React
 """
 from flask import Blueprint, jsonify, request, current_app, url_for
+import threading
+import uuid
 
 api_bp = Blueprint('api', __name__, url_prefix='/api')
 
@@ -127,42 +129,357 @@ def download_chapter():
         current_app.logger.exception(f"Erro no download: {e}")
         return jsonify({'success': False, 'message': f'Erro: {str(e)}'}), 500
 
+_download_jobs: dict = {}
+_jobs_lock = threading.Lock()
+
+# ─── Endpoint: iniciar range download ─────────────────────────────────────────
+@api_bp.route('/download/range', methods=['POST'])
+def download_range():
+    """
+    Inicia download de um range de capítulos em thread separada.
+
+    Body JSON:
+        base_url   (str)  — URL base do mangá
+        cap_inicio (int)  — capítulo inicial (inclusivo)
+        cap_fim    (int)  — capítulo final (inclusivo)
+        nome_manga (str)  — nome do mangá
+
+    Retorna:
+        { job_id, total } — ID para consultar progresso via GET /api/download/progresso/<job_id>
+    """
+    data = request.json or {}
+    base_url   = data.get('base_url', '').strip()
+    cap_inicio = data.get('cap_inicio')
+    cap_fim    = data.get('cap_fim')
+    nome_manga = data.get('nome_manga', '').strip()
+
+    # Validações
+    if not base_url:
+        return jsonify({'success': False, 'message': 'URL base obrigatória'}), 400
+    if cap_inicio is None or cap_fim is None:
+        return jsonify({'success': False, 'message': 'cap_inicio e cap_fim obrigatórios'}), 400
+
+    cap_inicio = int(cap_inicio)
+    cap_fim    = int(cap_fim)
+
+    if cap_inicio < 1 or cap_fim < cap_inicio:
+        return jsonify({'success': False, 'message': 'Range inválido. cap_inicio deve ser ≥ 1 e ≤ cap_fim'}), 400
+
+    total = cap_fim - cap_inicio + 1
+    if total > 200:
+        return jsonify({'success': False, 'message': 'Máximo de 200 capítulos por download'}), 400
+
+    if not nome_manga:
+        nome_manga = 'Manga'
+
+    # Cria job
+    job_id = str(uuid.uuid4())[:8]
+    with _jobs_lock:
+        _download_jobs[job_id] = {
+            'status':    'rodando',   # rodando | concluido | cancelado
+            'total':     total,
+            'concluido': 0,
+            'atual':     None,        # capítulo sendo baixado agora
+            'resultados': [],         # lista de { cap, sucesso, mensagem }
+            'cancelar':  False,       # flag para cancelamento
+        }
+
+    # Dispara thread de download
+    app = current_app._get_current_object()
+    thread = threading.Thread(
+        target=_executar_range_download,
+        args=(app, job_id, base_url, cap_inicio, cap_fim, nome_manga),
+        daemon=True,
+    )
+    thread.start()
+
+    return jsonify({'success': True, 'job_id': job_id, 'total': total})
+
+
+# ─── Endpoint: consultar progresso ────────────────────────────────────────────
+@api_bp.route('/download/progresso/<job_id>', methods=['GET'])
+def download_progresso(job_id):
+    """
+    Retorna o progresso atual de um job de range download.
+
+    Retorna:
+        {
+          status:    'rodando' | 'concluido' | 'cancelado',
+          total:     int,
+          concluido: int,
+          atual:     int | null,
+          resultados: [{ cap, sucesso, mensagem }]
+        }
+    """
+    with _jobs_lock:
+        job = _download_jobs.get(job_id)
+
+    if not job:
+        return jsonify({'success': False, 'message': 'Job não encontrado'}), 404
+
+    return jsonify({'success': True, **job})
+
+
+# ─── Endpoint: cancelar job ────────────────────────────────────────────────────
+@api_bp.route('/download/cancelar/<job_id>', methods=['POST'])
+def download_cancelar(job_id):
+    """Sinaliza cancelamento de um job em andamento."""
+    with _jobs_lock:
+        job = _download_jobs.get(job_id)
+        if not job:
+            return jsonify({'success': False, 'message': 'Job não encontrado'}), 404
+        job['cancelar'] = True
+
+    return jsonify({'success': True, 'message': 'Cancelamento solicitado'})
+
+
+# ─── Worker: executa o range em background ────────────────────────────────────
+def _executar_range_download(app, job_id: str, base_url: str, cap_inicio: int, cap_fim: int, nome_manga: str):
+    """
+    Função executada em thread separada.
+    Itera pelos capítulos do range e atualiza o estado do job a cada capítulo.
+    """
+    import re
+
+    def limpar_sufixo(nome: str) -> str:
+        padrao = r'[-_\s]*(manga[-_\s]*)?pt[-_\s]*br$'
+        return re.sub(padrao, '', nome, flags=re.IGNORECASE).strip()
+
+    nome_limpo = limpar_sufixo(nome_manga)
+
+    with app.app_context():
+        from src.application.use_cases import BaixarCapituloDTO
+        container = app.container
+
+        for cap_num in range(cap_inicio, cap_fim + 1):
+            # Verifica cancelamento antes de cada capítulo
+            with _jobs_lock:
+                job = _download_jobs[job_id]
+                if job['cancelar']:
+                    job['status'] = 'cancelado'
+                    break
+                job['atual'] = cap_num
+
+            try:
+                url_completa = construir_url_capitulo_correta(base_url, cap_num)
+
+                dto = BaixarCapituloDTO(
+                    url_capitulo=url_completa,
+                    nome_manga=nome_limpo,
+                    numero_capitulo=cap_num,
+                    sobrescrever=False,
+                )
+
+                resultado = container.baixar_capitulo_use_case.executar(dto)
+
+                with _jobs_lock:
+                    _download_jobs[job_id]['resultados'].append({
+                        'cap':      cap_num,
+                        'sucesso':  resultado.sucesso,
+                        'mensagem': resultado.mensagem,
+                    })
+                    _download_jobs[job_id]['concluido'] += 1
+
+            except Exception as e:
+                with _jobs_lock:
+                    _download_jobs[job_id]['resultados'].append({
+                        'cap':      cap_num,
+                        'sucesso':  False,
+                        'mensagem': f'Erro inesperado: {str(e)}',
+                    })
+                    _download_jobs[job_id]['concluido'] += 1
+
+        # Marca como concluído (se não foi cancelado)
+        with _jobs_lock:
+            job = _download_jobs[job_id]
+            if job['status'] == 'rodando':
+                job['status']  = 'concluido'
+                job['atual']   = None
+
+@api_bp.route('/library/<nome_manga>', methods=['DELETE'])
+def delete_manga(nome_manga):
+    """
+    Deleta um mangá e todos os seus capítulos.
+
+    Params:
+        nome_manga: Nome do mangá (URL encoded)
+    """
+    from urllib.parse import unquote
+    nome_decodificado = unquote(nome_manga)
+
+    try:
+        container = current_app.container
+
+        if not container.manga_repository.existe(nome_decodificado):
+            return jsonify({'success': False, 'message': 'Mangá não encontrado.'}), 404
+
+        if container.manga_repository.deletar(nome_decodificado):
+            # Remove URL salva associada, se existir
+            try:
+                container.url_repository.deletar(nome_decodificado)
+            except Exception:
+                pass  # URL pode não existir — não é erro crítico
+
+            current_app.logger.info(f"Mangá deletado via API: {nome_decodificado}")
+            return jsonify({
+                'success': True,
+                'message': f"Mangá '{nome_decodificado}' e todos os seus capítulos foram excluídos."
+            })
+        else:
+            return jsonify({'success': False, 'message': 'Erro ao excluir mangá.'}), 500
+
+    except Exception as e:
+        current_app.logger.exception(f"Erro ao deletar mangá '{nome_decodificado}': {e}")
+        return jsonify({'success': False, 'message': f'Erro: {str(e)}'}), 500
+
+@api_bp.route('/library/<nome_manga>/<nome_arquivo>', methods=['DELETE'])
+def delete_capitulo(nome_manga, nome_arquivo):
+    """
+    Deleta um capítulo específico de um mangá.
+
+    Params:
+        nome_manga:   Nome do mangá (URL encoded)
+        nome_arquivo: Nome do arquivo PDF (URL encoded)
+    """
+    from urllib.parse import unquote
+
+    nome_decodificado  = unquote(nome_manga)
+    arquivo_decodificado = unquote(nome_arquivo)
+
+    # Bloqueia path traversal
+    if '..' in nome_decodificado or '..' in arquivo_decodificado:
+        return jsonify({'success': False, 'message': 'Acesso negado.'}), 403
+
+    try:
+        container = current_app.container
+
+        # Verifica se o mangá existe antes de tentar deletar
+        if not container.manga_repository.existe(nome_decodificado):
+            return jsonify({'success': False, 'message': 'Mangá não encontrado.'}), 404
+
+        # Deleta via repositório (remove PDF + thumbnail automaticamente)
+        if container.capitulo_repository.deletar(nome_decodificado, arquivo_decodificado):
+            current_app.logger.info(
+                f"Capítulo deletado via API: {nome_decodificado}/{arquivo_decodificado}"
+            )
+            return jsonify({
+                'success': True,
+                'message': f"Capítulo '{arquivo_decodificado.replace('.pdf', '')}' excluído com sucesso!"
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'message': 'Capítulo não encontrado no disco.'
+            }), 404
+
+    except Exception as e:
+        current_app.logger.exception(
+            f"Erro ao deletar capítulo '{arquivo_decodificado}' de '{nome_decodificado}': {e}"
+        )
+        return jsonify({'success': False, 'message': f'Erro interno: {str(e)}'}), 500
+
+@api_bp.route('/library/<nome_manga>/capa', methods=['POST'])
+def upload_capa(nome_manga):
+    """
+    Faz upload de imagem de capa para um mangá.
+
+    Body: multipart/form-data com campo 'capa' (arquivo de imagem)
+    Params:
+        nome_manga: Nome do mangá (URL encoded)
+    """
+    from urllib.parse import unquote
+    from PIL import Image
+
+    nome_decodificado = unquote(nome_manga)
+
+    try:
+        container = current_app.container
+
+        manga = container.manga_repository.buscar_por_nome(nome_decodificado)
+        if not manga:
+            return jsonify({'success': False, 'message': 'Mangá não encontrado.'}), 404
+
+        if 'capa' not in request.files:
+            return jsonify({'success': False, 'message': 'Nenhum arquivo enviado.'}), 400
+
+        file = request.files['capa']
+
+        if file.filename == '':
+            return jsonify({'success': False, 'message': 'Arquivo sem nome.'}), 400
+
+        extensoes_permitidas = {'png', 'jpg', 'jpeg', 'webp'}
+        ext = file.filename.rsplit('.', 1)[-1].lower() if '.' in file.filename else ''
+        if ext not in extensoes_permitidas:
+            return jsonify({
+                'success': False,
+                'message': 'Formato inválido. Use PNG, JPG, JPEG ou WEBP.'
+            }), 400
+
+        # Converte para JPEG e salva como capa.jpg
+        import os
+        img = Image.open(file.stream).convert('RGB')
+        caminho_capa = os.path.join(manga.caminho, 'capa.jpg')
+        img.save(caminho_capa, 'JPEG', quality=90)
+
+        current_app.logger.info(f"Capa atualizada via API: {nome_decodificado}")
+
+        # Retorna a nova URL da capa para atualização imediata no frontend
+        nova_url = url_for('manga.visualizar_capa', nome_manga=nome_decodificado, _external=True)
+        return jsonify({
+            'success': True,
+            'message': f"Capa de '{nome_decodificado}' atualizada com sucesso!",
+            'capa_url': nova_url
+        })
+
+    except Exception as e:
+        current_app.logger.exception(f"Erro ao fazer upload de capa para '{nome_decodificado}': {e}")
+        return jsonify({'success': False, 'message': f'Erro ao processar imagem: {str(e)}'}), 500
 
 def construir_url_capitulo_correta(base_url: str, numero_capitulo: int) -> str:
     """
-    Constrói URL correta do capítulo.
-    
-    Exemplos:
-        Input: "https://site.com/manga/one-piece/capitulo-", 567
-        Output: "https://site.com/manga/one-piece/capitulo-567/"
-        
-        Input: "https://site.com/manga/naruto/", 10
-        Output: "https://site.com/manga/naruto/capitulo-10/"
+    Constrói a URL correta do capítulo detectando e respeitando
+    o zero-padding usado pelo site.
+
+    Casos suportados:
+      "site.com/capitulo-"    -> "site.com/capitulo-1/"    (sem padding)
+      "site.com/capitulo-01"  -> "site.com/capitulo-01/"   (padding 2 dígitos)
+      "site.com/capitulo-001" -> "site.com/capitulo-001/"  (padding 3 dígitos)
+      "site.com/chap-02"      -> "site.com/chap-09/"       (padding detectado)
+      "site.com/manga/titulo" -> "site.com/manga/titulo/capitulo-1/"
     """
     import re
-    
-    # Remove trailing slash
+
     base_url = base_url.rstrip('/')
-    
-    # Caso 1: URL já termina com "capitulo-" (padrão mais comum)
-    if base_url.endswith('capitulo-') or base_url.endswith('capitulo_'):
-        # Remove o último caractere (-) e adiciona número
-        base_url = base_url.rstrip('-_')
-        return f"{base_url}-{numero_capitulo}/"
-    
-    # Caso 2: URL já termina com "chap-" ou "chapter-"
-    if base_url.endswith('chap-') or base_url.endswith('chapter-'):
-        base_url = base_url.rstrip('-_')
-        return f"{base_url}-{numero_capitulo}/"
-    
-    # Caso 3: URL já tem um número no final (substitui)
-    # Ex: "site.com/manga/naruto/capitulo-566" -> "site.com/manga/naruto/capitulo-567"
-    if re.search(r'capitulo[-_]?\d+$', base_url, re.IGNORECASE):
-        base_url = re.sub(r'(capitulo[-_]?)\d+$', r'\g<1>', base_url, flags=re.IGNORECASE)
+
+    # Caso 1: URL já termina com número embutido (ex: capitulo-01, chap-002)
+    # Detecta o padrão e extrai o zero-padding do número de exemplo
+    match = re.search(
+        r'(capitulo[-_]?|chap[-_]?|chapter[-_]?)(\d+)$',
+        base_url,
+        re.IGNORECASE
+    )
+    if match:
+        prefixo      = match.group(1)   # ex: "capitulo-"
+        num_exemplo  = match.group(2)   # ex: "01"
+        largura      = len(num_exemplo) # ex: 2
+
+        # Reconstrói a base sem o número
+        base_sem_num = base_url[:match.start()] + prefixo
+
+        # Aplica padding somente se o exemplo original tinha zeros à esquerda
+        if num_exemplo.startswith('0') and largura > 1:
+            num_formatado = str(numero_capitulo).zfill(largura)
+        else:
+            # Número sem zero-padding (ex: "42") — usa puro
+            num_formatado = str(numero_capitulo)
+
+        return f"{base_sem_num}{num_formatado}/"
+
+    # Caso 2: URL termina com separador sem número (ex: "capitulo-", "chap-")
+    if re.search(r'(capitulo[-_]|chap[-_]|chapter[-_])$', base_url, re.IGNORECASE):
         return f"{base_url}{numero_capitulo}/"
-    
-    # Caso 4: URL termina só com o nome do mangá (adiciona /capitulo-)
-    # Ex: "site.com/manga/one-piece" -> "site.com/manga/one-piece/capitulo-567/"
+
+    # Caso 3: URL sem padrão conhecido — adiciona /capitulo-N/
     return f"{base_url}/capitulo-{numero_capitulo}/"
 
 

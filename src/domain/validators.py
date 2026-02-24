@@ -101,7 +101,11 @@ class ValidadorCapitulo:
 class ValidadorURL:
     """Valida URLs de mangá"""
     
-    PADROES_CAPITULO = ['capitulo-', 'chap-', 'chapter-', '/capitulo/', '/chap/']
+    PADROES_CAPITULO = [
+        'capitulo-', 'capitulo_', '/capitulo/',
+        'chap-',     'chap_',     '/chap/',
+        'chapter-',  'chapter_',  '/chapter/',
+    ]
     
     @classmethod
     def validar_url_base(cls, url: str) -> Tuple[bool, str]:
@@ -125,13 +129,18 @@ class ValidadorURL:
         except Exception:
             return False, "URL inválida"
         
-        # Verifica se contém padrão de capítulo
+        # Verifica se contém padrão de capítulo (com ou sem número embutido)
+        # Ex válidos: "capitulo-"  "capitulo-01"  "chap-"  "chap-002"  "chapter-"
         url_lower = url.lower()
         tem_padrao = any(padrao in url_lower for padrao in cls.PADROES_CAPITULO)
-        
+
+        # Aceita também quando o número está colado (ex: "capitulo01", "chap02")
         if not tem_padrao:
-            return False, "URL não contém padrão de capítulo reconhecido"
-        
+            tem_padrao = bool(re.search(r'(capitulo|chap|chapter)\d+', url_lower))
+
+        if not tem_padrao:
+            return False, "URL não contém padrão de capítulo reconhecido (capitulo-, chap-, chapter-)"
+
         return True, ""
     
     @classmethod

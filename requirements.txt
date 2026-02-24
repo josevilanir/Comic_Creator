@@ -1,9 +1,25 @@
-Flask
-Pillow
-requests
-beautifulsoup4
-pymupdf
-werkzeug
+# ═══════════════════════════════════════════
+# Comic Creator — Dependências de produção
+# ═══════════════════════════════════════════
 
+# Web framework
+Flask>=2.3.0
+Werkzeug>=2.3.0
 
-fpdf
+# CORS — necessário para o frontend React acessar a API
+Flask-Cors>=4.0.0
+
+# Validação de dados
+pydantic>=2.0.0
+
+# Processamento de imagens e PDF
+Pillow>=10.0.0
+pymupdf>=1.23.0        # fitz — leitura/geração de PDFs
+fpdf2>=2.7.0           # geração de PDFs (substitui fpdf legado)
+
+# HTTP e scraping
+requests>=2.31.0
+beautifulsoup4>=4.12.0
+
+# Utilitários
+werkzeug>=2.3.0        # hash de senhas (generate_password_hash)
