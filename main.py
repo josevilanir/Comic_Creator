@@ -7,8 +7,7 @@ import os
 # Determina ambiente
 env = os.environ.get('FLASK_ENV', 'development')
 
-# Cria aplicação (create_app já cria o container internamente)
-app = create_app(env)  # ✅ Passa apenas o env
+app = create_app(env)  
 
 if __name__ == '__main__':
     app.run(
