@@ -55,3 +55,4 @@ logs/
 # Env
 .env
 .env.local
+GEMINI.MD
