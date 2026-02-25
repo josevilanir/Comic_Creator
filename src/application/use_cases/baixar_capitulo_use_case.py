@@ -118,8 +118,9 @@ class BaixarCapituloUseCase:
 
             manga = self.manga_repo.buscar_por_nome(user_id, dto.nome_manga)
             if not manga:
-                manga = Manga(nome=dto.nome_manga, caminho="") 
-                # O repositório preencherá o caminho baseado no user_id e retornará a entidade atualizada
+                # Usamos um placeholder no caminho para passar pelo __post_init__
+                # O repositório irá preencher o caminho correto baseado no user_id
+                manga = Manga(nome=dto.nome_manga, caminho="PENDING") 
                 manga = self.manga_repo.salvar(user_id, manga)
 
             if not manga.caminho:
