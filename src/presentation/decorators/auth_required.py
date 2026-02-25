@@ -1,7 +1,7 @@
 import jwt as pyjwt
 from functools import wraps
-from flask import request, jsonify, g
-from src.infrastructure.auth.jwt_service import JwtService, SECRET_KEY
+from flask import request, jsonify, g, current_app
+from src.infrastructure.auth.jwt_service import get_secret_key
 
 def auth_required(f):
     @wraps(f)
@@ -12,15 +12,21 @@ def auth_required(f):
         
         token = auth_header.split(" ")[1]
         try:
-            payload = pyjwt.decode(token, SECRET_KEY, algorithms=["HS256"])
+            secret = get_secret_key()
+            payload = pyjwt.decode(token, secret, algorithms=["HS256"])
+            
             if payload.get("type") != "access":
-                raise ValueError("Tipo de token inválido")
+                return jsonify({"status": "fail", "data": {"auth": "Tipo de token inválido"}}), 401
+                
             g.user_id = payload["sub"]
             g.username = payload.get("username")
+            
         except pyjwt.ExpiredSignatureError:
             return jsonify({"status": "fail", "data": {"auth": "Token expirado"}}), 401
-        except (pyjwt.InvalidTokenError, ValueError) as e:
-            return jsonify({"status": "fail", "data": {"auth": "Token inválido"}}), 401
+        except pyjwt.InvalidTokenError as e:
+            return jsonify({"status": "fail", "data": {"auth": f"Token inválido: {str(e)}"}}), 401
+        except Exception as e:
+            return jsonify({"status": "fail", "data": {"auth": "Erro interno de autenticação"}}), 401
         
         return f(*args, **kwargs)
     return decorated
