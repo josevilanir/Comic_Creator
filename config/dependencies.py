@@ -8,6 +8,7 @@ from src.infrastructure.repositories import (
     SQLiteURLRepository,
     UserDataRepository
 )
+from src.infrastructure.auth.jwt_service import JwtService
 from src.infrastructure.services import (
     ImageDownloadService,
     PDFGeneratorService,
@@ -35,6 +36,7 @@ class DependencyContainer:
         self.pdf_generator_service = PDFGeneratorService()
         self.thumbnail_service = ThumbnailService()
         self.hash_service = HashService()
+        self.jwt_service = JwtService()
     
     def _init_repositories(self):
         """Inicializa repositories"""
