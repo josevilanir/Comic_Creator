@@ -117,7 +117,7 @@ def download_chapter():
         
         if resultado.sucesso:
             return success({'message': resultado.mensagem})
-        return fail({'download': resultado.mensagem})
+        return fail({'message': resultado.mensagem})
     except Exception as e:
         return error(str(e), 'DOWNLOAD_ERROR')
 

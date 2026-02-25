@@ -49,19 +49,21 @@ export function useDownload(showAlert) {
     }
     setLoadingSingle(true);
     try {
-      const data = await api.downloadSingle({
+      const res = await api.downloadSingle({
         base_url: baseUrl,
         capitulo: parseInt(cap, 10),
         nome_manga: nome || 'Manga',
       });
-      if (data.status === 'success') {
-        showAlert && showAlert(data.data?.message || 'Capítulo baixado!');
+      
+      if (res.status === 'success') {
+        showAlert && showAlert(res.data?.message || 'Capítulo baixado!');
         setCapitulo('');
       } else {
-        showAlert && showAlert(data.message || 'Erro no download.', 'error');
+        showAlert && showAlert(res.data?.message || 'Erro no download.', 'error');
       }
     } catch (err) {
-      showAlert && showAlert(`Erro de conexão: ${err.message}`, 'error');
+      const msg = err.response?.data?.data?.message || err.response?.data?.message || `Erro: ${err.message}`;
+      showAlert && showAlert(msg, 'error');
     } finally {
       setLoadingSingle(false);
     }
@@ -94,20 +96,21 @@ export function useDownload(showAlert) {
     }
 
     try {
-      const data = await api.downloadRange({
+      const res = await api.downloadRange({
         base_url: baseUrl,
         cap_inicio: i,
         cap_fim: f,
         nome_manga: nome || 'Manga',
       });
-      if (data.status === 'success') {
-        setJobId(data.data.job_id);
-        setJobStatus({ status: 'rodando', total: data.data.total, concluido: 0, atual: null, resultados: [] });
+      if (res.status === 'success') {
+        setJobId(res.data.job_id);
+        setJobStatus({ status: 'rodando', total: res.data.total, concluido: 0, atual: null, resultados: [] });
       } else {
-        showAlert && showAlert(data.message || 'Erro ao iniciar download.', 'error');
+        showAlert && showAlert(res.data?.message || 'Erro ao iniciar download.', 'error');
       }
     } catch (err) {
-      showAlert && showAlert(`Erro de conexão: ${err.message}`, 'error');
+      const msg = err.response?.data?.data?.message || err.response?.data?.message || `Erro: ${err.message}`;
+      showAlert && showAlert(msg, 'error');
     }
   };
 
