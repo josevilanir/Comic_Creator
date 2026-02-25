@@ -29,18 +29,24 @@ class SQLiteUserRepository(IUserRepository):
                 )
             """)
             
-            # Migração: Adicionar coluna email se não existir
+            # Migração: Garantir que todas as colunas existam
             cursor = conn.execute("PRAGMA table_info(users)")
             colunas = [row[1] for row in cursor.fetchall()]
+            
             if 'email' not in colunas:
                 conn.execute("ALTER TABLE users ADD COLUMN email TEXT")
-                # Se houver usuários antigos, eles ficarão com email NULL. 
-                # Como a coluna é UNIQUE NOT NULL no schema ideal, vamos apenas garantir que exista.
-                # Para evitar erros de restrição em bancos existentes:
                 try:
                     conn.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_users_email ON users(email)")
-                except:
-                    pass
+                except: pass
+
+            if 'password_hash' not in colunas:
+                conn.execute("ALTER TABLE users ADD COLUMN password_hash TEXT")
+
+            if 'created_at' not in colunas:
+                conn.execute("ALTER TABLE users ADD COLUMN created_at TEXT DEFAULT (datetime('now'))")
+            
+            if 'updated_at' not in colunas:
+                conn.execute("ALTER TABLE users ADD COLUMN updated_at TEXT DEFAULT (datetime('now'))")
 
             conn.execute("""
                 CREATE TABLE IF NOT EXISTS refresh_tokens (
