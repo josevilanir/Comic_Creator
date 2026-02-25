@@ -2,12 +2,15 @@ import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAlert } from './useAlert';
 import { apiService as api } from '../services/api';
+import { useAuth } from '../contexts/AuthContext';
 
 const ITEMS_PER_PAGE = 20;
 
 export function useChapters(mangaName) {
   const { alert, showAlert } = useAlert(4000);
   const queryClient = useQueryClient();
+  const { user } = useAuth();
+  const userId = user?.id;
 
   const [sortOrder, setSortOrder] = useState('asc');
   const [currentPage, setCurrentPage] = useState(1);
@@ -15,7 +18,7 @@ export function useChapters(mangaName) {
 
   // ── Fetch dos capítulos ───────────────────────────────────────────────────
   const { data: chapters = [], isLoading: loading } = useQuery({
-    queryKey: ['chapters', mangaName, sortOrder],
+    queryKey: ['chapters', userId, mangaName, sortOrder],
     queryFn: () =>
       api.getChapters(mangaName, sortOrder).then(res => {
         const lista = res.data?.chapters ?? res.data?.capitulos ?? [];
@@ -56,7 +59,7 @@ export function useChapters(mangaName) {
     onMutate: (filename) => setDeletingFile(filename),
     onSuccess: (res, filename) => {
       if (res.status === 'success') {
-        queryClient.setQueryData(['chapters', mangaName, sortOrder], (old = []) =>
+        queryClient.setQueryData(['chapters', userId, mangaName, sortOrder], (old = []) =>
           old.filter(c => c.filename !== filename)
         );
         showAlert(res.data?.message || 'Capítulo excluído!');
@@ -73,7 +76,7 @@ export function useChapters(mangaName) {
     mutationFn: (filename) => api.toggleLido(mangaName, filename),
     onSuccess: (res, filename) => {
       if (res.status === 'success') {
-        queryClient.setQueryData(['chapters', mangaName, sortOrder], (old = []) =>
+        queryClient.setQueryData(['chapters', userId, mangaName, sortOrder], (old = []) =>
           old.map(c =>
             c.filename === filename ? { ...c, read: res.data?.lido } : c
           )
