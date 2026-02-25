@@ -1,34 +1,38 @@
-from src.infrastructure.repositories.sqlite_user_repository import SQLiteUserRepository as UserRepository
+"""
+RegisterUserUseCase — Registro de novo usuário
+"""
+from datetime import datetime, timedelta, timezone
+from src.domain.entities.user import User
+from src.infrastructure.repositories.sqlite_user_repository import SQLiteUserRepository
+from src.infrastructure.services.hash_service import HashService
 from src.infrastructure.auth.jwt_service import JwtService
-from src.domain.exceptions import UserAlreadyExistsException, ValidationException
+
 
 class RegisterUserUseCase:
-    def __init__(self, repo: UserRepository, jwt: JwtService):
-        self.repo = repo
-        self.jwt = jwt
+    def __init__(self, user_repo: SQLiteUserRepository, hash_svc: HashService, jwt_svc: JwtService):
+        self.user_repo = user_repo
+        self.hash_svc = hash_svc
+        self.jwt_svc = jwt_svc
 
-    def execute(self, username: str, email: str, password: str) -> dict:
-        if len(password) < 6:
-            raise ValidationException("Senha deve ter pelo menos 6 caracteres", field="password")
-        if self.repo.find_by_username(username):
-            raise UserAlreadyExistsException(username)
-        if self.repo.find_by_email(email):
-            raise UserAlreadyExistsException(email) # Ou uma exceção mais específica para email
-        
-        from src.domain.entities.user import User
-        password_hash = self.jwt.hash_password(password)
-        user = User(id=None, username=username, email=email, password_hash=password_hash)
-        user = self.repo.create(user)
-        
-        access_token = self.jwt.create_access_token(user.id, user.username)
-        refresh_token = self.jwt.create_refresh_token(user.id)
-        
-        from datetime import datetime, timedelta, timezone
+    def executar(self, username: str, password: str) -> dict:
+        valido, msg = self.hash_svc.validar_forca_senha(password)
+        if not valido:
+            raise ValueError(msg)
+
+        if self.user_repo.existe(username):
+            raise ValueError('Username já em uso')
+
+        password_hash = self.hash_svc.hash_password(password)
+        # email é opcional — passa None (SQLite UNIQUE permite múltiplos NULLs)
+        user = self.user_repo.criar(User(id=None, username=username, email=None, password_hash=password_hash))
+
+        access_token = self.jwt_svc.create_access_token(user.id, user.username)
+        refresh_token = self.jwt_svc.create_refresh_token(user.id)
         expires_at = (datetime.now(timezone.utc) + timedelta(days=7)).isoformat()
-        self.repo.save_refresh_token(user.id, refresh_token, expires_at)
-        
+        self.user_repo.salvar_refresh_token(user.id, refresh_token, expires_at)
+
         return {
-            "user": {"id": user.id, "username": user.username, "email": user.email},
-            "access_token": access_token,
-            "refresh_token": refresh_token
+            'user': {'id': user.id, 'username': user.username},
+            'access_token': access_token,
+            'refresh_token': refresh_token,
         }

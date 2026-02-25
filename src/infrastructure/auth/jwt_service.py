@@ -1,45 +1,39 @@
-import jwt
-import bcrypt
+"""
+JWT Service — Geração e validação de tokens JWT
+"""
 import os
+import jwt
+import uuid
 from datetime import datetime, timedelta, timezone
 
-# Helper para garantir que a chave seja lida do ambiente sempre que necessário
-def get_secret_key():
-    return os.environ.get("JWT_SECRET_KEY", "dev-secret-troque-em-producao")
-
+SECRET_KEY = os.environ.get('JWT_SECRET_KEY', 'dev-secret-NUNCA-use-em-producao')
 ACCESS_EXPIRES_MINUTES = 30
 REFRESH_EXPIRES_DAYS = 7
 
+
 class JwtService:
-    @staticmethod
-    def hash_password(password: str) -> str:
-        return bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
+    """Serviço de JWT — encode/decode de access e refresh tokens."""
 
-    @staticmethod
-    def verify_password(password: str, hashed: str) -> bool:
-        return bcrypt.checkpw(password.encode(), hashed.encode())
-
-    @staticmethod
-    def create_access_token(user_id: int, username: str) -> str:
+    def create_access_token(self, user_id: int, username: str) -> str:
         payload = {
-            "sub": str(user_id),
-            "username": username,
-            "exp": datetime.now(timezone.utc) + timedelta(minutes=ACCESS_EXPIRES_MINUTES),
-            "type": "access",
-            "jti": os.urandom(8).hex()
+            'sub': user_id,
+            'username': username,
+            'type': 'access',
+            'exp': datetime.now(timezone.utc) + timedelta(minutes=ACCESS_EXPIRES_MINUTES),
         }
-        return jwt.encode(payload, get_secret_key(), algorithm="HS256")
+        return jwt.encode(payload, SECRET_KEY, algorithm='HS256')
 
-    @staticmethod
-    def create_refresh_token(user_id: int) -> str:
+    def create_refresh_token(self, user_id: int) -> str:
         payload = {
-            "sub": str(user_id),
-            "exp": datetime.now(timezone.utc) + timedelta(days=REFRESH_EXPIRES_DAYS),
-            "type": "refresh",
-            "jti": os.urandom(8).hex()
+            'sub': user_id,
+            'type': 'refresh',
+            'jti': str(uuid.uuid4()),  # garante unicidade mesmo quando chamado no mesmo segundo
+            'exp': datetime.now(timezone.utc) + timedelta(days=REFRESH_EXPIRES_DAYS),
         }
-        return jwt.encode(payload, get_secret_key(), algorithm="HS256")
+        return jwt.encode(payload, SECRET_KEY, algorithm='HS256')
 
-    @staticmethod
-    def decode_token(token: str) -> dict:
-        return jwt.decode(token, get_secret_key(), algorithms=["HS256"])
+    def decode_token(self, token: str) -> dict:
+        """
+        Decodifica token. Lança jwt.ExpiredSignatureError ou jwt.InvalidTokenError em caso de falha.
+        """
+        return jwt.decode(token, SECRET_KEY, algorithms=['HS256'])

@@ -111,10 +111,12 @@ class SQLiteUserRepository(IUserRepository):
                     email=row["email"], password_hash=row["password_hash"])
 
     def create(self, user: User) -> User:
+        # email pode ser None — SQLite UNIQUE permite múltiplos NULLs
+        email_val = user.email if user.email else None
         with self._get_conn() as conn:
             cursor = conn.execute(
                 "INSERT INTO users (username, email, password_hash) VALUES (?, ?, ?)",
-                (user.username, user.email, user.password_hash)
+                (user.username, email_val, user.password_hash)
             )
             user.id = cursor.lastrowid
             return user
@@ -152,6 +154,23 @@ class SQLiteUserRepository(IUserRepository):
             row = conn.execute("SELECT * FROM users WHERE id = ?", (user_id,)).fetchone()
         if not row: return None
         return User(id=row["id"], username=row["username"], email=row["email"], password_hash=row["password_hash"])
+
+    def revogar_todos_tokens(self, user_id: int):
+        with self._get_conn() as conn:
+            conn.execute(
+                'UPDATE refresh_tokens SET revoked = 1 WHERE user_id = ?',
+                (user_id,)
+            )
+
+    # ── Aliases em português para os use cases do MVP ─────────────────────────
+    def salvar_refresh_token(self, user_id: int, token: str, expires_at: str):
+        return self.save_refresh_token(user_id, token, expires_at)
+
+    def buscar_refresh_token(self, token: str) -> Optional[dict]:
+        return self.find_refresh_token(token)
+
+    def revogar_refresh_token(self, token: str):
+        return self.revoke_refresh_token(token)
 
     def atualizar(self, user: User) -> User: return user # Dummy para interface
     def existe(self, username: str) -> bool: return self.find_by_username(username) is not None
