@@ -54,7 +54,7 @@ export function useLibrary() {
         );
         showAlert(`"${nomeManga}" excluído com sucesso.`);
       } else {
-        showAlert(res.message || 'Erro ao excluir.', 'error');
+        showAlert(res.data?.message || 'Erro ao excluir.', 'error');
       }
     },
     onError: (err) => showAlert(`Erro de conexão: ${err.message}`, 'error'),
@@ -76,7 +76,7 @@ export function useLibrary() {
         showAlert(`Capa de "${nomeManga}" atualizada!`);
         return res.data?.capa_url;
       } else {
-        showAlert(res.message || 'Erro ao enviar capa.', 'error');
+        showAlert(res.data?.message || 'Erro ao enviar capa.', 'error');
       }
     },
     onError: (err) => showAlert(`Erro de conexão: ${err.message}`, 'error'),

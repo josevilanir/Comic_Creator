@@ -56,3 +56,6 @@ logs/
 .env
 .env.local
 GEMINI.MD
+
+# Banco de dados local
+comic_creator.db

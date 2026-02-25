@@ -61,7 +61,7 @@ export function useChapters(mangaName) {
         );
         showAlert(res.data?.message || 'Capítulo excluído!');
       } else {
-        showAlert(res.message || 'Erro ao excluir capítulo.', 'error');
+        showAlert(res.data?.message || 'Erro ao excluir capítulo.', 'error');
       }
     },
     onError: (err) => showAlert(`Erro de conexão: ${err.message}`, 'error'),
@@ -72,18 +72,15 @@ export function useChapters(mangaName) {
   const toggleLidoMutation = useMutation({
     mutationFn: (filename) => api.toggleLido(mangaName, filename),
     onSuccess: (res, filename) => {
-      // toggleLido ainda não usa JSend 100% no backend (retorna success: true)
-      // Mas nosso wrapper no api.js ou o backend pode ter mudado.
-      // Se seguir o padrão JSend:
-      if (res.status === 'success' || res.success) {
+      if (res.status === 'success') {
         queryClient.setQueryData(['chapters', mangaName, sortOrder], (old = []) =>
           old.map(c =>
-            c.filename === filename ? { ...c, read: res.data?.lido ?? res.lido } : c
+            c.filename === filename ? { ...c, read: res.data?.lido } : c
           )
         );
-        showAlert(res.message || 'Status atualizado', 'success');
+        showAlert(res.data?.message || 'Status atualizado', 'success');
       } else {
-        showAlert(res.message || 'Erro ao atualizar.', 'error');
+        showAlert(res.data?.message || 'Erro ao atualizar.', 'error');
       }
     },
     onError: (err) => showAlert(`Erro de conexão: ${err.message}`, 'error'),
