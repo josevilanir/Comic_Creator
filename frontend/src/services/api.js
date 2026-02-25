@@ -5,6 +5,18 @@ const API_V1 = `${BASE_URL}/api/v1`;
 
 export { BASE_URL };
 
+/**
+ * Adiciona ?token=<access_token> a uma URL de imagem protegida,
+ * permitindo que <img src> carregue recursos autenticados.
+ */
+export function authImgUrl(url) {
+  if (!url) return url;
+  const token = localStorage.getItem('access_token');
+  if (!token) return url;
+  const sep = url.includes('?') ? '&' : '?';
+  return `${url}${sep}token=${token}`;
+}
+
 export const api = axios.create({
   baseURL: API_V1,
 });

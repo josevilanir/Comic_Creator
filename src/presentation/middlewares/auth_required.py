@@ -14,11 +14,14 @@ def auth_required(f):
     """
     @wraps(f)
     def decorated(*args, **kwargs):
+        # Suporta Bearer header (API calls) e ?token= query param (<img src> tags)
         auth_header = request.headers.get('Authorization', '')
-        if not auth_header.startswith('Bearer '):
-            return jsonify({'status': 'fail', 'data': {'auth': 'Token não fornecido'}}), 401
-
-        token = auth_header.split(' ', 1)[1]
+        if auth_header.startswith('Bearer '):
+            token = auth_header.split(' ', 1)[1]
+        else:
+            token = request.args.get('token', '')
+            if not token:
+                return jsonify({'status': 'fail', 'data': {'auth': 'Token não fornecido'}}), 401
         try:
             payload = pyjwt.decode(token, SECRET_KEY, algorithms=['HS256'])
             if payload.get('type') != 'access':

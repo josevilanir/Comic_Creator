@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import { authImgUrl } from '../../services/api';
 
 /**
  * MangaCard — componente base reutilizável para exibição de um mangá.
@@ -8,7 +9,7 @@ import React, { useState, useRef } from 'react';
 function MangaCard({ manga, onClick, onDelete, onUploadCapa }) {
   const [isDeleting,  setIsDeleting]  = useState(false);
   const [isUploading, setIsUploading] = useState(false);
-  const [capaUrl,     setCapaUrl]     = useState(manga.capa_url);
+  const [capaUrl,     setCapaUrl]     = useState(authImgUrl(manga.capa_url));
   const fileInputRef = useRef(null);
 
   async function handleDelete(e) {
@@ -32,7 +33,7 @@ Esta ação não pode ser desfeita.`)) return;
     if (!file) return;
     setIsUploading(true);
     const novaUrl = await onUploadCapa(manga.nome, file);
-    if (novaUrl) setCapaUrl(`${novaUrl}?t=${Date.now()}`);
+    if (novaUrl) setCapaUrl(authImgUrl(`${novaUrl}?t=${Date.now()}`));
     setIsUploading(false);
     e.target.value = '';
   }

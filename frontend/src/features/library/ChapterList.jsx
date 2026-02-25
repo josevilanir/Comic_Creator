@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import Pagination from '../../components/shared/Pagination';
 import Alert from '../../components/ui/Alert';
 import { useChapters } from '../../hooks/useChapters';
+import { authImgUrl } from '../../services/api';
 
 /**
  * Página de listagem de capítulos de um mangá.
@@ -119,7 +120,7 @@ function ChapterList() {
             {chapter.thumbnail ? (
               <img
                 className="chapter-thumb"
-                src={chapter.thumbnail}
+                src={authImgUrl(chapter.thumbnail)}
                 alt={chapter.title}
                 loading="lazy"
               />
