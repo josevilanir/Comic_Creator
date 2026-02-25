@@ -123,9 +123,10 @@ class ImageDownloadService:
             response = requests.get(url, headers=self.headers, timeout=self.timeout, stream=True)
             response.raise_for_status()
             
-            # Verifica Content-Type
+            # Verifica Content-Type — aceita octet-stream pois alguns servidores
+            # servem imagens com tipo binário genérico; o PIL valida o conteúdo real
             content_type = response.headers.get('Content-Type', '').lower()
-            if not content_type.startswith('image/'):
+            if not content_type.startswith('image/') and 'octet-stream' not in content_type:
                 raise ImagensInvalidasException(f"Content-Type inválido: {content_type}")
             
             img_data = response.content
