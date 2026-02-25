@@ -59,3 +59,6 @@ GEMINI.MD
 
 # Banco de dados local
 comic_creator.db.env
+
+# Claude Code (worktrees e memória interna)
+.claude/
