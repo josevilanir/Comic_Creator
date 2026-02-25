@@ -21,16 +21,17 @@ export function useDownload(showAlert) {
     pollRef.current = setInterval(async () => {
       try {
         const data = await api.getProgress(jobId);
-        if (!data.success) return;
+        if (data.status !== 'success') return;
 
-        setJobStatus(data);
+        setJobStatus(data.data);
 
-        if (data.status === 'concluido' || data.status === 'cancelado') {
+        const status = data.data.status;
+        if (status === 'concluido' || status === 'cancelado') {
           clearInterval(pollRef.current);
-          const ok = data.resultados.filter(r => r.sucesso).length;
-          const err = data.resultados.filter(r => !r.sucesso).length;
+          const ok = data.data.resultados.filter(r => r.sucesso).length;
+          const err = data.data.resultados.filter(r => !r.sucesso).length;
           const msg =
-            data.status === 'cancelado'
+            status === 'cancelado'
               ? `Download cancelado. ${ok} capítulos baixados, ${err} falhou.`
               : `Download concluído! ✓ ${ok} baixados${err > 0 ? `, ✕ ${err} falharam` : ''}.`;
           showAlert && showAlert(msg, err > 0 ? 'error' : 'success');
@@ -53,8 +54,8 @@ export function useDownload(showAlert) {
         capitulo: parseInt(cap, 10),
         nome_manga: nome || 'Manga',
       });
-      if (data.success) {
-        showAlert && showAlert(data.message || 'Capítulo baixado!');
+      if (data.status === 'success') {
+        showAlert && showAlert(data.data?.message || 'Capítulo baixado!');
         setCapitulo('');
       } else {
         showAlert && showAlert(data.message || 'Erro no download.', 'error');
@@ -84,7 +85,7 @@ export function useDownload(showAlert) {
       return;
     }
     if (f < i) {
-      showAlert && showAlert('Capítulo final deve ser maior ou igual ao inicial.', 'error');
+      showAlert && showAlert('Capítulo final deve maior ou igual ao inicial.', 'error');
       return;
     }
     if (f - i + 1 > 200) {
@@ -99,9 +100,9 @@ export function useDownload(showAlert) {
         cap_fim: f,
         nome_manga: nome || 'Manga',
       });
-      if (data.success) {
-        setJobId(data.job_id);
-        setJobStatus({ status: 'rodando', total: data.total, concluido: 0, atual: null, resultados: [] });
+      if (data.status === 'success') {
+        setJobId(data.data.job_id);
+        setJobStatus({ status: 'rodando', total: data.data.total, concluido: 0, atual: null, resultados: [] });
       } else {
         showAlert && showAlert(data.message || 'Erro ao iniciar download.', 'error');
       }

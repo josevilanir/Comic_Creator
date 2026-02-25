@@ -13,7 +13,11 @@ export function useLibrary() {
 
   useEffect(() => {
     api.getLibrary()
-      .then(data => setMangas(Array.isArray(data) ? data : []))
+      .then(data => {
+        if (data.status === 'success') {
+          setMangas(Array.isArray(data.data) ? data.data : []);
+        }
+      })
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
@@ -41,9 +45,9 @@ export function useLibrary() {
   async function handleDelete(nomeManga) {
     try {
       const data = await api.deleteManga(nomeManga);
-      if (data.success) {
+      if (data.status === 'success') {
         setMangas(prev => prev.filter(m => m.nome !== nomeManga));
-        showAlert(`"${nomeManga}" excluído com sucesso.`);
+        showAlert(data.data?.message || `"${nomeManga}" excluído com sucesso.`);
       } else {
         showAlert(data.message || 'Erro ao excluir.', 'error');
       }
@@ -57,9 +61,9 @@ export function useLibrary() {
     formData.append('capa', file);
     try {
       const data = await api.uploadCover(nomeManga, formData);
-      if (data.success) {
-        showAlert(`Capa de "${nomeManga}" atualizada!`);
-        return data.capa_url;
+      if (data.status === 'success') {
+        showAlert(data.data?.message || `Capa de "${nomeManga}" atualizada!`);
+        return data.data?.capa_url;
       } else {
         showAlert(data.message || 'Erro ao enviar capa.', 'error');
         return null;

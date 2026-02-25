@@ -8,7 +8,11 @@ export function useUrls() {
 
   useEffect(() => {
     api.getUrls()
-      .then(d => setUrls(typeof d === 'object' ? d : {}))
+      .then(d => {
+        if (d.status === 'success') {
+          setUrls(d.data || {});
+        }
+      })
       .catch(() => {});
   }, []);
 
@@ -20,7 +24,7 @@ export function useUrls() {
 
   const addUrl = async (nome, url) => {
     const data = await api.saveUrl(nome, url);
-    if (data.success) {
+    if (data.status === 'success') {
       setUrls(prev => ({ ...prev, [nome]: url }));
     }
     return data;
@@ -28,7 +32,7 @@ export function useUrls() {
 
   const removeUrl = async (nome) => {
     const data = await api.removeUrl(nome);
-    if (data.success) {
+    if (data.status === 'success') {
       setUrls(prev => {
         const n = { ...prev };
         delete n[nome];

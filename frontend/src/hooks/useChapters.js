@@ -16,8 +16,10 @@ export function useChapters(mangaName) {
     setLoading(true);
     api.getChapters(mangaName, sortOrder)
       .then(data => {
-        const lista = data.chapters ?? data.capitulos ?? [];
-        setChapters(Array.isArray(lista) ? lista : []);
+        if (data.status === 'success') {
+          const lista = data.data?.chapters ?? [];
+          setChapters(Array.isArray(lista) ? lista : []);
+        }
       })
       .catch(err => {
         console.error('Erro ao carregar capítulos:', err);
@@ -25,7 +27,6 @@ export function useChapters(mangaName) {
       .finally(() => setLoading(false));
   }, [mangaName, sortOrder]);
 
-  // Usamos useState para chapters, loading etc. que já estão importados
   const sorted = useMemo(() => {
     return [...chapters].sort((a, b) => {
       const numA = parseInt(a.title?.match(/\d+/)?.[0] ?? 0, 10);
@@ -58,9 +59,9 @@ export function useChapters(mangaName) {
     setDeletingFile(filename);
     try {
       const data = await api.deleteChapter(mangaName, filename);
-      if (data.success) {
+      if (data.status === 'success') {
         setChapters(prev => prev.filter(c => c.filename !== filename));
-        showAlert(data.message || 'Capítulo excluído!');
+        showAlert(data.data?.message || 'Capítulo excluído!');
       } else {
         showAlert(data.message || 'Erro ao excluir capítulo.', 'error');
       }
@@ -74,6 +75,7 @@ export function useChapters(mangaName) {
   async function handleToggleLido(filename) {
     try {
       const data = await api.toggleLido(mangaName, filename);
+      // toggleLido ainda não usa JSend conforme planejado
       if (data.success) {
         setChapters(prev =>
           prev.map(c =>
