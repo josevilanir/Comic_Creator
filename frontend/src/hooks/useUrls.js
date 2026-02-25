@@ -1,50 +1,55 @@
 import { useState, useEffect } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../services/api';
 
 export function useUrls() {
-  const [urls, setUrls] = useState({});
+  const queryClient = useQueryClient();
   const [selectedManga, setSelectedManga] = useState('');
   const [baseUrl, setBaseUrl] = useState('');
 
-  useEffect(() => {
-    api.getUrls()
-      .then(d => {
-        if (d.status === 'success') {
-          setUrls(d.data || {});
-        }
-      })
-      .catch(() => {});
-  }, []);
+  // ── Fetch das URLs salvas ─────────────────────────────────────────────────
+  const { data: urls = {} } = useQuery({
+    queryKey: ['urls'],
+    queryFn: () => api.getUrls().then(res => res.data ?? {}),
+  });
 
+  // Sincronizar baseUrl ao selecionar manga
   useEffect(() => {
     if (selectedManga && urls[selectedManga]) {
       setBaseUrl(urls[selectedManga]);
     }
   }, [selectedManga, urls]);
 
-  const addUrl = async (nome, url) => {
-    const data = await api.saveUrl(nome, url);
-    if (data.status === 'success') {
-      setUrls(prev => ({ ...prev, [nome]: url }));
-    }
-    return data;
-  };
-
-  const removeUrl = async (nome) => {
-    const data = await api.removeUrl(nome);
-    if (data.status === 'success') {
-      setUrls(prev => {
-        const n = { ...prev };
-        delete n[nome];
-        return n;
-      });
-      if (selectedManga === nome) {
-        setSelectedManga('');
-        setBaseUrl('');
+  // ── Mutation: adicionar URL ───────────────────────────────────────────────
+  const addMutation = useMutation({
+    mutationFn: ({ nome, url }) => api.saveUrl(nome, url),
+    onSuccess: (res, { nome, url }) => {
+      if (res.status === 'success') {
+        queryClient.setQueryData(['urls'], (old = {}) => ({ ...old, [nome]: url }));
       }
-    }
-    return data;
-  };
+    },
+  });
+
+  // ── Mutation: remover URL ─────────────────────────────────────────────────
+  const removeMutation = useMutation({
+    mutationFn: (nome) => api.removeUrl(nome),
+    onSuccess: (res, nome) => {
+      if (res.status === 'success') {
+        queryClient.setQueryData(['urls'], (old = {}) => {
+          const updated = { ...old };
+          delete updated[nome];
+          return updated;
+        });
+        if (selectedManga === nome) {
+          setSelectedManga('');
+          setBaseUrl('');
+        }
+      }
+    },
+  });
+
+  const addUrl = (nome, url) => addMutation.mutateAsync({ nome, url });
+  const removeUrl = (nome) => removeMutation.mutateAsync(nome);
 
   return {
     urls,

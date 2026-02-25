@@ -1,4 +1,5 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAlert } from './useAlert';
 import { api } from '../services/api';
 
@@ -6,24 +7,24 @@ const ITEMS_PER_PAGE = 18;
 
 export function useLibrary() {
   const { alert, showAlert } = useAlert(4000);
-  const [mangas, setMangas] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
+
   const [search, setSearch] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
 
-  useEffect(() => {
-    api.getLibrary()
-      .then(data => {
-        if (data.status === 'success') {
-          setMangas(Array.isArray(data.data) ? data.data : []);
-        }
-      })
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, []);
+  // ── Fetch da biblioteca ───────────────────────────────────────────────────
+  const { data: mangas = [], isLoading: loading } = useQuery({
+    queryKey: ['library'],
+    queryFn: () => api.getLibrary().then(res => res.data ?? []),
+  });
 
-  useEffect(() => { setCurrentPage(1); }, [search]);
+  // Resetar página ao mudar busca
+  const handleSearchChange = (value) => {
+    setSearch(value);
+    setCurrentPage(1);
+  };
 
+  // ── Filtro e paginação ────────────────────────────────────────────────────
   const filtered = useMemo(() => {
     if (!search.trim()) return mangas;
     const q = search.toLowerCase();
@@ -42,43 +43,60 @@ export function useLibrary() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
-  async function handleDelete(nomeManga) {
-    try {
-      const data = await api.deleteManga(nomeManga);
-      if (data.status === 'success') {
-        setMangas(prev => prev.filter(m => m.nome !== nomeManga));
-        showAlert(data.data?.message || `"${nomeManga}" excluído com sucesso.`);
+  // ── Mutation: excluir mangá ───────────────────────────────────────────────
+  const deleteMutation = useMutation({
+    mutationFn: (nomeManga) => api.deleteManga(nomeManga),
+    onSuccess: (res, nomeManga) => {
+      if (res.status === 'success') {
+        // Atualiza cache sem refetch
+        queryClient.setQueryData(['library'], (old = []) =>
+          old.filter(m => m.nome !== nomeManga)
+        );
+        showAlert(`"${nomeManga}" excluído com sucesso.`);
       } else {
-        showAlert(data.message || 'Erro ao excluir.', 'error');
+        showAlert(res.message || 'Erro ao excluir.', 'error');
       }
-    } catch (err) {
-      showAlert(`Erro de conexão: ${err.message}`, 'error');
-    }
+    },
+    onError: (err) => showAlert(`Erro de conexão: ${err.message}`, 'error'),
+  });
+
+  // ── Mutation: upload de capa ──────────────────────────────────────────────
+  const uploadCapaMutation = useMutation({
+    mutationFn: ({ nomeManga, formData }) => api.uploadCover(nomeManga, formData),
+    onSuccess: (res, { nomeManga }) => {
+      if (res.status === 'success') {
+        // Atualiza a capa no cache sem refetch
+        queryClient.setQueryData(['library'], (old = []) =>
+          old.map(m =>
+            m.nome === nomeManga
+              ? { ...m, tem_capa: true, capa_url: res.data?.capa_url ?? m.capa_url }
+              : m
+          )
+        );
+        showAlert(`Capa de "${nomeManga}" atualizada!`);
+        return res.data?.capa_url;
+      } else {
+        showAlert(res.message || 'Erro ao enviar capa.', 'error');
+      }
+    },
+    onError: (err) => showAlert(`Erro de conexão: ${err.message}`, 'error'),
+  });
+
+  async function handleDelete(nomeManga) {
+    deleteMutation.mutate(nomeManga);
   }
 
   async function handleUploadCapa(nomeManga, file) {
     const formData = new FormData();
     formData.append('capa', file);
-    try {
-      const data = await api.uploadCover(nomeManga, formData);
-      if (data.status === 'success') {
-        showAlert(data.data?.message || `Capa de "${nomeManga}" atualizada!`);
-        return data.data?.capa_url;
-      } else {
-        showAlert(data.message || 'Erro ao enviar capa.', 'error');
-        return null;
-      }
-    } catch (err) {
-      showAlert(`Erro de conexão: ${err.message}`, 'error');
-      return null;
-    }
+    uploadCapaMutation.mutate({ nomeManga, formData });
   }
 
   return {
     alert,
     loading,
     search,
-    setSearch,
+    setSearch: handleSearchChange,
     filtered,
     paginated,
     currentPage,

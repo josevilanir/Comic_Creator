@@ -1,32 +1,30 @@
-import { useState, useEffect, useMemo } from 'react';
-import { api } from '../services/api';
+import { useState, useMemo } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAlert } from './useAlert';
+import { api } from '../services/api';
 
 const ITEMS_PER_PAGE = 20;
 
 export function useChapters(mangaName) {
   const { alert, showAlert } = useAlert(4000);
-  const [chapters, setChapters] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
+
   const [sortOrder, setSortOrder] = useState('asc');
   const [currentPage, setCurrentPage] = useState(1);
   const [deletingFile, setDeletingFile] = useState(null);
 
-  useEffect(() => {
-    setLoading(true);
-    api.getChapters(mangaName, sortOrder)
-      .then(data => {
-        if (data.status === 'success') {
-          const lista = data.data?.chapters ?? [];
-          setChapters(Array.isArray(lista) ? lista : []);
-        }
-      })
-      .catch(err => {
-        console.error('Erro ao carregar capítulos:', err);
-      })
-      .finally(() => setLoading(false));
-  }, [mangaName, sortOrder]);
+  // ── Fetch dos capítulos ───────────────────────────────────────────────────
+  const { data: chapters = [], isLoading: loading } = useQuery({
+    queryKey: ['chapters', mangaName, sortOrder],
+    queryFn: () =>
+      api.getChapters(mangaName, sortOrder).then(res => {
+        const lista = res.data?.chapters ?? res.data?.capitulos ?? [];
+        return Array.isArray(lista) ? lista : [];
+      }),
+    enabled: !!mangaName,
+  });
 
+  // ── Ordenação e paginação ────────────────────────────────────────────────
   const sorted = useMemo(() => {
     return [...chapters].sort((a, b) => {
       const numA = parseInt(a.title?.match(/\d+/)?.[0] ?? 0, 10);
@@ -52,43 +50,53 @@ export function useChapters(mangaName) {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
+  // ── Mutation: excluir capítulo ────────────────────────────────────────────
+  const deleteMutation = useMutation({
+    mutationFn: (filename) => api.deleteChapter(mangaName, filename),
+    onMutate: (filename) => setDeletingFile(filename),
+    onSuccess: (res, filename) => {
+      if (res.status === 'success') {
+        queryClient.setQueryData(['chapters', mangaName, sortOrder], (old = []) =>
+          old.filter(c => c.filename !== filename)
+        );
+        showAlert(res.data?.message || 'Capítulo excluído!');
+      } else {
+        showAlert(res.message || 'Erro ao excluir capítulo.', 'error');
+      }
+    },
+    onError: (err) => showAlert(`Erro de conexão: ${err.message}`, 'error'),
+    onSettled: () => setDeletingFile(null),
+  });
+
+  // ── Mutation: toggle lido ─────────────────────────────────────────────────
+  const toggleLidoMutation = useMutation({
+    mutationFn: (filename) => api.toggleLido(mangaName, filename),
+    onSuccess: (res, filename) => {
+      // toggleLido ainda não usa JSend 100% no backend (retorna success: true)
+      // Mas nosso wrapper no api.js ou o backend pode ter mudado.
+      // Se seguir o padrão JSend:
+      if (res.status === 'success' || res.success) {
+        queryClient.setQueryData(['chapters', mangaName, sortOrder], (old = []) =>
+          old.map(c =>
+            c.filename === filename ? { ...c, read: res.data?.lido ?? res.lido } : c
+          )
+        );
+        showAlert(res.message || 'Status atualizado', 'success');
+      } else {
+        showAlert(res.message || 'Erro ao atualizar.', 'error');
+      }
+    },
+    onError: (err) => showAlert(`Erro de conexão: ${err.message}`, 'error'),
+  });
+
   async function handleDelete(filename) {
     if (!window.confirm(`Excluir o capítulo "${filename.replace('.pdf', '')}"?\n\nEsta ação não pode ser desfeita.`))
       return;
-
-    setDeletingFile(filename);
-    try {
-      const data = await api.deleteChapter(mangaName, filename);
-      if (data.status === 'success') {
-        setChapters(prev => prev.filter(c => c.filename !== filename));
-        showAlert(data.data?.message || 'Capítulo excluído!');
-      } else {
-        showAlert(data.message || 'Erro ao excluir capítulo.', 'error');
-      }
-    } catch (err) {
-      showAlert(`Erro de conexão: ${err.message}`, 'error');
-    } finally {
-      setDeletingFile(null);
-    }
+    deleteMutation.mutate(filename);
   }
 
   async function handleToggleLido(filename) {
-    try {
-      const data = await api.toggleLido(mangaName, filename);
-      // toggleLido ainda não usa JSend conforme planejado
-      if (data.success) {
-        setChapters(prev =>
-          prev.map(c =>
-            c.filename === filename ? { ...c, read: data.lido } : c
-          )
-        );
-        showAlert(data.message, 'success');
-      } else {
-        showAlert(data.message || 'Erro ao atualizar.', 'error');
-      }
-    } catch (err) {
-      showAlert(`Erro de conexão: ${err.message}`, 'error');
-    }
+    toggleLidoMutation.mutate(filename);
   }
 
   return {
