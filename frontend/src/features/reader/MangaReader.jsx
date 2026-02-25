@@ -79,7 +79,12 @@ function MangaReader() {
 
       try {
         // 1. Busca o PDF binário com fetch (CORS resolvido no backend por /capitulo/*)
-        const res = await fetch(pdfUrl);
+        const token = localStorage.getItem("access_token");
+        const res = await fetch(pdfUrl, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const buffer = await res.arrayBuffer();
         if (cancelled) return;
