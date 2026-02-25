@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { BASE_URL } from '../../services/api';
+import { useProgresso } from '../../hooks/useProgresso';
 
 // ─── PDF.js lazy loader ────────────────────────────────────────────────────────
 let _pdfjsLib = null;
@@ -46,6 +47,8 @@ function MangaReader() {
   const decodedFile  = decodeURIComponent(filename);
   const chapterTitle = decodedFile.replace('.pdf', '').replace(/_/g, ' ');
 
+  const { loadProgresso, saveProgresso } = useProgresso(decodedManga, decodedFile);
+
   const allChapters = location.state?.chapters ?? [];
   const currentIdx  = allChapters.findIndex(c => c.filename === decodedFile);
   const prevChapter = currentIdx > 0                       ? allChapters[currentIdx - 1] : null;
@@ -88,6 +91,12 @@ function MangaReader() {
 
         pdfRef.current = pdf;
         setTotal(pdf.numPages);
+        
+        // Carrega a última página salva
+        const savedPage = await loadProgresso();
+        const startPage = Math.min(savedPage, pdf.numPages);
+        setPage(startPage);
+        
         setStatus('ready');
       } catch (err) {
         if (!cancelled) {
@@ -138,12 +147,22 @@ function MangaReader() {
 
   // ── Navegação ──────────────────────────────────────────────────────────────
   function goNext() {
-    if (page < total) { setPage(p => p + 1); return; }
+    if (page < total) {
+      const nextP = page + 1;
+      setPage(nextP);
+      saveProgresso(nextP);
+      return;
+    }
     if (nextChapter)  goToChapter(nextChapter);
   }
 
   function goPrev() {
-    if (page > 1)    { setPage(p => p - 1); return; }
+    if (page > 1) {
+      const prevP = page - 1;
+      setPage(prevP);
+      saveProgresso(prevP);
+      return;
+    }
     if (prevChapter) goToChapter(prevChapter);
   }
 

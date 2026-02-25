@@ -39,6 +39,9 @@ def create_app(env='development'):
     from src.presentation.api.routes import api_bp
     app.register_blueprint(api_bp)
 
+    from src.presentation.api.progresso_routes import progresso_bp
+    app.register_blueprint(progresso_bp)
+
     # Aliases de retrocompatibilidade — /api/* → /api/v1/*
     # TODO: remover após todos os clientes migrarem para /api/v1
     from flask import redirect

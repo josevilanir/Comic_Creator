@@ -44,4 +44,13 @@ export const api = {
       `${BASE_URL}/capitulo/lido/${encodeURIComponent(mangaName)}/${encodeURIComponent(filename)}`,
       { method: 'POST' }
     ).then(r => r.json()),
+  getProgresso: (mangaName, filename) =>
+    fetch(`${API_V1}/progresso/${encodeURIComponent(mangaName)}/${encodeURIComponent(filename)}`)
+      .then(r => r.json()),
+  saveProgresso: (manga, filename, pagina) =>
+    fetch(`${API_V1}/progresso`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ manga, filename, pagina }),
+    }).then(r => r.json()),
 };
