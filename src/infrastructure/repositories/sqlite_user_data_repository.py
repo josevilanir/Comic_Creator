@@ -7,11 +7,34 @@ from typing import List, Set
 class UserDataRepository:
     def __init__(self, db_path: str):
         self.db_path = db_path
+        self._create_tables()
 
     def _get_conn(self):
         conn = sqlite3.connect(self.db_path)
         conn.row_factory = sqlite3.Row
         return conn
+
+    def _create_tables(self):
+        with self._get_conn() as conn:
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS user_reads (
+                    user_id INTEGER NOT NULL,
+                    manga_name TEXT NOT NULL,
+                    filename TEXT NOT NULL,
+                    PRIMARY KEY (user_id, manga_name, filename),
+                    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+                )
+            """)
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS user_progress (
+                    user_id INTEGER NOT NULL,
+                    manga_name TEXT NOT NULL,
+                    filename TEXT NOT NULL,
+                    page INTEGER NOT NULL,
+                    PRIMARY KEY (user_id, manga_name, filename),
+                    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+                )
+            """)
 
     # ─── Reads ───────────────────────────────────────────────────────────
     

@@ -10,11 +10,24 @@ from ...domain.repositories import IURLSalvaRepository
 class SQLiteURLRepository(IURLSalvaRepository):
     def __init__(self, db_path: str):
         self.db_path = db_path
+        self._create_table()
 
     def _get_conn(self):
         conn = sqlite3.connect(self.db_path)
         conn.row_factory = sqlite3.Row
         return conn
+
+    def _create_table(self):
+        with self._get_conn() as conn:
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS user_urls (
+                    user_id INTEGER NOT NULL,
+                    manga_name TEXT NOT NULL,
+                    url_base TEXT NOT NULL,
+                    PRIMARY KEY (user_id, manga_name),
+                    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+                )
+            """)
 
     def listar_todas(self, user_id: int) -> List[URLSalva]:
         with self._get_conn() as conn:
