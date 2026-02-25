@@ -1,4 +1,4 @@
-from src.infrastructure.repositories.user_repository import UserRepository
+from src.infrastructure.repositories.sqlite_user_repository import SQLiteUserRepository as UserRepository
 
 class LogoutUserUseCase:
     def __init__(self, repo: UserRepository):
