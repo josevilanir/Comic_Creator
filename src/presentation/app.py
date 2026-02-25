@@ -42,6 +42,9 @@ def create_app(env='development'):
     from src.presentation.api.progresso_routes import progresso_bp
     app.register_blueprint(progresso_bp)
 
+    from src.presentation.controllers.auth_controller import auth_bp
+    app.register_blueprint(auth_bp)
+
     # Aliases de retrocompatibilidade — /api/* → /api/v1/*
     # TODO: remover após todos os clientes migrarem para /api/v1
     from flask import redirect
@@ -71,12 +74,10 @@ def create_app(env='development'):
     from src.presentation.controllers.download_controller import download_bp
     from src.presentation.controllers.manga_controller import manga_bp
     from src.presentation.controllers.capitulo_controller import capitulo_bp
-    from src.presentation.controllers.auth_controller import auth_bp
 
     app.register_blueprint(download_bp, url_prefix='/legacy')
     app.register_blueprint(manga_bp, url_prefix='/manga')
     app.register_blueprint(capitulo_bp, url_prefix='/capitulo')
-    app.register_blueprint(auth_bp, url_prefix='/auth')
 
     # ========================================
     # ✅ ADICIONE ESTAS ROTAS AQUI:

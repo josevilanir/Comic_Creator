@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { api } from '../services/api';
+import { apiService as api } from '../services/api';
 
 export function useDownload(showAlert) {
   const [capitulo, setCapitulo] = useState('');

@@ -5,6 +5,9 @@ import Library from './src/features/library/Library';
 import ChapterList from './src/features/library/ChapterList';
 import MangaReader from './src/features/reader/MangaReader';
 import Downloader from './src/features/downloader/Downloader';
+import { AuthProvider, useAuth } from './src/contexts/AuthContext';
+import { PrivateRoute } from './src/components/PrivateRoute';
+import { AuthPage } from './src/pages/AuthPage';
 
 const NAV_LINKS = [
   { to: '/',         label: 'Home' },
@@ -17,6 +20,7 @@ const NAV_LINKS = [
  */
 function Navbar() {
   const { pathname } = useLocation();
+  const { user, logout } = useAuth();
 
   // Verifica se o link está ativo (exact para '/', prefix para o resto)
   function isActive(to) {
@@ -47,20 +51,16 @@ function Navbar() {
               {link.label}
             </Link>
           ))}
+          
+          {user && (
+              <div style={{ display: 'flex', alignItems: 'center', marginLeft: '16px', gap: '12px' }}>
+                  <span style={{ color: 'var(--text-light)', fontSize: '0.85rem' }}>👋 {user.username}</span>
+                  <button onClick={logout} className="btn btn-sm btn-outline">Sair</button>
+              </div>
+          )}
         </nav>
       </div>
     </header>
-  );
-}
-
-/**
- * App — composição de rotas e layout global
- */
-function App() {
-  return (
-    <Router>
-      <AppContent />
-    </Router>
   );
 }
 
@@ -71,20 +71,36 @@ function App() {
 function AppContent() {
   const { pathname } = useLocation();
   const isReader = pathname.includes('/ler/');
+  const isAuthPage = pathname === '/login';
 
   return (
     <>
-      {!isReader && <Navbar />}
+      {!isReader && !isAuthPage && <Navbar />}
       <main>
         <Routes>
-          <Route path="/"                                    element={<LandingPage />} />
-          <Route path="/library"                            element={<Library />} />
-          <Route path="/manga/:mangaName"                   element={<ChapterList />} />
-          <Route path="/manga/:mangaName/ler/:filename"     element={<MangaReader />} />
-          <Route path="/download"                           element={<Downloader />} />
+          <Route path="/login" element={<AuthPage />} />
+          
+          <Route path="/" element={<PrivateRoute><LandingPage /></PrivateRoute>} />
+          <Route path="/library" element={<PrivateRoute><Library /></PrivateRoute>} />
+          <Route path="/manga/:mangaName" element={<PrivateRoute><ChapterList /></PrivateRoute>} />
+          <Route path="/manga/:mangaName/ler/:filename" element={<PrivateRoute><MangaReader /></PrivateRoute>} />
+          <Route path="/download" element={<PrivateRoute><Downloader /></PrivateRoute>} />
         </Routes>
       </main>
     </>
+  );
+}
+
+/**
+ * App — composição de rotas e layout global
+ */
+function App() {
+  return (
+    <Router>
+      <AuthProvider>
+        <AppContent />
+      </AuthProvider>
+    </Router>
   );
 }
 

@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAlert } from './useAlert';
-import { api } from '../services/api';
+import { apiService as api } from '../services/api';
 
 const ITEMS_PER_PAGE = 20;
 

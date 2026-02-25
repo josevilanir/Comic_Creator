@@ -9,6 +9,9 @@ from src.domain.exceptions import (
     EntityNotFoundException,
     ValidationException as DomainValidationException,
     DuplicateException,
+    UserNotFoundException,
+    UserAlreadyExistsException,
+    InvalidCredentialsException
 )
 
 
@@ -37,9 +40,21 @@ def register_error_handlers(app):
     def entity_not_found_handler(e):
         return _error(e.message, e.code, 404)
 
+    @app.errorhandler(UserNotFoundException)
+    def user_not_found_handler(e):
+        return _error(e.message, "USER_NOT_FOUND", 404)
+
     @app.errorhandler(DuplicateException)
     def duplicate_entity_handler(e):
         return _error(e.message, e.code, 409)
+
+    @app.errorhandler(UserAlreadyExistsException)
+    def user_already_exists_handler(e):
+        return _error(e.message, "USER_ALREADY_EXISTS", 409)
+
+    @app.errorhandler(InvalidCredentialsException)
+    def invalid_credentials_handler(e):
+        return _error(e.message, "INVALID_CREDENTIALS", 401)
 
     @app.errorhandler(DomainValidationException)
     def domain_validation_handler(e):

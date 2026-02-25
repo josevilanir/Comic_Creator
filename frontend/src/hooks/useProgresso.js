@@ -3,7 +3,7 @@
  * Salva a cada virada de página com debounce de 800ms para não spammar a API.
  */
 import { useCallback, useRef } from 'react';
-import { api } from '../services/api';
+import { apiService as api } from '../services/api';
 
 export function useProgresso(mangaName, filename) {
   const debounceRef = useRef(null);

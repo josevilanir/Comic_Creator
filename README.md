@@ -1,6 +1,6 @@
-# 📖 Comic Creator
+# 📖 Comic Creator v2.0.0
 
-**Comic Creator** é uma solução completa para download, organização e leitura de mangás e quadrinhos. Com um backend robusto em Python e um frontend moderno em React, você pode gerenciar sua coleção local com facilidade.
+**Comic Creator** é uma solução completa para download, organização e leitura de mangás e quadrinhos. Agora com **autenticação JWT multi-usuário**, permitindo bibliotecas e progressos de leitura individuais.
 
 ## 🚀 Guia Rápido de Instalação
 
@@ -20,6 +20,9 @@ source .venv/bin/activate  # Linux/macOS
 
 # Instalar dependências
 pip install -r requirements.txt
+
+# Configurar variáveis de ambiente
+echo "JWT_SECRET_KEY=$(openssl rand -hex 32)" > .env
 
 # Iniciar o servidor (Porta 5000)
 python main.py

@@ -25,4 +25,5 @@ beautifulsoup4>=4.12.0
 werkzeug>=2.3.0        # hash de senhas (generate_password_hash)
 pytest>=7.0.0           # testes unitáriosss
 pytest-cov>=3.0.0       # cobertura de testes
-python-dotenv>=0.20.0   # variáveis de ambiente
+python-dotenv>=0.20.0   # variáveis de ambientePyJWT==2.8.0
+bcrypt==4.1.3
