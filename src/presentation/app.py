@@ -43,7 +43,7 @@ def create_app(env='development'):
     app.register_blueprint(progresso_bp)
 
     from src.presentation.controllers.auth_controller import auth_bp
-    app.register_blueprint(auth_bp)
+    app.register_blueprint(auth_bp, url_prefix='/api/v1/auth')
 
     # Aliases de retrocompatibilidade — /api/* → /api/v1/*
     # TODO: remover após todos os clientes migrarem para /api/v1

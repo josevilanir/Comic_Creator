@@ -6,7 +6,7 @@ from src.application.use_cases.login_user import LoginUserUseCase
 from src.application.use_cases.refresh_token import RefreshTokenUseCase
 from src.application.use_cases.logout_user import LogoutUserUseCase
 
-auth_bp = Blueprint("auth", __name__, url_prefix="/api/v1/auth")
+auth_bp = Blueprint("auth", __name__)
 
 repo = UserRepository()
 jwt_svc = JwtService()
