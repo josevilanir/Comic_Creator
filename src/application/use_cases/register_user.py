@@ -15,8 +15,10 @@ class RegisterUserUseCase:
         if self.repo.find_by_email(email):
             raise UserAlreadyExistsException(email) # Ou uma exceção mais específica para email
         
+        from src.domain.entities.user import User
         password_hash = self.jwt.hash_password(password)
-        user = self.repo.create(username, email, password_hash)
+        user = User(id=None, username=username, email=email, password_hash=password_hash)
+        user = self.repo.create(user)
         
         access_token = self.jwt.create_access_token(user.id, user.username)
         refresh_token = self.jwt.create_refresh_token(user.id)
