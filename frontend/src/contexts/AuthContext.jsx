@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { apiService as api, api as axiosInstance } from "../services/api";
+import { queryClient } from "../../main";
 
 const AuthContext = createContext(null);
 
@@ -41,6 +42,7 @@ export function AuthProvider({ children }) {
     localStorage.setItem("access_token", access_token);
     localStorage.setItem("refresh_token", refresh_token);
     localStorage.setItem("user", JSON.stringify(user));
+    queryClient.clear();
     setUser(user);
     return user;
   };
@@ -51,17 +53,19 @@ export function AuthProvider({ children }) {
     localStorage.setItem("access_token", access_token);
     localStorage.setItem("refresh_token", refresh_token);
     localStorage.setItem("user", JSON.stringify(user));
+    queryClient.clear();
     setUser(user);
     return user;
   };
 
   const logout = async () => {
     const refresh_token = localStorage.getItem("refresh_token");
-    try { 
-        if (refresh_token) await api.logout(refresh_token); 
+    try {
+        if (refresh_token) await api.logout(refresh_token);
     } catch (e) {
         console.error("Logout error", e);
     }
+    queryClient.clear();
     localStorage.removeItem("access_token");
     localStorage.removeItem("refresh_token");
     localStorage.removeItem("user");

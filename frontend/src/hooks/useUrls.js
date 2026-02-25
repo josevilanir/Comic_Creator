@@ -1,15 +1,18 @@
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiService as api } from '../services/api';
+import { useAuth } from '../contexts/AuthContext';
 
 export function useUrls() {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
+  const userId = user?.id;
   const [selectedManga, setSelectedManga] = useState('');
   const [baseUrl, setBaseUrl] = useState('');
 
   // ── Fetch das URLs salvas ─────────────────────────────────────────────────
   const { data: urls = {} } = useQuery({
-    queryKey: ['urls'],
+    queryKey: ['urls', userId],
     queryFn: () => api.getUrls().then(res => res.data ?? {}),
   });
 
@@ -25,7 +28,7 @@ export function useUrls() {
     mutationFn: ({ nome, url }) => api.saveUrl(nome, url),
     onSuccess: (res, { nome, url }) => {
       if (res.status === 'success') {
-        queryClient.setQueryData(['urls'], (old = {}) => ({ ...old, [nome]: url }));
+        queryClient.setQueryData(['urls', userId], (old = {}) => ({ ...old, [nome]: url }));
       }
     },
   });
@@ -35,7 +38,7 @@ export function useUrls() {
     mutationFn: (nome) => api.removeUrl(nome),
     onSuccess: (res, nome) => {
       if (res.status === 'success') {
-        queryClient.setQueryData(['urls'], (old = {}) => {
+        queryClient.setQueryData(['urls', userId], (old = {}) => {
           const updated = { ...old };
           delete updated[nome];
           return updated;

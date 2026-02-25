@@ -2,19 +2,22 @@ import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAlert } from './useAlert';
 import { apiService as api } from '../services/api';
+import { useAuth } from '../contexts/AuthContext';
 
 const ITEMS_PER_PAGE = 18;
 
 export function useLibrary() {
   const { alert, showAlert } = useAlert(4000);
   const queryClient = useQueryClient();
+  const { user } = useAuth();
+  const userId = user?.id;
 
   const [search, setSearch] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
 
   // ── Fetch da biblioteca ───────────────────────────────────────────────────
   const { data: mangas = [], isLoading: loading } = useQuery({
-    queryKey: ['library'],
+    queryKey: ['library', userId],
     queryFn: () => api.getLibrary().then(res => res.data ?? []),
   });
 
@@ -49,7 +52,7 @@ export function useLibrary() {
     onSuccess: (res, nomeManga) => {
       if (res.status === 'success') {
         // Atualiza cache sem refetch
-        queryClient.setQueryData(['library'], (old = []) =>
+        queryClient.setQueryData(['library', userId], (old = []) =>
           old.filter(m => m.nome !== nomeManga)
         );
         showAlert(`"${nomeManga}" excluído com sucesso.`);
@@ -66,7 +69,7 @@ export function useLibrary() {
     onSuccess: (res, { nomeManga }) => {
       if (res.status === 'success') {
         // Atualiza a capa no cache sem refetch
-        queryClient.setQueryData(['library'], (old = []) =>
+        queryClient.setQueryData(['library', userId], (old = []) =>
           old.map(m =>
             m.nome === nomeManga
               ? { ...m, tem_capa: true, capa_url: res.data?.capa_url ?? m.capa_url }
