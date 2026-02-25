@@ -118,10 +118,12 @@ class BaixarCapituloUseCase:
 
             manga = self.manga_repo.buscar_por_nome(user_id, dto.nome_manga)
             if not manga:
-                manga = Manga(nome=dto.nome_manga, caminho="") # O repo vai preencher o caminho
+                manga = Manga(nome=dto.nome_manga, caminho="") 
+                # O repositório preencherá o caminho baseado no user_id e retornará a entidade atualizada
                 manga = self.manga_repo.salvar(user_id, manga)
 
-            pasta_temp = os.path.join(manga.caminho, "tmp")
+            if not manga.caminho:
+                return BaixarCapituloResultado(False, "Erro ao determinar caminho de salvamento do mangá")
             os.makedirs(pasta_temp, exist_ok=True)
 
             try:
