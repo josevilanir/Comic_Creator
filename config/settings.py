@@ -3,7 +3,10 @@ Configurações da aplicação Comic Creator
 """
 import os
 from pathlib import Path
+from dotenv import load_dotenv
 
+# Carregar arquivo .env se existir
+load_dotenv()
 
 class Config:
     """Configurações base"""

@@ -41,14 +41,15 @@ api.interceptors.response.use(
     }
 
     if (isRefreshing) {
-      return new Promise((resolve, reject) => {
-        failedQueue.push({ resolve, reject });
-      })
-        .then((token) => {
-          original.headers.Authorization = `Bearer ${token}`;
-          return api(original);
-        })
-        .catch((err) => Promise.reject(err));
+      try {
+        const token = await new Promise((resolve, reject) => {
+          failedQueue.push({ resolve, reject });
+        });
+        original.headers.Authorization = `Bearer ${token}`;
+        return api(original);
+      } catch (err) {
+        return Promise.reject(err);
+      }
     }
 
     original._retry = true;
@@ -58,8 +59,6 @@ api.interceptors.response.use(
     
     if (!refresh_token) {
       localStorage.clear();
-      // Não redirecionamos com window.location aqui para evitar quebrar o estado do React
-      // O componente PrivateRoute ou useAuth lidará com o user null
       return Promise.reject(error);
     }
 
@@ -82,11 +81,10 @@ api.interceptors.response.use(
       }
     } catch (err) {
       processQueue(err, null);
-      localStorage.clear();
-      // Em vez de window.location.href, deixamos o erro propagar.
-      // Se o usuário estiver numa PrivateRoute, o estado de 'user' no AuthContext 
-      // precisaria ser setado para null. Mas o interceptor não tem acesso ao contexto.
-      // Uma solução comum é disparar um evento customizado ou apenas deixar falhar.
+      // Apenas limpa se o erro for realmente de autenticação (401 ou 403)
+      if (err.response?.status === 401 || err.response?.status === 403) {
+          localStorage.clear();
+      }
       return Promise.reject(err);
     } finally {
       isRefreshing = false;
@@ -108,8 +106,6 @@ export const apiService = {
   deleteManga: (nome) => api.delete(`/library/${encodeURIComponent(nome)}`),
   uploadCover: (nome, formData) => api.post(`/library/${encodeURIComponent(nome)}/capa`, formData),
   toggleLido: (mangaName, filename) => {
-      // Corrigido: usando a instância 'api' para ter os interceptores (token Bearer)
-      // Como o endpoint está fora do /api/v1 (capitulo_bp), precisamos ajustar a URL
       return api.post(`../../capitulo/lido/${encodeURIComponent(mangaName)}/${encodeURIComponent(filename)}`);
   },
   getProgresso: (mangaName, filename) => api.get(`/progresso/${encodeURIComponent(mangaName)}/${encodeURIComponent(filename)}`),
