@@ -33,6 +33,34 @@ class UserRepository:
                     created_at TEXT DEFAULT (datetime('now'))
                 )
             """)
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS user_reads (
+                    user_id INTEGER NOT NULL,
+                    manga_name TEXT NOT NULL,
+                    filename TEXT NOT NULL,
+                    PRIMARY KEY (user_id, manga_name, filename),
+                    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+                )
+            """)
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS user_progress (
+                    user_id INTEGER NOT NULL,
+                    manga_name TEXT NOT NULL,
+                    filename TEXT NOT NULL,
+                    page INTEGER NOT NULL,
+                    PRIMARY KEY (user_id, manga_name, filename),
+                    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+                )
+            """)
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS user_urls (
+                    user_id INTEGER NOT NULL,
+                    manga_name TEXT NOT NULL,
+                    url_base TEXT NOT NULL,
+                    PRIMARY KEY (user_id, manga_name),
+                    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+                )
+            """)
 
     def find_by_username(self, username: str) -> Optional[User]:
         with self._get_conn() as conn:

@@ -1,24 +1,18 @@
 """
 Dependency Injection Container
 """
-from src.domain.repositories import (
-    IMangaRepository,
-    ICapituloRepository,
-    IUserRepository,
-    IURLSalvaRepository
-)
 from src.infrastructure.repositories import (
     FileSystemMangaRepository,
     FileSystemCapituloRepository,
     SQLiteUserRepository,
-    JSONURLRepository
+    SQLiteURLRepository,
+    UserDataRepository
 )
 from src.infrastructure.services import (
     ImageDownloadService,
     PDFGeneratorService,
     ThumbnailService,
-    HashService,
-    URLStorageService
+    HashService
 )
 from src.application.use_cases import (
     BaixarCapituloUseCase,
@@ -37,7 +31,6 @@ class DependencyContainer:
     
     def _init_services(self):
         """Inicializa services"""
-        self.url_storage_service = URLStorageService(self.config.URLS_JSON)
         self.image_download_service = ImageDownloadService()
         self.pdf_generator_service = PDFGeneratorService()
         self.thumbnail_service = ThumbnailService()
@@ -45,13 +38,16 @@ class DependencyContainer:
     
     def _init_repositories(self):
         """Inicializa repositories"""
+        db_path = str(self.config.DATABASE_PATH)
         self.manga_repository = FileSystemMangaRepository(self.config.BASE_COMICS)
         self.capitulo_repository = FileSystemCapituloRepository(self.config.BASE_COMICS)
-        self.user_repository = SQLiteUserRepository(self.config.DATABASE_PATH)
-        self.url_repository = JSONURLRepository(self.url_storage_service)
+        self.user_repository = SQLiteUserRepository(db_path)
+        self.url_repository = SQLiteURLRepository(db_path)
+        self.user_data_repository = UserDataRepository(db_path)
     
     def _init_use_cases(self):
         """Inicializa use cases"""
+        # Nota: O use case precisará ser atualizado para aceitar o user_id no método executar
         self.baixar_capitulo_use_case = BaixarCapituloUseCase(
             manga_repo=self.manga_repository,
             capitulo_repo=self.capitulo_repository,

@@ -1,8 +1,9 @@
 """
 Capitulo Controller - Controller para gerenciamento de capítulos
 """
-from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app, send_file, jsonify
+from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app, send_file, jsonify, g
 import os
+from src.presentation.decorators.auth_required import auth_required
 
 capitulo_bp = Blueprint('capitulo', __name__)
 
@@ -127,6 +128,7 @@ def excluir_capitulo(nome_manga, nome_arquivo):
 
 
 @capitulo_bp.route('/lido/<nome_manga>/<nome_arquivo>', methods=['POST'])
+@auth_required
 def toggle_lido(nome_manga, nome_arquivo):
     """Alterna estado de leitura de um capítulo"""
     if '..' in nome_manga or '..' in nome_arquivo:
@@ -134,13 +136,9 @@ def toggle_lido(nome_manga, nome_arquivo):
         return fail({'path': 'Acesso negado.'}, 403)
 
     try:
-        from config.settings import Config
-        reads_path = str(Config.DATA_DIR / 'reads.json')
-
-        from src.infrastructure.persistence.reads_repository import ReadsRepository
         from src.presentation.api.jsend import success, error
-        repo = ReadsRepository(reads_path)
-        is_read = repo.toggle(nome_manga, nome_arquivo)
+        container = current_app.container
+        is_read = container.user_data_repository.toggle_read(g.user_id, nome_manga, nome_arquivo)
 
         return success({
             'lido': is_read,
