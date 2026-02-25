@@ -58,8 +58,12 @@ class HashService:
         """
         if not password or not password_hash:
             return False
-        
-        return check_password_hash(password_hash, password)
+
+        try:
+            return check_password_hash(password_hash, password)
+        except ValueError:
+            # Hash em formato incompatível (ex: bcrypt de versão anterior) — trata como inválido
+            return False
     
     def validar_forca_senha(self, password: str) -> tuple:
         """
