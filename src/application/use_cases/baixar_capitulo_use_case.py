@@ -125,6 +125,8 @@ class BaixarCapituloUseCase:
 
             if not manga.caminho:
                 return BaixarCapituloResultado(False, "Erro ao determinar caminho de salvamento do mangá")
+            
+            pasta_temp = os.path.join(manga.caminho, "tmp")
             os.makedirs(pasta_temp, exist_ok=True)
 
             try:
