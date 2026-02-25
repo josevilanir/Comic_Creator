@@ -1,5 +1,5 @@
 """
-Testes para Error Handlers
+Testes para Error Handlers — Formato JSend
 """
 import pytest
 from src.presentation.app import create_app
@@ -27,8 +27,9 @@ class TestErrorHandlers:
         resp = client.get('/_test/not_found')
         assert resp.status_code == 404
         data = resp.get_json()
-        assert data['sucesso'] is False
-        assert 'não encontrado' in data['erro'].lower()
+        assert data['status'] == 'error'
+        assert data['code'] == 'NOT_FOUND'
+        assert 'não encontrado' in data['message'].lower()
 
     def test_manga_duplicado(self, client):
         @client.application.route('/_test/duplicate')
@@ -38,8 +39,9 @@ class TestErrorHandlers:
         resp = client.get('/_test/duplicate')
         assert resp.status_code == 409
         data = resp.get_json()
-        assert data['sucesso'] is False
-        assert 'já existe' in data['erro'].lower()
+        assert data['status'] == 'error'
+        assert data['code'] == 'DUPLICATE'
+        assert 'já existe' in data['message'].lower()
 
     def test_domain_validation(self, client):
         @client.application.route('/_test/validation')
@@ -49,6 +51,6 @@ class TestErrorHandlers:
         resp = client.get('/_test/validation')
         assert resp.status_code == 400
         data = resp.get_json()
-        assert data['sucesso'] is False
-        assert data['codigo'] == 'VALIDATION_ERROR'
-        assert data.get('campo') == 'nome'
+        assert data['status'] == 'error'
+        assert data['code'] == 'VALIDATION_ERROR'
+        assert 'inválido' in data['message'].lower()
