@@ -143,9 +143,12 @@ class BaixarCapituloUseCase:
                 )
                 self.thumbnail_service.gerar_thumbnail_auto(caminho_pdf, manga.caminho)
 
+                # Criação da entidade capítulo para o repositório
                 capitulo = Capitulo(
-                    numero=dto.numero_capitulo, nome_arquivo=nome_pdf,
-                    manga_nome=dto.nome_manga, caminho_completo=caminho_pdf
+                    numero=dto.numero_capitulo, 
+                    nome_arquivo=nome_pdf,
+                    manga_nome=dto.nome_manga, 
+                    caminho_completo=caminho_pdf
                 )
                 capitulo = self.capitulo_repo.salvar(user_id, capitulo)
 
