@@ -26,6 +26,7 @@ python main.py
 ```
 
 ### 2. Preparar o Frontend
+
 Em um novo terminal, entre na pasta `frontend`:
 ```bash
 cd frontend
@@ -33,9 +34,15 @@ cd frontend
 # Instalar dependências
 npm install
 
+# Configurar variáveis de ambiente
+cp .env.example .env
+# O arquivo .env já vem configurado para desenvolvimento local.
+# Edite apenas se seu backend rodar em uma porta diferente da 5000.
+
 # Iniciar em modo desenvolvimento
 npm run dev
 ```
+
 O frontend ficará disponível em `http://localhost:5173`.
 
 ---
