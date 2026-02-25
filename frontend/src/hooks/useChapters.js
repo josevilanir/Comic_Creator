@@ -71,6 +71,24 @@ export function useChapters(mangaName) {
     }
   }
 
+  async function handleToggleLido(filename) {
+    try {
+      const data = await api.toggleLido(mangaName, filename);
+      if (data.success) {
+        setChapters(prev =>
+          prev.map(c =>
+            c.filename === filename ? { ...c, read: data.lido } : c
+          )
+        );
+        showAlert(data.message, 'success');
+      } else {
+        showAlert(data.message || 'Erro ao atualizar.', 'error');
+      }
+    } catch (err) {
+      showAlert(`Erro de conexão: ${err.message}`, 'error');
+    }
+  }
+
   return {
     loading,
     alert,
@@ -83,5 +101,6 @@ export function useChapters(mangaName) {
     toggleSort,
     handlePageChange,
     handleDelete,
+    handleToggleLido,
   };
 }

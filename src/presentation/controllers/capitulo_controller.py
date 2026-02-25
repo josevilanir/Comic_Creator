@@ -124,3 +124,26 @@ def excluir_capitulo(nome_manga, nome_arquivo):
             'success': False,
             'message': f"Erro: {str(e)}"
         }), 500
+
+
+@capitulo_bp.route('/lido/<nome_manga>/<nome_arquivo>', methods=['POST'])
+def toggle_lido(nome_manga, nome_arquivo):
+    """Alterna estado de leitura de um capítulo"""
+    if '..' in nome_manga or '..' in nome_arquivo:
+        return jsonify({'success': False, 'message': 'Acesso negado.'}), 403
+
+    try:
+        from config.settings import Config
+        reads_path = str(Config.DATA_DIR / 'reads.json')
+        
+        from src.infrastructure.persistence.reads_repository import ReadsRepository
+        repo = ReadsRepository(reads_path)
+        is_read = repo.toggle(nome_manga, nome_arquivo)
+        
+        return jsonify({
+            'success': True,
+            'lido': is_read,
+            'message': 'Marcado como lido!' if is_read else 'Marcado como não lido.'
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500

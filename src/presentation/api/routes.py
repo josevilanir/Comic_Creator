@@ -537,6 +537,12 @@ def get_manga_chapters(nome_manga):
         # Lista capítulos
         capitulos = container.capitulo_repository.listar_por_manga(nome_decodificado, ordem=ordem)
         
+        # Carrega estados de leitura
+        from src.infrastructure.persistence.reads_repository import ReadsRepository
+        from config.settings import Config
+        reads_repo = ReadsRepository(str(Config.DATA_DIR / 'reads.json'))
+        lidos = reads_repo.get_reads(nome_decodificado)
+
         # Prepara resposta
         chapters = []
         for cap in capitulos:
@@ -555,7 +561,7 @@ def get_manga_chapters(nome_manga):
                     nome_arquivo=cap.nome_arquivo,
                     _external=True
                 ) if cap.thumbnail_url else None,
-                'read': False  # TODO: Implementar sistema de leitura
+                'read': cap.nome_arquivo in lidos
             })
         
         return jsonify({

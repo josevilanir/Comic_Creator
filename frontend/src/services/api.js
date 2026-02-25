@@ -36,4 +36,9 @@ export const api = {
     fetch(`${BASE_URL}/api/library/${encodeURIComponent(nome)}`, { method: 'DELETE' }).then(r => r.json()),
   uploadCover: (nome, formData) =>
     fetch(`${BASE_URL}/api/library/${encodeURIComponent(nome)}/capa`, { method: 'POST', body: formData }).then(r => r.json()),
+  toggleLido: (mangaName, filename) =>
+    fetch(
+      `${BASE_URL}/capitulo/lido/${encodeURIComponent(mangaName)}/${encodeURIComponent(filename)}`,
+      { method: 'POST' }
+    ).then(r => r.json()),
 };

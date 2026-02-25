@@ -67,4 +67,4 @@ pytest
 ```
 
 ---
-*Desenvolvido seguindo os padrões de Clean Architecture e as boas práticas da Imersão42.*
+*Desenvolvido seguindo os padrões de Clean Architecture e as boas práticas*

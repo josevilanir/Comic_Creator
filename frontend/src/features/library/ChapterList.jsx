@@ -25,6 +25,7 @@ function ChapterList() {
     toggleSort,
     handlePageChange,
     handleDelete,
+    handleToggleLido,
   } = useChapters(decodedName);
 
   if (loading) {
@@ -143,6 +144,13 @@ function ChapterList() {
                 title="Ler capítulo"
               >
                 📖 Ler
+              </button>
+              <button
+                className={`btn btn-sm ${chapter.read ? 'btn-outline' : 'btn-success'}`}
+                onClick={() => handleToggleLido(chapter.filename)}
+                title={chapter.read ? 'Marcar como não lido' : 'Marcar como lido'}
+              >
+                {chapter.read ? '↩ Não lido' : '✓ Lido'}
               </button>
               <button
                 className="btn btn-sm btn-danger"
