@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { apiService as api } from "../services/api";
+import { apiService as api, api as axiosInstance } from "../services/api";
 
 const AuthContext = createContext(null);
 
@@ -7,6 +7,7 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  // Inicializa o usuário do localStorage
   useEffect(() => {
     const stored = localStorage.getItem("user");
     if (stored) {
@@ -17,6 +18,21 @@ export function AuthProvider({ children }) {
         }
     }
     setLoading(false);
+  }, []);
+
+  // Interceptor para detectar quando o token expira permanentemente
+  useEffect(() => {
+    const interceptor = axiosInstance.interceptors.response.use(
+      (res) => res,
+      (err) => {
+        // Se a chamada de refresh falhou ou se recebemos 401 sem token no storage
+        if (err.response?.status === 401 && !localStorage.getItem("access_token")) {
+          setUser(null);
+        }
+        return Promise.reject(err);
+      }
+    );
+    return () => axiosInstance.interceptors.response.eject(interceptor);
   }, []);
 
   const login = async (username, password) => {
