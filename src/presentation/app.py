@@ -180,22 +180,5 @@ def create_app(env='development'):
             'ambiente': env,
             'timestamp': __import__('datetime').datetime.now().isoformat()
         }), 200
-    
-    # Handler customizado para 404
-    @app.errorhandler(404)
-    def not_found(error):
-        """Handler customizado para 404 - Recurso não encontrado"""
-        return jsonify({
-            'codigo': 'NOT_FOUND',
-            'erro': 'Recurso não encontrado',
-            'status': 404,
-            'path': __import__('flask').request.path,
-            'sugestoes': [
-                'Verifique a URL digitada',
-                'Veja os endpoints disponíveis em /',
-                'Consulte a documentação da API em /api',
-                'Acesse o frontend em http://localhost:5173'
-            ]
-        }), 404
 
     return app

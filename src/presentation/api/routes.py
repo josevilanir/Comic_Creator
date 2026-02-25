@@ -1,9 +1,11 @@
 """
 API REST Routes - Endpoints JSON para o frontend React
 """
-from flask import Blueprint, jsonify, request, current_app, url_for
+from flask import Blueprint, request, current_app, url_for
 import threading
 import uuid
+
+from src.presentation.api.jsend import success, error, fail
 
 api_bp = Blueprint('api', __name__, url_prefix='/api/v1')
 
@@ -23,7 +25,7 @@ def get_library():
             'total_capitulos': manga.total_capitulos
         })
     
-    return jsonify(resultado)
+    return success(resultado)
 
 
 @api_bp.route('/urls', methods=['GET'])
@@ -35,18 +37,18 @@ def get_urls():
     # Converte para dicionário {nome: url}
     urls_dict = {url.nome_manga: url.url_base for url in urls_entities}
     
-    return jsonify(urls_dict)
+    return success(urls_dict)
 
 
 @api_bp.route('/urls', methods=['POST'])
 def save_url():
     """Salva nova URL"""
-    data = request.json
+    data = request.json or {}
     nome = data.get('nome')
     url = data.get('url')
     
     if not nome or not url:
-        return jsonify({'success': False, 'message': 'Nome e URL obrigatórios'}), 400
+        return fail({'nome': 'obrigatório', 'url': 'obrigatório'})
     
     try:
         from src.domain.entities import URLSalva
@@ -55,41 +57,45 @@ def save_url():
         url_salva = URLSalva(nome_manga=nome, url_base=url)
         container.url_repository.salvar(url_salva)
         
-        return jsonify({'success': True, 'message': 'URL salva com sucesso!'})
+        return success({'message': 'URL salva com sucesso!'}, 201)
     except Exception as e:
-        return jsonify({'success': False, 'message': str(e)}), 500
+        return error(str(e), 'SAVE_URL_ERROR')
 
 
 @api_bp.route('/urls', methods=['DELETE'])
 def delete_url():
     """Remove URL salva"""
-    data = request.json
+    data = request.json or {}
     nome = data.get('nome')
     
     if not nome:
-        return jsonify({'success': False, 'message': 'Nome obrigatório'}), 400
+        return fail({'nome': 'obrigatório'})
     
     try:
         container = current_app.container
         sucesso = container.url_repository.deletar(nome)
         
         if sucesso:
-            return jsonify({'success': True, 'message': 'URL removida!'})
+            return success({'message': 'URL removida!'})
         else:
-            return jsonify({'success': False, 'message': 'URL não encontrada'}), 404
+            return fail({'nome': 'URL não encontrada'}, 404)
     except Exception as e:
-        return jsonify({'success': False, 'message': str(e)}), 500
+        return error(str(e), 'DELETE_URL_ERROR')
 
 @api_bp.route('/download', methods=['POST'])
 def download_chapter():
     """Baixa capítulo"""
-    data = request.json
+    data = request.json or {}
     base_url = data.get('base_url')
     capitulo = data.get('capitulo')
     nome_manga = data.get('nome_manga')
     
     if not all([base_url, capitulo, nome_manga]):
-        return jsonify({'success': False, 'message': 'Dados incompletos'}), 400
+        return fail({
+            'base_url': 'obrigatório',
+            'capitulo': 'obrigatório',
+            'nome_manga': 'obrigatório'
+        })
     
     try:
         container = current_app.container
@@ -121,13 +127,13 @@ def download_chapter():
         resultado = container.baixar_capitulo_use_case.executar(dto)
         
         if resultado.sucesso:
-            return jsonify({'success': True, 'message': resultado.mensagem})
+            return success({'message': resultado.mensagem})
         else:
-            return jsonify({'success': False, 'message': resultado.mensagem}), 400
+            return fail({'download': resultado.mensagem})
             
     except Exception as e:
         current_app.logger.exception(f"Erro no download: {e}")
-        return jsonify({'success': False, 'message': f'Erro: {str(e)}'}), 500
+        return error(str(e), 'DOWNLOAD_ERROR')
 
 _download_jobs: dict = {}
 _jobs_lock = threading.Lock()
@@ -151,26 +157,23 @@ def download_range():
     base_url   = data.get('base_url', '').strip()
     cap_inicio = data.get('cap_inicio')
     cap_fim    = data.get('cap_fim')
-    nome_manga = data.get('nome_manga', '').strip()
+    nome_manga = data.get('nome_manga', '').strip() or 'Manga'
 
     # Validações
     if not base_url:
-        return jsonify({'success': False, 'message': 'URL base obrigatória'}), 400
+        return fail({'base_url': 'obrigatório'})
     if cap_inicio is None or cap_fim is None:
-        return jsonify({'success': False, 'message': 'cap_inicio e cap_fim obrigatórios'}), 400
+        return fail({'cap_inicio': 'obrigatório', 'cap_fim': 'obrigatório'})
 
     cap_inicio = int(cap_inicio)
     cap_fim    = int(cap_fim)
 
     if cap_inicio < 1 or cap_fim < cap_inicio:
-        return jsonify({'success': False, 'message': 'Range inválido. cap_inicio deve ser ≥ 1 e ≤ cap_fim'}), 400
+        return fail({'range': 'cap_inicio deve ser ≥ 1 e ≤ cap_fim'})
 
     total = cap_fim - cap_inicio + 1
     if total > 200:
-        return jsonify({'success': False, 'message': 'Máximo de 200 capítulos por download'}), 400
-
-    if not nome_manga:
-        nome_manga = 'Manga'
+        return fail({'range': 'Máximo de 200 capítulos por download'})
 
     # Cria job
     job_id = str(uuid.uuid4())[:8]
@@ -193,7 +196,7 @@ def download_range():
     )
     thread.start()
 
-    return jsonify({'success': True, 'job_id': job_id, 'total': total})
+    return success({'job_id': job_id, 'total': total}, 202)
 
 
 # ─── Endpoint: consultar progresso ────────────────────────────────────────────
@@ -215,9 +218,9 @@ def download_progresso(job_id):
         job = _download_jobs.get(job_id)
 
     if not job:
-        return jsonify({'success': False, 'message': 'Job não encontrado'}), 404
+        return fail({'job_id': 'Job não encontrado'}, 404)
 
-    return jsonify({'success': True, **job})
+    return success(job)
 
 
 # ─── Endpoint: cancelar job ────────────────────────────────────────────────────
@@ -227,10 +230,10 @@ def download_cancelar(job_id):
     with _jobs_lock:
         job = _download_jobs.get(job_id)
         if not job:
-            return jsonify({'success': False, 'message': 'Job não encontrado'}), 404
+            return fail({'job_id': 'Job não encontrado'}, 404)
         job['cancelar'] = True
 
-    return jsonify({'success': True, 'message': 'Cancelamento solicitado'})
+    return success({'message': 'Cancelamento solicitado'})
 
 
 # ─── Worker: executa o range em background ────────────────────────────────────
@@ -311,7 +314,7 @@ def delete_manga(nome_manga):
         container = current_app.container
 
         if not container.manga_repository.existe(nome_decodificado):
-            return jsonify({'success': False, 'message': 'Mangá não encontrado.'}), 404
+            return fail({'nome_manga': 'Mangá não encontrado.'}, 404)
 
         if container.manga_repository.deletar(nome_decodificado):
             # Remove URL salva associada, se existir
@@ -321,16 +324,15 @@ def delete_manga(nome_manga):
                 pass  # URL pode não existir — não é erro crítico
 
             current_app.logger.info(f"Mangá deletado via API: {nome_decodificado}")
-            return jsonify({
-                'success': True,
+            return success({
                 'message': f"Mangá '{nome_decodificado}' e todos os seus capítulos foram excluídos."
             })
         else:
-            return jsonify({'success': False, 'message': 'Erro ao excluir mangá.'}), 500
+            return error('Erro ao excluir mangá.', 'DELETE_MANGA_ERROR')
 
     except Exception as e:
         current_app.logger.exception(f"Erro ao deletar mangá '{nome_decodificado}': {e}")
-        return jsonify({'success': False, 'message': f'Erro: {str(e)}'}), 500
+        return error(str(e), 'DELETE_MANGA_ERROR')
 
 @api_bp.route('/library/<nome_manga>/<nome_arquivo>', methods=['DELETE'])
 def delete_capitulo(nome_manga, nome_arquivo):
@@ -348,35 +350,33 @@ def delete_capitulo(nome_manga, nome_arquivo):
 
     # Bloqueia path traversal
     if '..' in nome_decodificado or '..' in arquivo_decodificado:
-        return jsonify({'success': False, 'message': 'Acesso negado.'}), 403
+        return fail({'error': 'Acesso negado.'}, 403)
 
     try:
         container = current_app.container
 
         # Verifica se o mangá existe antes de tentar deletar
         if not container.manga_repository.existe(nome_decodificado):
-            return jsonify({'success': False, 'message': 'Mangá não encontrado.'}), 404
+            return fail({'nome_manga': 'Mangá não encontrado.'}, 404)
 
         # Deleta via repositório (remove PDF + thumbnail automaticamente)
         if container.capitulo_repository.deletar(nome_decodificado, arquivo_decodificado):
             current_app.logger.info(
                 f"Capítulo deletado via API: {nome_decodificado}/{arquivo_decodificado}"
             )
-            return jsonify({
-                'success': True,
+            return success({
                 'message': f"Capítulo '{arquivo_decodificado.replace('.pdf', '')}' excluído com sucesso!"
             })
         else:
-            return jsonify({
-                'success': False,
-                'message': 'Capítulo não encontrado no disco.'
+            return fail({
+                'nome_arquivo': 'Capítulo não encontrado no disco.'
             }), 404
 
     except Exception as e:
         current_app.logger.exception(
             f"Erro ao deletar capítulo '{arquivo_decodificado}' de '{nome_decodificado}': {e}"
         )
-        return jsonify({'success': False, 'message': f'Erro interno: {str(e)}'}), 500
+        return error(str(e), 'DELETE_CAPITULO_ERROR')
 
 @api_bp.route('/library/<nome_manga>/capa', methods=['POST'])
 def upload_capa(nome_manga):
@@ -397,23 +397,22 @@ def upload_capa(nome_manga):
 
         manga = container.manga_repository.buscar_por_nome(nome_decodificado)
         if not manga:
-            return jsonify({'success': False, 'message': 'Mangá não encontrado.'}), 404
+            return fail({'nome_manga': 'Mangá não encontrado.'}, 404)
 
         if 'capa' not in request.files:
-            return jsonify({'success': False, 'message': 'Nenhum arquivo enviado.'}), 400
+            return fail({'capa': 'Nenhum arquivo enviado.'})
 
         file = request.files['capa']
 
         if file.filename == '':
-            return jsonify({'success': False, 'message': 'Arquivo sem nome.'}), 400
+            return fail({'capa': 'Arquivo sem nome.'})
 
         extensoes_permitidas = {'png', 'jpg', 'jpeg', 'webp'}
         ext = file.filename.rsplit('.', 1)[-1].lower() if '.' in file.filename else ''
         if ext not in extensoes_permitidas:
-            return jsonify({
-                'success': False,
-                'message': 'Formato inválido. Use PNG, JPG, JPEG ou WEBP.'
-            }), 400
+            return fail({
+                'capa': 'Formato inválido. Use PNG, JPG, JPEG ou WEBP.'
+            })
 
         # Converte para JPEG e salva como capa.jpg
         import os
@@ -425,15 +424,14 @@ def upload_capa(nome_manga):
 
         # Retorna a nova URL da capa para atualização imediata no frontend
         nova_url = url_for('manga.visualizar_capa', nome_manga=nome_decodificado, _external=True)
-        return jsonify({
-            'success': True,
+        return success({
             'message': f"Capa de '{nome_decodificado}' atualizada com sucesso!",
             'capa_url': nova_url
         })
 
     except Exception as e:
         current_app.logger.exception(f"Erro ao fazer upload de capa para '{nome_decodificado}': {e}")
-        return jsonify({'success': False, 'message': f'Erro ao processar imagem: {str(e)}'}), 500
+        return error(str(e), 'UPLOAD_CAPA_ERROR')
 
 def construir_url_capitulo_correta(base_url: str, numero_capitulo: int) -> str:
     """
@@ -490,7 +488,7 @@ def get_chapters(nome_manga):
     
     manga = container.manga_repository.buscar_por_nome(nome_manga)
     if not manga:
-        return jsonify({'error': 'Mangá não encontrado'}), 404
+        return fail({'nome_manga': 'Mangá não encontrado'}, 404)
     
     ordem = request.args.get('ordem', 'asc')
     capitulos = container.capitulo_repository.listar_por_manga(nome_manga, ordem=ordem)
@@ -505,7 +503,7 @@ def get_chapters(nome_manga):
             'read': False  # TODO: Implementar leitura
         })
     
-    return jsonify(resultado)
+    return success(resultado)
 
 @api_bp.route('/library/<nome_manga>', methods=['GET'])
 def get_manga_chapters(nome_manga):
@@ -526,10 +524,10 @@ def get_manga_chapters(nome_manga):
         # Verifica se mangá existe
         manga = container.manga_repository.buscar_por_nome(nome_decodificado)
         if not manga:
-            return jsonify({
+            return fail({
                 'error': 'Mangá não encontrado',
                 'manga': nome_decodificado
-            }), 404
+            }, 404)
         
         # Pega ordem (asc ou desc)
         ordem = request.args.get('ordem', 'asc')
@@ -564,7 +562,7 @@ def get_manga_chapters(nome_manga):
                 'read': cap.nome_arquivo in lidos
             })
         
-        return jsonify({
+        return success({
             'manga': nome_decodificado,
             'total': len(chapters),
             'chapters': chapters
@@ -572,7 +570,4 @@ def get_manga_chapters(nome_manga):
         
     except Exception as e:
         current_app.logger.exception(f"Erro ao listar capítulos: {e}")
-        return jsonify({
-            'error': 'Erro interno ao buscar capítulos',
-            'details': str(e)
-        }), 500
+        return error('Erro interno ao buscar capítulos', 'GET_CHAPTERS_ERROR')
