@@ -9,12 +9,13 @@ capitulo_bp = Blueprint('capitulo', __name__)
 
 
 @capitulo_bp.route('/<nome_manga>')
+@auth_required
 def listar_capitulos(nome_manga):
     """Lista capítulos de um mangá"""
     container = current_app.container
     
     # Verifica se mangá existe
-    manga = container.manga_repository.buscar_por_nome(nome_manga)
+    manga = container.manga_repository.buscar_por_nome(g.user_id, nome_manga)
     if not manga:
         flash(f"Mangá '{nome_manga}' não encontrado.", 'error')
         return redirect(url_for('manga.biblioteca'))
@@ -23,12 +24,10 @@ def listar_capitulos(nome_manga):
     ordem = request.args.get('ordem', 'asc')
     
     # Lista capítulos
-    capitulos = container.capitulo_repository.listar_por_manga(nome_manga, ordem=ordem)
+    capitulos = container.capitulo_repository.listar_por_manga(g.user_id, nome_manga, ordem=ordem)
     
     # Prepara dados para template
-    arquivos = []
-    for cap in capitulos:
-        arquivos.append(cap.nome_arquivo)
+    arquivos = [cap.nome_arquivo for cap in capitulos]
     
     return render_template(
         'lista_pdfs.html',
@@ -40,6 +39,7 @@ def listar_capitulos(nome_manga):
 
 
 @capitulo_bp.route('/visualizar/<nome_manga>/<nome_arquivo>')
+@auth_required
 def visualizar_pdf(nome_manga, nome_arquivo):
     """Serve arquivo PDF de um capítulo"""
     container = current_app.container
@@ -48,8 +48,8 @@ def visualizar_pdf(nome_manga, nome_arquivo):
     if '..' in nome_manga or '..' in nome_arquivo:
         return 'Acesso negado', 403
     
-    # Busca mangá
-    manga = container.manga_repository.buscar_por_nome(nome_manga)
+    # Busca mangá isolado por usuário
+    manga = container.manga_repository.buscar_por_nome(g.user_id, nome_manga)
     if not manga:
         return 'Mangá não encontrado', 404
     
@@ -63,6 +63,7 @@ def visualizar_pdf(nome_manga, nome_arquivo):
 
 
 @capitulo_bp.route('/thumbnail/<nome_manga>/<nome_arquivo>')
+@auth_required
 def visualizar_thumbnail(nome_manga, nome_arquivo):
     """Serve thumbnail de um capítulo"""
     container = current_app.container
@@ -71,8 +72,8 @@ def visualizar_thumbnail(nome_manga, nome_arquivo):
     if '..' in nome_manga or '..' in nome_arquivo:
         return 'Acesso negado', 403
     
-    # Busca mangá
-    manga = container.manga_repository.buscar_por_nome(nome_manga)
+    # Busca mangá isolado
+    manga = container.manga_repository.buscar_por_nome(g.user_id, nome_manga)
     if not manga:
         return 'Mangá não encontrado', 404
     
@@ -96,6 +97,7 @@ def visualizar_thumbnail(nome_manga, nome_arquivo):
 
 
 @capitulo_bp.route('/excluir/<nome_manga>/<nome_arquivo>', methods=['DELETE'])
+@auth_required
 def excluir_capitulo(nome_manga, nome_arquivo):
     """Exclui um capítulo específico"""
     container = current_app.container
@@ -108,8 +110,8 @@ def excluir_capitulo(nome_manga, nome_arquivo):
                 'message': 'Acesso negado.'
             }), 403
         
-        # Deleta capítulo
-        if container.capitulo_repository.deletar(nome_manga, nome_arquivo):
+        # Deleta capítulo passando user_id
+        if container.capitulo_repository.deletar(g.user_id, nome_manga, nome_arquivo):
             return jsonify({
                 'success': True,
                 'message': f"Capítulo '{nome_arquivo.replace('.pdf', '')}' excluído com sucesso!"
