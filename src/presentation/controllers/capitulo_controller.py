@@ -34,7 +34,7 @@ def listar_capitulos(nome_manga):
         nome_pasta=nome_manga,
         arquivos=arquivos,
         ordem=ordem,
-        lidos=[]  # TODO: Implementar marcação de leitura
+        lidos=[]
     )
 
 
