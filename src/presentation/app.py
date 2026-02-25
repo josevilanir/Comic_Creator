@@ -20,6 +20,7 @@ def create_app(env='development'):
     # CORS
     CORS(app, resources={
         r"/api/*":      {"origins": "*", "supports_credentials": False},
+        r"/api/v1/*":   {"origins": "*", "supports_credentials": False},
         r"/capitulo/*": {"origins": "*", "supports_credentials": False},
         r"/manga/*":    {"origins": "*", "supports_credentials": False},
     })
@@ -37,6 +38,31 @@ def create_app(env='development'):
     # Registrar API REST
     from src.presentation.api.routes import api_bp
     app.register_blueprint(api_bp)
+
+    # Aliases de retrocompatibilidade — /api/* → /api/v1/*
+    # TODO: remover após todos os clientes migrarem para /api/v1
+    from flask import redirect
+
+    @app.route('/api/library')
+    @app.route('/api/library/<path:resto>')
+    def compat_library(resto=''):
+        """TODO: remover após todos os clientes migrarem para /api/v1"""
+        path = f'/api/v1/library/{resto}' if resto else '/api/v1/library'
+        return redirect(path, code=308)
+
+    @app.route('/api/urls', methods=['GET', 'POST', 'DELETE'])
+    @app.route('/api/urls/<path:resto>', methods=['GET', 'POST', 'DELETE'])
+    def compat_urls(resto=''):
+        """TODO: remover após todos os clientes migrarem para /api/v1"""
+        path = f'/api/v1/urls/{resto}' if resto else '/api/v1/urls'
+        return redirect(path, code=308)
+
+    @app.route('/api/download', methods=['GET', 'POST'])
+    @app.route('/api/download/<path:resto>', methods=['GET', 'POST', 'DELETE'])
+    def compat_download(resto=''):
+        """TODO: remover após todos os clientes migrarem para /api/v1"""
+        path = f'/api/v1/download/{resto}' if resto else '/api/v1/download'
+        return redirect(path, code=308)
 
     # Registrar Controllers (templates Jinja2)
     from src.presentation.controllers.download_controller import download_bp
@@ -63,11 +89,11 @@ def create_app(env='development'):
             'environment': env,
             'endpoints': {
                 'health': '/health',
-                'api_root': '/api',
-                'library': '/api/library',
-                'manga_details': '/api/library/<manga_name>',
-                'urls': '/api/urls',
-                'download': '/api/download'
+                'api_root': '/api/v1',
+                'library': '/api/v1/library',
+                'manga_details': '/api/v1/library/<manga_name>',
+                'urls': '/api/v1/urls',
+                'download': '/api/v1/download'
             },
             'frontend': {
                 'url': 'http://localhost:5173',
@@ -93,47 +119,47 @@ def create_app(env='development'):
             'endpoints': [
                 {
                     'method': 'GET',
-                    'path': '/api/library',
+                    'path': '/api/v1/library',
                     'description': 'Lista todos os mangás da biblioteca',
                     'response': 'Array de objetos Manga'
                 },
                 {
                     'method': 'GET',
-                    'path': '/api/library/<manga_name>',
+                    'path': '/api/v1/library/<manga_name>',
                     'description': 'Lista capítulos de um mangá específico',
                     'params': {'manga_name': 'Nome do mangá', 'ordem': 'asc ou desc'},
                     'response': 'Objeto com manga e array de capítulos'
                 },
                 {
                     'method': 'GET',
-                    'path': '/api/urls',
+                    'path': '/api/v1/urls',
                     'description': 'Lista todas as URLs salvas',
                     'response': 'Objeto {nome_manga: url_base}'
                 },
                 {
                     'method': 'POST',
-                    'path': '/api/urls',
+                    'path': '/api/v1/urls',
                     'description': 'Salva uma nova URL base',
                     'body': {'nome': 'string', 'url': 'string'},
                     'response': 'Objeto com success e message'
                 },
                 {
                     'method': 'DELETE',
-                    'path': '/api/urls',
+                    'path': '/api/v1/urls',
                     'description': 'Remove uma URL salva',
                     'body': {'nome': 'string'},
                     'response': 'Objeto com success e message'
                 },
                 {
                     'method': 'POST',
-                    'path': '/api/download',
+                    'path': '/api/v1/download',
                     'description': 'Inicia o download de um capítulo',
                     'body': {
                         'base_url': 'string',
                         'capitulo': 'number',
                         'nome_manga': 'string'
                     },
-                    'response': 'Objeto com success e message'
+                    'response': 'Objeto with success and message'
                 },
                 {
                     'method': 'GET',

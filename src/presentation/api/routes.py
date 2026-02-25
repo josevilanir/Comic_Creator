@@ -5,7 +5,7 @@ from flask import Blueprint, jsonify, request, current_app, url_for
 import threading
 import uuid
 
-api_bp = Blueprint('api', __name__, url_prefix='/api')
+api_bp = Blueprint('api', __name__, url_prefix='/api/v1')
 
 
 @api_bp.route('/library', methods=['GET'])
