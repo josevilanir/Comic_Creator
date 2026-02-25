@@ -27,7 +27,7 @@ function UrlManager({
     }
 
     addUrl(novoNome, novaUrl).then(data => {
-      if (data.success) {
+      if (data.status === 'success') {
         showAlert(`URL de "${novoNome}" salva!`);
         setNovoNome('');
         setNovaUrl('');
@@ -42,7 +42,7 @@ function UrlManager({
   function handleRemove(nome) {
     if (!window.confirm(`Remover a URL de "${nome}"?`)) return;
     removeUrl(nome).then(data => {
-      if (data.success) {
+      if (data.status === 'success') {
         showAlert(`URL de "${nome}" removida.`);
       } else {
         showAlert(data.message || 'Erro ao remover.', 'error');
