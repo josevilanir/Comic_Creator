@@ -18,6 +18,7 @@ class Config:
     
     # Flask
     SECRET_KEY = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-production')
+    JWT_SECRET_KEY = os.environ.get('JWT_SECRET_KEY', 'dev-jwt-secret-NUNCA-use-em-producao')
     DEBUG = os.environ.get('DEBUG', 'False') == 'True'
     TESTING = False
     
@@ -160,6 +161,12 @@ class ProductionConfig(Config):
             raise ValueError(
                 '🚨 ERRO: SECRET_KEY não definida em produção! '
                 'Defina a variável de ambiente SECRET_KEY.'
+            )
+
+        if app.config['JWT_SECRET_KEY'] == 'dev-jwt-secret-NUNCA-use-em-producao':
+            raise ValueError(
+                '🚨 ERRO: JWT_SECRET_KEY não definida em produção! '
+                'Defina a variável de ambiente JWT_SECRET_KEY.'
             )
 
         if not app.config['CORS_ORIGINS']:

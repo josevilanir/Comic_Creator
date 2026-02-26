@@ -21,9 +21,10 @@ def client(app):
 
 
 @pytest.fixture
-def auth_headers():
+def auth_headers(app):
     """Gera um Bearer token válido para testes autenticados."""
-    token = JwtService().create_access_token(user_id=1, username='testuser')
+    secret = app.config.get('JWT_SECRET_KEY')
+    token = JwtService(secret).create_access_token(user_id=1, username='testuser')
     return {'Authorization': f'Bearer {token}'}
 
 

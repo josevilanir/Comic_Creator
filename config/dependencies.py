@@ -39,7 +39,7 @@ class DependencyContainer:
         self.pdf_generator_service = PDFGeneratorService()
         self.thumbnail_service = ThumbnailService()
         self.hash_service = HashService()
-        self.jwt_service = JwtService()
+        self.jwt_service = JwtService(self.config.JWT_SECRET_KEY)
     
     def _init_repositories(self):
         """Inicializa repositories — usa S3 se S3_BUCKET estiver configurado."""
