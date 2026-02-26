@@ -79,11 +79,12 @@ def index():
         if not nome_manga_form:
             nome_manga_form = _extrair_nome_manga_da_url(base_url)
         
+        url_service = container.manga_url_service
         # Limpa sufixos como "-manga-pt-br"
-        nome_manga_limpo = _limpar_sufixo_manga(nome_manga_form)
+        nome_manga_limpo = url_service.clean_manga_name(nome_manga_form)
         
         # Constrói URL completa do capítulo
-        url_capitulo = _construir_url_capitulo(base_url, numero_capitulo)
+        url_capitulo = url_service.resolve_url(base_url, numero_capitulo)
         
         # Cria DTO
         dto = BaixarCapituloDTO(
@@ -107,36 +108,13 @@ def index():
 
 
 def _extrair_nome_manga_da_url(url: str) -> str:
-    """Extrai nome do mangá da URL"""
-    from urllib.parse import urlparse
-    
-    partes = urlparse(url).path.strip('/').split('/')
-    for parte in reversed(partes):
-        if parte and 'capitulo' not in parte.lower() and 'chap' not in parte.lower():
-            return parte.replace('-', ' ').replace('_', ' ').title()
-    
-    return 'Manga_Desconhecido'
-
-
-def _limpar_sufixo_manga(nome: str) -> str:
-    """Remove sufixos como '-manga-pt-br'"""
-    padrao = r'[-_\s]*(manga[-_\s]*)?pt[-_\s]*br$'
-    return re.sub(padrao, '', nome, flags=re.IGNORECASE).strip()
-
-
-def _construir_url_capitulo(base_url: str, numero: int) -> str:
-    """Constrói URL completa do capítulo"""
-    # Detecta se precisa sufixo -pt-br
-    sufixo = '-pt-br' if 'manga-pt-br' in base_url.lower() else ''
-    
-    # Se URL já termina com número, substitui
-    if base_url[-1].isdigit():
-        # Remove último número
-        base_url = re.sub(r'\d+/?$', '', base_url)
-    
-    # Garante que termina com padrão correto
-    if not base_url.endswith(('capitulo-', 'chap-', 'chapter-')):
-        if 'capitulo' in base_url.lower():
-            base_url = base_url.rstrip('/') + '/'
-    
-    return f"{base_url}{numero}{sufixo}/"
+            """Extrai nome do mangá da URL"""
+            from urllib.parse import urlparse
+            
+            partes = urlparse(url).path.strip('/').split('/')
+            for parte in reversed(partes):
+                if parte and 'capitulo' not in parte.lower() and 'chap' not in parte.lower():
+                    return parte.replace('-', ' ').replace('_', ' ').title()
+            
+            return 'Manga_Desconhecido'
+        

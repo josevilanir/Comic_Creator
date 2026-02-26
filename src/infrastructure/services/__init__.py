@@ -7,6 +7,7 @@ from .thumbnail_service import ThumbnailService
 from .hash_service import HashService
 from .url_storage_service import URLStorageService
 from .s3_service import S3Service
+from .manga_url_service import MangaUrlService
 
 __all__ = [
     'ImageDownloadService',
@@ -15,4 +16,5 @@ __all__ = [
     'HashService',
     'URLStorageService',
     'S3Service',
+    'MangaUrlService'
 ]

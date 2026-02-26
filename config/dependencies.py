@@ -16,7 +16,8 @@ from src.infrastructure.services import (
     ImageDownloadService,
     PDFGeneratorService,
     ThumbnailService,
-    HashService
+    HashService,
+    MangaUrlService
 )
 from src.application.use_cases import (
     BaixarCapituloUseCase,
@@ -40,6 +41,7 @@ class DependencyContainer:
         self.thumbnail_service = ThumbnailService()
         self.hash_service = HashService()
         self.jwt_service = JwtService(self.config.JWT_SECRET_KEY)
+        self.manga_url_service = MangaUrlService()
     
     def _init_repositories(self):
         """Inicializa repositories — usa S3 se S3_BUCKET estiver configurado."""

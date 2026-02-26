@@ -122,20 +122,16 @@ def download_chapter():
     try:
         container = current_app.container
         from src.application.use_cases import BaixarCapituloDTO
-        import re
         
-        def limpar_sufixo(nome: str) -> str:
-            padrao = r'[-_\s]*(manga[-_\s]*)?pt[-_\s]*br$'
-            return re.sub(padrao, '', nome, flags=re.IGNORECASE).strip()
-        
-        nome_limpo = limpar_sufixo(nome_manga)
+        url_service = container.manga_url_service
+        nome_limpo = url_service.clean_manga_name(nome_manga)
         
         try:
             num_cap = int(capitulo)
         except (ValueError, TypeError):
             return fail({'message': 'O número do capítulo deve ser um valor inteiro.'})
 
-        url_completa = construir_url_capitulo_correta(base_url, num_cap)
+        url_completa = url_service.resolve_url(base_url, num_cap)
         
         dto = BaixarCapituloDTO(
             url_capitulo=url_completa,
@@ -201,16 +197,13 @@ def download_cancelar(job_id):
 
 
 def _executar_range_download(app, job_id, base_url, cap_inicio, cap_fim, nome_manga, user_id):
-    import re
-    def limpar_sufixo(nome: str) -> str:
-        padrao = r'[-_\s]*(manga[-_\s]*)?pt[-_\s]*br$'
-        return re.sub(padrao, '', nome, flags=re.IGNORECASE).strip()
-    nome_limpo = limpar_sufixo(nome_manga)
-
     with app.app_context():
         from src.application.use_cases import BaixarCapituloDTO
         container = app.container
         repo = container.download_job_repository
+        url_service = container.manga_url_service
+
+        nome_limpo = url_service.clean_manga_name(nome_manga)
 
         for cap_num in range(cap_inicio, cap_fim + 1):
             if repo.deve_cancelar(job_id):
@@ -220,7 +213,7 @@ def _executar_range_download(app, job_id, base_url, cap_inicio, cap_fim, nome_ma
             repo.atualizar_atual(job_id, cap_num)
 
             try:
-                url_completa = construir_url_capitulo_correta(base_url, cap_num)
+                url_completa = url_service.resolve_url(base_url, cap_num)
                 dto = BaixarCapituloDTO(url_completa, nome_limpo, cap_num, False)
                 resultado = container.baixar_capitulo_use_case.executar(dto, user_id=user_id)
                 repo.registrar_resultado(job_id, {
@@ -297,20 +290,6 @@ def upload_capa(nome_manga):
         return success({'message': 'Capa atualizada!', 'capa_url': nova_url})
     except Exception as e:
         return error(str(e), 'UPLOAD_CAPA_ERROR')
-
-def construir_url_capitulo_correta(base_url: str, numero_capitulo: int) -> str:
-    import re
-    base_url = base_url.rstrip('/')
-    match = re.search(r'(capitulo[-_]?|chap[-_]?|chapter[-_]?)(\d+)$', base_url, re.IGNORECASE)
-    if match:
-        prefixo, num_exemplo = match.group(1), match.group(2)
-        largura = len(num_exemplo)
-        base_sem_num = base_url[:match.start()] + prefixo
-        num_formatado = str(numero_capitulo).zfill(largura) if num_exemplo.startswith('0') and largura > 1 else str(numero_capitulo)
-        return f"{base_sem_num}{num_formatado}/"
-    if re.search(r'(capitulo[-_]|chap[-_]|chapter[-_])$', base_url, re.IGNORECASE):
-        return f"{base_url}{numero_capitulo}/"
-    return f"{base_url}/capitulo-{numero_capitulo}/"
 
 @api_bp.route('/library/<nome_manga>', methods=['GET'])
 @auth_required
