@@ -62,6 +62,12 @@ class Config:
     RATELIMIT_STRATEGY = 'fixed-window'  # ou 'moving-window'
     RATELIMIT_ENABLED = True
 
+    # Servindo arquivos (X-Accel-Redirect para Nginx em produção)
+    # Se USE_X_ACCEL_REDIRECT for True, o Flask envia o cabeçalho e o Nginx serve o arquivo.
+    # X_ACCEL_PREFIX deve corresponder à 'location' interna no Nginx.
+    USE_X_ACCEL_REDIRECT = os.environ.get('USE_X_ACCEL_REDIRECT', 'False') == 'True'
+    X_ACCEL_PREFIX = os.environ.get('X_ACCEL_PREFIX', '/internal_comics/')
+
     # Object Storage — S3 / Cloudflare R2
     # Define S3_BUCKET para ativar o modo S3 (repos de manga/capitulo usam S3).
     # Deixe em branco para usar o filesystem local (desenvolvimento/VPS).

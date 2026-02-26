@@ -4,6 +4,7 @@ Capitulo Controller - Controller para gerenciamento de capítulos
 from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app, send_file, jsonify, g, Response
 import os
 from src.presentation.decorators.auth_required import auth_required
+from src.presentation.api.utils import serve_file
 
 capitulo_bp = Blueprint('capitulo', __name__)
 
@@ -60,7 +61,7 @@ def visualizar_pdf(nome_manga, nome_arquivo):
     caminho_pdf = os.path.join(manga.caminho, nome_arquivo)
     if not os.path.exists(caminho_pdf):
         return 'Arquivo não encontrado', 404
-    return send_file(caminho_pdf, mimetype='application/pdf')
+    return serve_file(caminho_pdf, mimetype='application/pdf')
 
 
 @capitulo_bp.route('/thumbnail/<nome_manga>/<nome_arquivo>')
@@ -95,7 +96,7 @@ def visualizar_thumbnail(nome_manga, nome_arquivo):
         except Exception:
             pass
     if os.path.exists(caminho_thumb):
-        return send_file(caminho_thumb, mimetype='image/jpeg')
+        return serve_file(caminho_thumb, mimetype='image/jpeg')
     return 'Thumbnail não disponível', 404
 
 

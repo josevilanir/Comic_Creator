@@ -5,6 +5,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from PIL import Image
 import os
 from src.presentation.decorators.auth_required import auth_required
+from src.presentation.api.utils import serve_file
 
 manga_bp = Blueprint('manga', __name__)
 
@@ -47,7 +48,7 @@ def visualizar_capa(nome_manga):
     caminho_capa = os.path.join(manga.caminho, 'capa.jpg')
     if not os.path.exists(caminho_capa):
         return 'Arquivo de capa não encontrado', 404
-    return send_file(caminho_capa, mimetype='image/jpeg')
+    return serve_file(caminho_capa, mimetype='image/jpeg')
 
 
 @manga_bp.route('/upload_capa/<nome_manga>', methods=['POST'])
