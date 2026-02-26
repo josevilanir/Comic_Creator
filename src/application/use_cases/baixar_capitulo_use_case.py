@@ -161,8 +161,14 @@ class BaixarCapituloUseCase:
             return BaixarCapituloResultado(False, f"Erro: {str(e)}")
 
     def _resolver_url_com_conteudo(self, url_original: str, numero: int) -> Tuple[Optional[str], List[str]]:
+        import logging
+        logger = logging.getLogger(__name__)
         for largura in _PADDINGS:
             url_candidata = _aplicar_padding(url_original, numero, largura)
+            logger.info(f"Tentando resolver URL: {url_candidata}")
             tem_conteudo, urls_imagens = _verificar_conteudo_url(url_candidata)
-            if tem_conteudo: return url_candidata, urls_imagens
+            if tem_conteudo: 
+                logger.info(f"URL resolvida com sucesso: {url_candidata} ({len(urls_imagens)} imagens)")
+                return url_candidata, urls_imagens
+        logger.warning(f"Não foi possível resolver conteúdo para capítulo {numero} na URL base: {url_original}")
         return None, []

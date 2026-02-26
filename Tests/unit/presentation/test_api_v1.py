@@ -84,7 +84,8 @@ class TestApiV1:
         assert resp.status_code == 400
         data = resp.get_json()
         assert data['status'] == 'fail'
-        assert 'base_url' in data['data']
+        assert 'message' in data['data']
+        assert 'Campos obrigatórios' in data['data']['message']
 
     def test_get_progresso_not_found(self, client, app, auth_headers):
         app.container.download_job_repository.buscar.return_value = None

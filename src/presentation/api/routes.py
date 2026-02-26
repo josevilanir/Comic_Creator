@@ -83,12 +83,17 @@ def delete_url():
 def download_chapter():
     """Baixa capítulo para o usuário logado"""
     data = request.json or {}
-    base_url = data.get('base_url')
+    base_url = str(data.get('base_url', '')).strip()
     capitulo = data.get('capitulo')
-    nome_manga = data.get('nome_manga')
+    nome_manga = str(data.get('nome_manga', '')).strip()
     
-    if not all([base_url, capitulo, nome_manga]):
-        return fail({'base_url': 'obrigat.', 'capitulo': 'obrigat.', 'nome_manga': 'obrigat.'})
+    if not base_url or capitulo is None or not nome_manga:
+        faltando = []
+        if not base_url: faltando.append('base_url')
+        if capitulo is None: faltando.append('capitulo')
+        if not nome_manga: faltando.append('nome_manga')
+        current_app.logger.warning(f"Download negado - campos inválidos ou ausentes: {faltando}. Data: {data}")
+        return fail({'message': f'Campos obrigatórios inválidos ou ausentes: {", ".join(faltando)}'}, 400)
     
     try:
         container = current_app.container
@@ -100,25 +105,28 @@ def download_chapter():
             return re.sub(padrao, '', nome, flags=re.IGNORECASE).strip()
         
         nome_limpo = limpar_sufixo(nome_manga)
-        url_completa = construir_url_capitulo_correta(base_url, int(capitulo))
         
-        # TODO: BaixarCapituloUseCase deve ser atualizado para aceitar user_id
-        # Para este MVP, vamos forçar o salvamento na pasta do usuário via repo
+        try:
+            num_cap = int(capitulo)
+        except (ValueError, TypeError):
+            return fail({'message': 'O número do capítulo deve ser um valor inteiro.'})
+
+        url_completa = construir_url_capitulo_correta(base_url, num_cap)
+        
         dto = BaixarCapituloDTO(
             url_capitulo=url_completa,
             nome_manga=nome_limpo,
-            numero_capitulo=int(capitulo),
+            numero_capitulo=num_cap,
             sobrescrever=False
         )
         
-        # Atualizamos o use case para receber user_id no executar ou no construtor.
-        # Vamos assumir que atualizaremos o executar.
         resultado = container.baixar_capitulo_use_case.executar(dto, user_id=g.user_id)
         
         if resultado.sucesso:
             return success({'message': resultado.mensagem})
         return fail({'message': resultado.mensagem})
     except Exception as e:
+        current_app.logger.exception("Erro no download")
         return error(str(e), 'DOWNLOAD_ERROR')
 
 @api_bp.route('/download/range', methods=['POST'])
