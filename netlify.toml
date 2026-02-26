@@ -1,0 +1,15 @@
+# netlify.toml — Configuração de deploy do Comic Creator frontend no Netlify
+
+[build]
+  base    = "frontend"
+  command = "npm run build"
+  publish = "frontend/dist"
+
+[build.environment]
+  NODE_VERSION = "18"
+
+# SPA redirect — todas as rotas vão para o index.html
+[[redirects]]
+  from   = "/*"
+  to     = "/index.html"
+  status = 200
