@@ -1,0 +1,12 @@
+# railway.toml — Configuração de deploy do Comic Creator no Railway
+# Documentação: https://docs.railway.app/reference/config-as-code
+
+[build]
+builder = "nixpacks"
+
+[deploy]
+startCommand = "gunicorn \"main:app\" --config gunicorn.conf.py"
+healthcheckPath = "/api/v1/health"
+healthcheckTimeout = 30
+restartPolicyType = "on_failure"
+restartPolicyMaxRetries = 3
