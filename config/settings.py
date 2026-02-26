@@ -47,12 +47,17 @@ class Config:
     DOWNLOAD_TIMEOUT = 30  # segundos
     MAX_RETRIES = 3
     RETRY_DELAY = 2  # segundos
+    MAX_CONCURRENT_DOWNLOADS = int(os.environ.get('MAX_CONCURRENT_DOWNLOADS', '4'))
     
     # Segurança
     SESSION_COOKIE_SECURE = False  # True em produção com HTTPS
     SESSION_COOKIE_HTTPONLY = True
     SESSION_COOKIE_SAMESITE = 'Lax'
     PERMANENT_SESSION_LIFETIME = 3600  # 1 hora
+    
+    # Registro de usuários
+    ALLOW_PUBLIC_REGISTRATION = os.environ.get('ALLOW_PUBLIC_REGISTRATION', 'True') == 'True'
+    INVITE_CODE = os.environ.get('INVITE_CODE', '')  # Se definido, exige este código no registro
     
     # CORS
     CORS_ORIGINS = ['http://localhost:5173', 'http://localhost:3000']

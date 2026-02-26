@@ -28,7 +28,19 @@ def _get_use_cases(container):
 @auth_api_bp.route('/register', methods=['POST'])
 @limiter.limit("5 per minute")
 def register():
+    # Verifica se registro público está habilitado
+    if not current_app.config.get('ALLOW_PUBLIC_REGISTRATION', True):
+        return fail({'message': 'O registro de novos usuários está desativado.'}, 403)
+
     body = request.get_json() or {}
+    
+    # Verifica código de convite se configurado
+    expected_invite = current_app.config.get('INVITE_CODE')
+    if expected_invite:
+        provided_invite = body.get('invite_code')
+        if provided_invite != expected_invite:
+            return fail({'invite_code': 'Código de convite inválido ou ausente.'}, 403)
+
     username = body.get('username', '').strip()
     password = body.get('password', '')
 

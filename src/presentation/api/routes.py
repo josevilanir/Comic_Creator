@@ -169,11 +169,10 @@ def download_range():
     current_app.container.download_job_repository.criar(job_id, g.user_id, total)
 
     app = current_app._get_current_object()
-    threading.Thread(
-        target=_executar_range_download,
-        args=(app, job_id, base_url, cap_inicio, cap_fim, nome_manga, g.user_id),
-        daemon=True,
-    ).start()
+    current_app.container.background_executor.submit(
+        _executar_range_download,
+        app, job_id, base_url, cap_inicio, cap_fim, nome_manga, g.user_id
+    )
 
     return success({'job_id': job_id, 'total': total}, 202)
 
