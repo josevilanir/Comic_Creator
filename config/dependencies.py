@@ -6,7 +6,9 @@ from src.infrastructure.repositories import (
     FileSystemCapituloRepository,
     SQLiteUserRepository,
     SQLiteURLRepository,
-    UserDataRepository
+    UserDataRepository,
+    S3MangaRepository,
+    S3CapituloRepository,
 )
 from src.infrastructure.persistence import DownloadJobRepository
 from src.infrastructure.auth.jwt_service import JwtService
@@ -40,10 +42,19 @@ class DependencyContainer:
         self.jwt_service = JwtService()
     
     def _init_repositories(self):
-        """Inicializa repositories"""
+        """Inicializa repositories — usa S3 se S3_BUCKET estiver configurado."""
         db_path = str(self.config.DATABASE_PATH)
-        self.manga_repository = FileSystemMangaRepository(self.config.BASE_COMICS)
-        self.capitulo_repository = FileSystemCapituloRepository(self.config.BASE_COMICS)
+
+        if getattr(self.config, 'S3_BUCKET', ''):
+            from src.infrastructure.services.s3_service import S3Service
+            self.s3_service = S3Service(self.config)
+            self.manga_repository = S3MangaRepository(self.s3_service)
+            self.capitulo_repository = S3CapituloRepository(self.s3_service)
+        else:
+            self.s3_service = None
+            self.manga_repository = FileSystemMangaRepository(self.config.BASE_COMICS)
+            self.capitulo_repository = FileSystemCapituloRepository(self.config.BASE_COMICS)
+
         self.user_repository = SQLiteUserRepository(db_path)
         self.url_repository = SQLiteURLRepository(db_path)
         self.user_data_repository = UserDataRepository(db_path)

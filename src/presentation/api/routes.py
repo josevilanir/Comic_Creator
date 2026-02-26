@@ -242,14 +242,25 @@ def upload_capa(nome_manga):
     import os
     nome_decodificado = unquote(nome_manga)
     try:
+        import io
         container = current_app.container
         manga = container.manga_repository.buscar_por_nome(g.user_id, nome_decodificado)
         if not manga: return fail({'nome_manga': 'Não encontrado.'}, 404)
         if 'capa' not in request.files: return fail({'capa': 'Nenhum arquivo enviado.'})
         file = request.files['capa']
         img = Image.open(file.stream).convert('RGB')
-        img.save(os.path.join(manga.caminho, 'capa.jpg'), 'JPEG', quality=90)
-        nova_url = url_for('manga.visualizar_capa', nome_manga=nome_decodificado, _external=True)
+
+        if getattr(container, 's3_service', None):
+            buf = io.BytesIO()
+            img.save(buf, 'JPEG', quality=90)
+            buf.seek(0)
+            key = f"user_{g.user_id}/{nome_decodificado}/capa.jpg"
+            container.s3_service.upload_fileobj(buf, key, 'image/jpeg')
+            nova_url = container.s3_service.get_presigned_url(key)
+        else:
+            img.save(os.path.join(manga.caminho, 'capa.jpg'), 'JPEG', quality=90)
+            nova_url = url_for('manga.visualizar_capa', nome_manga=nome_decodificado, _external=True)
+
         return success({'message': 'Capa atualizada!', 'capa_url': nova_url})
     except Exception as e:
         return error(str(e), 'UPLOAD_CAPA_ERROR')

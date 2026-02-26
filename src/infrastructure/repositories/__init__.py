@@ -3,3 +3,5 @@ from .filesystem_capitulo_repository import FileSystemCapituloRepository
 from .sqlite_user_repository import SQLiteUserRepository
 from .sqlite_url_repository import SQLiteURLRepository
 from .sqlite_user_data_repository import UserDataRepository
+from .s3_manga_repository import S3MangaRepository
+from .s3_capitulo_repository import S3CapituloRepository

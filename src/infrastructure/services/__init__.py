@@ -6,6 +6,7 @@ from .pdf_generator_service import PDFGeneratorService
 from .thumbnail_service import ThumbnailService
 from .hash_service import HashService
 from .url_storage_service import URLStorageService
+from .s3_service import S3Service
 
 __all__ = [
     'ImageDownloadService',
@@ -13,4 +14,5 @@ __all__ = [
     'ThumbnailService',
     'HashService',
     'URLStorageService',
+    'S3Service',
 ]

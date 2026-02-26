@@ -4,6 +4,7 @@ Baixar Capitulo Use Case - Caso de uso para baixar capítulos de mangá isolados
 import os
 import re
 import shutil
+import tempfile
 import requests
 from bs4 import BeautifulSoup
 from dataclasses import dataclass
@@ -118,17 +119,13 @@ class BaixarCapituloUseCase:
 
             manga = self.manga_repo.buscar_por_nome(user_id, dto.nome_manga)
             if not manga:
-                # Usamos um placeholder no caminho para passar pelo __post_init__
-                # O repositório irá preencher o caminho correto baseado no user_id
-                manga = Manga(nome=dto.nome_manga, caminho="PENDING") 
+                manga = Manga(nome=dto.nome_manga, caminho="PENDING")
                 manga = self.manga_repo.salvar(user_id, manga)
 
-            if not manga.caminho:
-                return BaixarCapituloResultado(False, "Erro ao determinar caminho de salvamento do mangá")
-            
-            pasta_temp = os.path.join(manga.caminho, "tmp")
-            os.makedirs(pasta_temp, exist_ok=True)
-
+            # Todo trabalho local ocorre em um diretório temporário isolado.
+            # O repositório de capítulos é responsável por mover/fazer upload
+            # para o destino final (filesystem ou S3).
+            pasta_temp = tempfile.mkdtemp()
             try:
                 caminhos_imagens = self.image_service.baixar_capitulo_completo(
                     url_resolvida, pasta_temp, prefixo_arquivo=f"cap{dto.numero_capitulo}"
@@ -137,27 +134,28 @@ class BaixarCapituloUseCase:
                     raise ImagensInvalidasException("Imagens insuficientes salvas.")
 
                 nome_pdf = f"capitulo_{str(dto.numero_capitulo).zfill(3)}.pdf"
-                caminho_pdf = os.path.join(manga.caminho, nome_pdf)
+                caminho_pdf = os.path.join(pasta_temp, nome_pdf)
                 self.pdf_service.gerar_pdf_de_imagens(
                     caminhos_imagens, caminho_pdf, titulo=f"{dto.nome_manga} - Cap. {dto.numero_capitulo}"
                 )
-                self.thumbnail_service.gerar_thumbnail_auto(caminho_pdf, manga.caminho)
 
-                # Criação da entidade capítulo para o repositório
+                caminho_thumb = caminho_pdf.replace(".pdf", ".jpg")
+                self.thumbnail_service.gerar_thumbnail(caminho_pdf, caminho_thumb)
+
                 capitulo = Capitulo(
-                    numero=dto.numero_capitulo, 
+                    numero=dto.numero_capitulo,
                     nome_arquivo=nome_pdf,
-                    manga_nome=dto.nome_manga, 
-                    caminho_completo=caminho_pdf
+                    manga_nome=dto.nome_manga,
+                    caminho_completo=caminho_pdf,
                 )
                 capitulo = self.capitulo_repo.salvar(user_id, capitulo)
 
-                if os.path.exists(pasta_temp): shutil.rmtree(pasta_temp)
                 return BaixarCapituloResultado(True, f"Capítulo {dto.numero_capitulo} baixado!", capitulo, caminho_pdf)
 
             except Exception as e:
-                if os.path.exists(pasta_temp): shutil.rmtree(pasta_temp)
                 raise e
+            finally:
+                shutil.rmtree(pasta_temp, ignore_errors=True)
 
         except Exception as e:
             return BaixarCapituloResultado(False, f"Erro: {str(e)}")

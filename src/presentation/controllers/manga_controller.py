@@ -1,7 +1,7 @@
 """
 Manga Controller - Controller para gerenciamento de mangás isolado por usuário
 """
-from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app, send_file, g
+from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app, send_file, g, Response
 from PIL import Image
 import os
 from src.presentation.decorators.auth_required import auth_required
@@ -32,20 +32,21 @@ def biblioteca():
 @manga_bp.route('/capa/<nome_manga>')
 @auth_required
 def visualizar_capa(nome_manga):
-    """Serve o arquivo de capa de um mangá isolado por usuário"""
+    """Serve o arquivo de capa de um mangá isolado por usuário."""
     container = current_app.container
-    
-    # Busca mangá passando user_id
     manga = container.manga_repository.buscar_por_nome(g.user_id, nome_manga)
     if not manga or not manga.tem_capa:
         return 'Capa não encontrada', 404
-    
-    # Caminho da capa
+
+    # Modo S3: redireciona para URL assinada temporária
+    if getattr(container, 's3_service', None):
+        url = container.s3_service.get_presigned_url(manga.capa_url)
+        return redirect(url)
+
+    # Modo filesystem
     caminho_capa = os.path.join(manga.caminho, 'capa.jpg')
-    
     if not os.path.exists(caminho_capa):
         return 'Arquivo de capa não encontrado', 404
-    
     return send_file(caminho_capa, mimetype='image/jpeg')
 
 
@@ -77,8 +78,18 @@ def upload_capa(nome_manga):
     
     try:
         img = Image.open(file.stream).convert('RGB')
-        caminho_capa = os.path.join(manga.caminho, 'capa.jpg')
-        img.save(caminho_capa, 'JPEG', quality=90)
+
+        if getattr(container, 's3_service', None):
+            import io
+            buf = io.BytesIO()
+            img.save(buf, 'JPEG', quality=90)
+            buf.seek(0)
+            key = f"user_{g.user_id}/{nome_manga}/capa.jpg"
+            container.s3_service.upload_fileobj(buf, key, 'image/jpeg')
+        else:
+            caminho_capa = os.path.join(manga.caminho, 'capa.jpg')
+            img.save(caminho_capa, 'JPEG', quality=90)
+
         flash(f'Capa atualizada para {nome_manga}.', 'success')
     except Exception as e:
         flash(f'Erro: {str(e)}', 'error')

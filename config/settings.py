@@ -55,6 +55,18 @@ class Config:
     
     # CORS
     CORS_ORIGINS = ['http://localhost:5173', 'http://localhost:3000']
+
+    # Object Storage — S3 / Cloudflare R2
+    # Define S3_BUCKET para ativar o modo S3 (repos de manga/capitulo usam S3).
+    # Deixe em branco para usar o filesystem local (desenvolvimento/VPS).
+    # Para Cloudflare R2: S3_ENDPOINT_URL=https://<account_id>.r2.cloudflarestorage.com
+    #                     S3_REGION=auto
+    S3_ENDPOINT_URL = os.environ.get('S3_ENDPOINT_URL', '')
+    S3_ACCESS_KEY   = os.environ.get('S3_ACCESS_KEY', '')
+    S3_SECRET_KEY   = os.environ.get('S3_SECRET_KEY', '')
+    S3_BUCKET       = os.environ.get('S3_BUCKET', '')
+    S3_REGION       = os.environ.get('S3_REGION', 'auto')
+    S3_PRESIGNED_EXPIRY = int(os.environ.get('S3_PRESIGNED_EXPIRY', '3600'))  # segundos
     
     @staticmethod
     def init_app(app):
