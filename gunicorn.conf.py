@@ -21,6 +21,8 @@ bind = os.environ.get("GUNICORN_BIND", "0.0.0.0:5000")
 # seguros: qualquer worker pode ler/atualizar o estado do job via banco.
 workers = int(os.environ.get("GUNICORN_WORKERS", multiprocessing.cpu_count() * 2 + 1))
 worker_class = "sync"
+max_requests = 1000        # Reinicia worker após N requests (evita memory leaks)
+max_requests_jitter = 100  # Aleatoriedade para evitar reinicializações simultâneas
 
 # ── Timeouts ──────────────────────────────────────────────────────────────────
 # 120 s para acomodar downloads de capítulo único que rodam de forma síncrona.
