@@ -1,19 +1,11 @@
-# Dependências base
-Flask
-Pillow
-requests
-beautifulsoup4
-pymupdf
-werkzeug
-fpdf
+# Instale após requirements.txt:
+#   pip install -r requirements.txt -r requirements-dev.txt
 
-# Dependências de teste
-pytest==7.4.3
-pytest-cov==4.1.0
-pytest-mock==3.12.0
-pytest-asyncio==0.21.1
+# Testes
+pytest>=7.0.0
+pytest-cov>=3.0.0
+pytest-mock>=3.12.0
 
-# Dependências de desenvolvimento
-black==23.12.0
-flake8==6.1.0
-mypy==1.7.1
+# Qualidade de código
+black>=23.0.0
+flake8>=6.0.0
