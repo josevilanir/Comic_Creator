@@ -17,12 +17,13 @@ def create_app(env='development'):
     app.config.from_object(config[env])
     config[env].init_app(app)
 
-    # CORS
+    # CORS — origins driven by environment config (see config/settings.py)
+    cors_origins = app.config['CORS_ORIGINS']
     CORS(app, resources={
-        r"/api/*":      {"origins": "*", "supports_credentials": False},
-        r"/api/v1/*":   {"origins": "*", "supports_credentials": False},
-        r"/capitulo/*": {"origins": "*", "supports_credentials": False},
-        r"/manga/*":    {"origins": "*", "supports_credentials": False},
+        r"/api/*":      {"origins": cors_origins, "supports_credentials": False},
+        r"/api/v1/*":   {"origins": cors_origins, "supports_credentials": False},
+        r"/capitulo/*": {"origins": cors_origins, "supports_credentials": False},
+        r"/manga/*":    {"origins": cors_origins, "supports_credentials": False},
     })
     # Dependency Injection
     container = DependencyContainer(config[env])

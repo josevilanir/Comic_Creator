@@ -129,22 +129,29 @@ class ProductionConfig(Config):
     # Segurança reforçada
     SESSION_COOKIE_SECURE = True  # Requer HTTPS
     
-    # CORS restrito em produção
-    CORS_ORIGINS = os.environ.get('CORS_ORIGINS', '').split(',')
-    
+    # CORS restrito em produção — ex: CORS_ORIGINS=https://meusite.com,https://www.meusite.com
+    CORS_ORIGINS = [o.strip() for o in os.environ.get('CORS_ORIGINS', '').split(',') if o.strip()]
+
     # Secret key DEVE ser definida em produção
     @staticmethod
     def init_app(app):
         Config.init_app(app)
-        
+
         # Valida configurações críticas
         if app.config['SECRET_KEY'] == 'dev-secret-key-change-in-production':
             raise ValueError(
                 '🚨 ERRO: SECRET_KEY não definida em produção! '
                 'Defina a variável de ambiente SECRET_KEY.'
             )
-        
+
+        if not app.config['CORS_ORIGINS']:
+            raise ValueError(
+                '🚨 ERRO: CORS_ORIGINS não definida em produção! '
+                'Ex: CORS_ORIGINS=https://meusite.com,https://www.meusite.com'
+            )
+
         app.logger.info('🚀 Modo PRODUCTION ativado')
+        app.logger.info(f'CORS permitido para: {app.config["CORS_ORIGINS"]}')
         app.logger.warning('Certifique-se de usar HTTPS em produção!')
 
 
