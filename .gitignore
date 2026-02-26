@@ -62,3 +62,5 @@ comic_creator.db.env
 
 # Claude Code (worktrees e memória interna)
 .claude/
+CLAUDE.MD
+GEMINI.MD
