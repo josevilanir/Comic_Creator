@@ -8,6 +8,7 @@ from src.infrastructure.repositories import (
     SQLiteURLRepository,
     UserDataRepository
 )
+from src.infrastructure.persistence import DownloadJobRepository
 from src.infrastructure.auth.jwt_service import JwtService
 from src.infrastructure.services import (
     ImageDownloadService,
@@ -46,6 +47,7 @@ class DependencyContainer:
         self.user_repository = SQLiteUserRepository(db_path)
         self.url_repository = SQLiteURLRepository(db_path)
         self.user_data_repository = UserDataRepository(db_path)
+        self.download_job_repository = DownloadJobRepository(db_path)
     
     def _init_use_cases(self):
         """Inicializa use cases"""

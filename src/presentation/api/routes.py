@@ -121,9 +121,6 @@ def download_chapter():
     except Exception as e:
         return error(str(e), 'DOWNLOAD_ERROR')
 
-_download_jobs: dict = {}
-_jobs_lock = threading.Lock()
-
 @api_bp.route('/download/range', methods=['POST'])
 @auth_required
 def download_range():
@@ -138,13 +135,9 @@ def download_range():
 
     cap_inicio, cap_fim = int(cap_inicio), int(cap_fim)
     total = cap_fim - cap_inicio + 1
-    
+
     job_id = str(uuid.uuid4())[:8]
-    with _jobs_lock:
-        _download_jobs[job_id] = {
-            'status': 'rodando', 'total': total, 'concluido': 0, 'atual': None, 
-            'resultados': [], 'cancelar': False, 'user_id': g.user_id
-        }
+    current_app.container.download_job_repository.criar(job_id, g.user_id, total)
 
     app = current_app._get_current_object()
     threading.Thread(
@@ -155,24 +148,24 @@ def download_range():
 
     return success({'job_id': job_id, 'total': total}, 202)
 
+
 @api_bp.route('/download/progresso/<job_id>', methods=['GET'])
 @auth_required
 def download_progresso(job_id):
-    with _jobs_lock:
-        job = _download_jobs.get(job_id)
-    if not job or job.get('user_id') != g.user_id:
+    job = current_app.container.download_job_repository.buscar(job_id, g.user_id)
+    if not job:
         return fail({'job_id': 'Job não encontrado ou acesso negado'}, 404)
     return success(job)
+
 
 @api_bp.route('/download/cancelar/<job_id>', methods=['POST'])
 @auth_required
 def download_cancelar(job_id):
-    with _jobs_lock:
-        job = _download_jobs.get(job_id)
-        if not job or job.get('user_id') != g.user_id:
-            return fail({'job_id': 'Job não encontrado'}, 404)
-        job['cancelar'] = True
+    cancelado = current_app.container.download_job_repository.solicitar_cancelamento(job_id, g.user_id)
+    if not cancelado:
+        return fail({'job_id': 'Job não encontrado'}, 404)
     return success({'message': 'Cancelamento solicitado'})
+
 
 def _executar_range_download(app, job_id, base_url, cap_inicio, cap_fim, nome_manga, user_id):
     import re
@@ -184,34 +177,30 @@ def _executar_range_download(app, job_id, base_url, cap_inicio, cap_fim, nome_ma
     with app.app_context():
         from src.application.use_cases import BaixarCapituloDTO
         container = app.container
+        repo = container.download_job_repository
+
         for cap_num in range(cap_inicio, cap_fim + 1):
-            with _jobs_lock:
-                job = _download_jobs[job_id]
-                if job['cancelar']: 
-                    job['status'] = 'cancelado'
-                    break
-                job['atual'] = cap_num
+            if repo.deve_cancelar(job_id):
+                repo.definir_status(job_id, 'cancelado')
+                break
+
+            repo.atualizar_atual(job_id, cap_num)
 
             try:
                 url_completa = construir_url_capitulo_correta(base_url, cap_num)
                 dto = BaixarCapituloDTO(url_completa, nome_limpo, cap_num, False)
                 resultado = container.baixar_capitulo_use_case.executar(dto, user_id=user_id)
-                with _jobs_lock:
-                    _download_jobs[job_id]['resultados'].append({
-                        'cap': cap_num, 'sucesso': resultado.sucesso, 'mensagem': resultado.mensagem
-                    })
-                    _download_jobs[job_id]['concluido'] += 1
+                repo.registrar_resultado(job_id, {
+                    'cap': cap_num, 'sucesso': resultado.sucesso, 'mensagem': resultado.mensagem
+                })
             except Exception as e:
-                with _jobs_lock:
-                    _download_jobs[job_id]['resultados'].append({
-                        'cap': cap_num, 'sucesso': False, 'mensagem': str(e)
-                    })
-                    _download_jobs[job_id]['concluido'] += 1
+                repo.registrar_resultado(job_id, {
+                    'cap': cap_num, 'sucesso': False, 'mensagem': str(e)
+                })
 
-        with _jobs_lock:
-            if _download_jobs[job_id]['status'] == 'rodando':
-                _download_jobs[job_id]['status'] = 'concluido'
-                _download_jobs[job_id]['atual'] = None
+        job = repo.buscar(job_id, user_id)
+        if job and job['status'] == 'rodando':
+            repo.definir_status(job_id, 'concluido')
 
 @api_bp.route('/library/<nome_manga>', methods=['DELETE'])
 @auth_required

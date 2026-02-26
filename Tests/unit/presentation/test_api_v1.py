@@ -86,7 +86,8 @@ class TestApiV1:
         assert data['status'] == 'fail'
         assert 'base_url' in data['data']
 
-    def test_get_progresso_not_found(self, client, auth_headers):
+    def test_get_progresso_not_found(self, client, app, auth_headers):
+        app.container.download_job_repository.buscar.return_value = None
         resp = client.get('/api/v1/download/progresso/invalid-id', headers=auth_headers)
         assert resp.status_code == 404
         data = resp.get_json()
