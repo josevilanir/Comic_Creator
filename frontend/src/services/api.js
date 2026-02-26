@@ -70,7 +70,8 @@ api.interceptors.response.use(
     const refresh_token = localStorage.getItem("refresh_token");
     
     if (!refresh_token) {
-      localStorage.clear();
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('refresh_token');
       return Promise.reject(error);
     }
 
@@ -95,7 +96,8 @@ api.interceptors.response.use(
       processQueue(err, null);
       // Apenas limpa se o erro for realmente de autenticação (401 ou 403)
       if (err.response?.status === 401 || err.response?.status === 403) {
-          localStorage.clear();
+          localStorage.removeItem('access_token');
+          localStorage.removeItem('refresh_token');
       }
       return Promise.reject(err);
     } finally {

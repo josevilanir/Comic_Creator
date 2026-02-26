@@ -147,7 +147,7 @@ def download_chapter():
         return fail({'message': resultado.mensagem})
     except Exception as e:
         current_app.logger.exception("Erro no download")
-        return error(str(e), 'DOWNLOAD_ERROR')
+        return error('Erro interno ao processar o download', 'DOWNLOAD_ERROR')
 
 @api_bp.route('/download/range', methods=['POST'])
 @auth_required
@@ -163,17 +163,20 @@ def download_range():
         return fail({'message': 'Dados incompletos'})
 
     cap_inicio, cap_fim = int(cap_inicio), int(cap_fim)
+    if cap_inicio > cap_fim:
+        return fail({'message': 'cap_inicio deve ser menor ou igual a cap_fim'})
+    if cap_fim - cap_inicio >= 100:
+        return fail({'message': 'O intervalo máximo por download é de 100 capítulos'})
     total = cap_fim - cap_inicio + 1
 
     job_id = str(uuid.uuid4())[:8]
     current_app.container.download_job_repository.criar(job_id, g.user_id, total)
 
     app = current_app._get_current_object()
-    threading.Thread(
-        target=_executar_range_download,
-        args=(app, job_id, base_url, cap_inicio, cap_fim, nome_manga, g.user_id),
-        daemon=True,
-    ).start()
+    current_app.container.background_executor.submit(
+        _executar_range_download,
+        app, job_id, base_url, cap_inicio, cap_fim, nome_manga, g.user_id
+    )
 
     return success({'job_id': job_id, 'total': total}, 202)
 
@@ -238,8 +241,10 @@ def delete_manga(nome_manga):
         if not container.manga_repository.existe(g.user_id, nome_decodificado):
             return fail({'nome_manga': 'Mangá não encontrado.'}, 404)
         if container.manga_repository.deletar(g.user_id, nome_decodificado):
-            try: container.url_repository.deletar(g.user_id, nome_decodificado)
-            except: pass
+            try:
+                container.url_repository.deletar(g.user_id, nome_decodificado)
+            except Exception:
+                current_app.logger.warning("Falha ao remover URL do mangá '%s' da lista salva", nome_decodificado)
             return success({'message': f"Mangá '{nome_decodificado}' excluído."})
         return error('Erro ao excluir mangá.', 'DELETE_MANGA_ERROR')
     except Exception as e:

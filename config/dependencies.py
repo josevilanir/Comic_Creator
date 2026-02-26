@@ -1,6 +1,7 @@
 """
 Dependency Injection Container
 """
+import concurrent.futures
 from src.infrastructure.repositories import (
     FileSystemMangaRepository,
     FileSystemCapituloRepository,
@@ -33,6 +34,10 @@ class DependencyContainer:
         self._init_services()
         self._init_repositories()
         self._init_use_cases()
+        self.background_executor = concurrent.futures.ThreadPoolExecutor(
+            max_workers=self.config.MAX_CONCURRENT_DOWNLOADS,
+            thread_name_prefix="DownloadWorker"
+        )
     
     def _init_services(self):
         """Inicializa services"""
