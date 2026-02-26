@@ -27,6 +27,10 @@ def register_error_handlers(app):
     def not_found_error(e):
         return _error("Recurso não encontrado", "NOT_FOUND", 404)
 
+    @app.errorhandler(429)
+    def too_many_requests_handler(e):
+        return _error(f"Limite de requisições excedido: {e.description}", "TOO_MANY_REQUESTS", 429)
+
     @app.errorhandler(500)
     def internal_error(e):
         current_app.logger.error(f"Erro interno: {e}")

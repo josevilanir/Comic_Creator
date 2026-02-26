@@ -4,6 +4,7 @@ Blueprint separado do auth_controller.py (Jinja2/legado). Este é o REST/JSend.
 """
 from flask import Blueprint, request, current_app
 from src.presentation.api.jsend import success, fail, error
+from src.presentation.app import limiter
 from src.application.use_cases import (
     RegisterUserUseCase,
     LoginUserUseCase,
@@ -25,6 +26,7 @@ def _get_use_cases(container):
 
 
 @auth_api_bp.route('/register', methods=['POST'])
+@limiter.limit("5 per minute")
 def register():
     body = request.get_json() or {}
     username = body.get('username', '').strip()
@@ -45,6 +47,7 @@ def register():
 
 
 @auth_api_bp.route('/login', methods=['POST'])
+@limiter.limit("10 per minute")
 def login():
     body = request.get_json() or {}
     username = body.get('username', '').strip()

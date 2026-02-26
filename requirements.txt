@@ -33,3 +33,7 @@ python-dotenv>=0.20.0   # variáveis de ambiente
 
 # Autenticação JWT
 PyJWT==2.8.0
+
+# Rate Limiting
+flask-limiter>=3.5.0
+redis>=5.0.0

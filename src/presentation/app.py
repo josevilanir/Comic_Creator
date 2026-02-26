@@ -3,11 +3,18 @@ Criação da aplicação Flask
 """
 from flask import Flask, jsonify  
 from flask_cors import CORS
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 from config.settings import config
 from config.dependencies import DependencyContainer
 from src.presentation.api.error_handlers import register_error_handlers
 from src.presentation.middlewares.logging_middleware import setup_request_logging
 
+# Instância global do limiter para ser usada nos blueprints
+limiter = Limiter(
+    key_func=get_remote_address,
+    default_limits=["200 per day", "50 per hour"]
+)
 
 def create_app(env='development'):
     """Factory da aplicação Flask"""
@@ -16,6 +23,9 @@ def create_app(env='development'):
     # Carregar configurações
     app.config.from_object(config[env])
     config[env].init_app(app)
+
+    # Inicializar Limiter
+    limiter.init_app(app)
 
     # CORS — origins driven by environment config (see config/settings.py)
     cors_origins = app.config['CORS_ORIGINS']

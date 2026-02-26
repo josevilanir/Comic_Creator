@@ -7,6 +7,7 @@ import uuid
 
 from src.presentation.api.jsend import success, error, fail
 from src.presentation.decorators.auth_required import auth_required
+from src.presentation.app import limiter
 
 api_bp = Blueprint('api', __name__, url_prefix='/api/v1')
 
@@ -80,6 +81,7 @@ def delete_url():
 
 @api_bp.route('/download', methods=['POST'])
 @auth_required
+@limiter.limit("10 per minute")
 def download_chapter():
     """Baixa capítulo para o usuário logado"""
     data = request.json or {}
@@ -131,6 +133,7 @@ def download_chapter():
 
 @api_bp.route('/download/range', methods=['POST'])
 @auth_required
+@limiter.limit("5 per minute")
 def download_range():
     data = request.json or {}
     base_url   = data.get('base_url', '').strip()

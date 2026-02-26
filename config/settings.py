@@ -56,6 +56,11 @@ class Config:
     # CORS
     CORS_ORIGINS = ['http://localhost:5173', 'http://localhost:3000']
 
+    # Rate Limiting
+    RATELIMIT_STORAGE_URL = os.environ.get('REDIS_URL', 'memory://')
+    RATELIMIT_STRATEGY = 'fixed-window'  # ou 'moving-window'
+    RATELIMIT_ENABLED = True
+
     # Object Storage — S3 / Cloudflare R2
     # Define S3_BUCKET para ativar o modo S3 (repos de manga/capitulo usam S3).
     # Deixe em branco para usar o filesystem local (desenvolvimento/VPS).
@@ -125,6 +130,7 @@ class TestingConfig(Config):
     
     # Desabilita limitações em testes
     MAX_CONTENT_LENGTH = None
+    RATELIMIT_ENABLED = False
     
     @staticmethod
     def init_app(app):
