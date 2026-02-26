@@ -31,12 +31,14 @@ def auth_headers(app):
 class TestApiV1:
     def test_get_library_empty(self, client, app, auth_headers):
         app.container.manga_repository.listar_todos.return_value = []
+        app.container.manga_repository.contar_todos.return_value = 0
 
         resp = client.get('/api/v1/library', headers=auth_headers)
         assert resp.status_code == 200
         data = resp.get_json()
         assert data['status'] == 'success'
-        assert data['data'] == []
+        assert data['data']['mangas'] == []
+        assert data['data']['pagination']['total'] == 0
 
     def test_get_library_with_data(self, client, app, auth_headers):
         manga = MagicMock()
@@ -44,13 +46,15 @@ class TestApiV1:
         manga.tem_capa = False
         manga.total_capitulos = 5
         app.container.manga_repository.listar_todos.return_value = [manga]
+        app.container.manga_repository.contar_todos.return_value = 1
 
         resp = client.get('/api/v1/library', headers=auth_headers)
         assert resp.status_code == 200
         data = resp.get_json()
         assert data['status'] == 'success'
-        assert len(data['data']) == 1
-        assert data['data'][0]['nome'] == "Test Manga"
+        assert len(data['data']['mangas']) == 1
+        assert data['data']['mangas'][0]['nome'] == "Test Manga"
+        assert data['data']['pagination']['total'] == 1
 
     def test_save_url_validation_fail(self, client, auth_headers):
         resp = client.post('/api/v1/urls', json={}, headers=auth_headers)

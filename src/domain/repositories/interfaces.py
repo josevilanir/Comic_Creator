@@ -10,8 +10,13 @@ class IMangaRepository(ABC):
     """Interface para repositório de Mangás"""
     
     @abstractmethod
-    def listar_todos(self, user_id: int) -> List[Manga]:
-        """Retorna todos os mangás da biblioteca do usuário"""
+    def listar_todos(self, user_id: int, skip: int = 0, limit: Optional[int] = None) -> List[Manga]:
+        """Retorna os mangás da biblioteca do usuário com paginação"""
+        pass
+
+    @abstractmethod
+    def contar_todos(self, user_id: int) -> int:
+        """Retorna o total de mangás do usuário"""
         pass
     
     @abstractmethod

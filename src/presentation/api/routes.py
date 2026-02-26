@@ -15,20 +15,42 @@ api_bp = Blueprint('api', __name__, url_prefix='/api/v1')
 @api_bp.route('/library', methods=['GET'])
 @auth_required
 def get_library():
-    """Lista todos os mangás do usuário logado"""
-    container = current_app.container
-    mangas = container.manga_repository.listar_todos(g.user_id)
+    """Lista mangás do usuário logado com paginação"""
+    try:
+        page = int(request.args.get('page', 1))
+        per_page = int(request.args.get('per_page', 20))
+        if page < 1: page = 1
+        if per_page < 1: per_page = 20
+        if per_page > 100: per_page = 100
+    except (ValueError, TypeError):
+        page = 1
+        per_page = 20
+
+    skip = (page - 1) * per_page
     
-    resultado = []
+    container = current_app.container
+    mangas = container.manga_repository.listar_todos(g.user_id, skip=skip, limit=per_page)
+    total = container.manga_repository.contar_todos(g.user_id)
+    
+    mangas_data = []
     for manga in mangas:
-        resultado.append({
+        mangas_data.append({
             'nome': manga.nome,
             'tem_capa': manga.tem_capa,
             'capa_url': url_for('manga.visualizar_capa', nome_manga=manga.nome, _external=True) if manga.tem_capa else None,
             'total_capitulos': manga.total_capitulos
         })
     
-    return success(resultado)
+    import math
+    return success({
+        'mangas': mangas_data,
+        'pagination': {
+            'total': total,
+            'page': page,
+            'per_page': per_page,
+            'pages': math.ceil(total / per_page)
+        }
+    })
 
 
 @api_bp.route('/urls', methods=['GET'])

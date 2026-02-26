@@ -16,10 +16,12 @@ export function useLibrary() {
   const [currentPage, setCurrentPage] = useState(1);
 
   // ── Fetch da biblioteca ───────────────────────────────────────────────────
-  const { data: mangas = [], isLoading: loading } = useQuery({
+  const { data: libraryData = { mangas: [], pagination: {} }, isLoading: loading } = useQuery({
     queryKey: ['library', userId],
-    queryFn: () => api.getLibrary().then(res => res.data ?? []),
+    queryFn: () => api.getLibrary().then(res => res.data ?? { mangas: [], pagination: {} }),
   });
+
+  const mangas = libraryData.mangas || [];
 
   // Resetar página ao mudar busca
   const handleSearchChange = (value) => {
@@ -52,9 +54,13 @@ export function useLibrary() {
     onSuccess: (res, nomeManga) => {
       if (res.status === 'success') {
         // Atualiza cache sem refetch
-        queryClient.setQueryData(['library', userId], (old = []) =>
-          old.filter(m => m.nome !== nomeManga)
-        );
+        queryClient.setQueryData(['library', userId], (old) => {
+          if (!old) return old;
+          return {
+            ...old,
+            mangas: old.mangas.filter(m => m.nome !== nomeManga)
+          };
+        });
         showAlert(`"${nomeManga}" excluído com sucesso.`);
       } else {
         showAlert(res.data?.message || 'Erro ao excluir.', 'error');
@@ -69,13 +75,17 @@ export function useLibrary() {
     onSuccess: (res, { nomeManga }) => {
       if (res.status === 'success') {
         // Atualiza a capa no cache sem refetch
-        queryClient.setQueryData(['library', userId], (old = []) =>
-          old.map(m =>
-            m.nome === nomeManga
-              ? { ...m, tem_capa: true, capa_url: res.data?.capa_url ?? m.capa_url }
-              : m
-          )
-        );
+        queryClient.setQueryData(['library', userId], (old) => {
+          if (!old) return old;
+          return {
+            ...old,
+            mangas: old.mangas.map(m =>
+              m.nome === nomeManga
+                ? { ...m, tem_capa: true, capa_url: res.data?.capa_url ?? m.capa_url }
+                : m
+            )
+          };
+        });
         showAlert(`Capa de "${nomeManga}" atualizada!`);
         return res.data?.capa_url;
       } else {

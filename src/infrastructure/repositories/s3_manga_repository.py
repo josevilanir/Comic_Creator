@@ -32,32 +32,46 @@ class S3MangaRepository(IMangaRepository):
 
     # ── IMangaRepository ───────────────────────────────────────────────────────
 
-    def listar_todos(self, user_id: int) -> List[Manga]:
-        """Lista todos os mangás do usuário em uma única chamada ao S3."""
+    def listar_todos(self, user_id: int, skip: int = 0, limit: Optional[int] = None) -> List[Manga]:
+        """Lista mangás do usuário com paginação."""
         prefix = self._user_prefix(user_id)
         all_objects = self.s3.list_objects(prefix)
 
-        # Agrega objetos por nome do mangá
-        manga_data: dict[str, dict] = {}
+        # Identifica todos os mangás únicos primeiro para paginação eficiente
+        manga_names = set()
         for obj in all_objects:
-            # key: user_{id}/{manga_name}/filename
-            tail = obj["Key"][len(prefix):]       # {manga_name}/filename
+            tail = obj["Key"][len(prefix):]
             parts = tail.split("/", 1)
-            if len(parts) < 2 or not parts[1]:    # ignora objects sem subpath
+            if len(parts) >= 2 and parts[1]:
+                manga_names.add(parts[0])
+        
+        sorted_names = sorted(list(manga_names), key=str.lower)
+        
+        if limit is not None:
+            paginated_names = sorted_names[skip : skip + limit]
+        else:
+            paginated_names = sorted_names[skip:]
+
+        # Agrega objetos apenas para os mangás da página atual
+        manga_data: dict[str, dict] = {nome: {"pdfs": 0, "tem_capa": False, "capa_key": None} for nome in paginated_names}
+        
+        for obj in all_objects:
+            tail = obj["Key"][len(prefix):]
+            parts = tail.split("/", 1)
+            if len(parts) < 2 or not parts[1]:
                 continue
-
+            
             manga_nome, filename = parts
-            if manga_nome not in manga_data:
-                manga_data[manga_nome] = {"pdfs": 0, "tem_capa": False, "capa_key": None}
-
-            if filename.endswith(".pdf"):
-                manga_data[manga_nome]["pdfs"] += 1
-            elif filename == "capa.jpg":
-                manga_data[manga_nome]["tem_capa"] = True
-                manga_data[manga_nome]["capa_key"] = obj["Key"]
+            if manga_nome in manga_data:
+                if filename.endswith(".pdf"):
+                    manga_data[manga_nome]["pdfs"] += 1
+                elif filename == "capa.jpg":
+                    manga_data[manga_nome]["tem_capa"] = True
+                    manga_data[manga_nome]["capa_key"] = obj["Key"]
 
         result = []
-        for nome, info in manga_data.items():
+        for nome in paginated_names:
+            info = manga_data[nome]
             result.append(Manga(
                 nome=nome,
                 caminho=self._manga_prefix(user_id, nome),
@@ -66,7 +80,18 @@ class S3MangaRepository(IMangaRepository):
                 total_capitulos=info["pdfs"],
             ))
 
-        return sorted(result, key=lambda m: m.nome.lower())
+        return result
+
+    def contar_todos(self, user_id: int) -> int:
+        prefix = self._user_prefix(user_id)
+        all_objects = self.s3.list_objects(prefix)
+        manga_names = set()
+        for obj in all_objects:
+            tail = obj["Key"][len(prefix):]
+            parts = tail.split("/", 1)
+            if len(parts) >= 2 and parts[1]:
+                manga_names.add(parts[0])
+        return len(manga_names)
 
     def buscar_por_nome(self, user_id: int, nome: str) -> Optional[Manga]:
         prefix = self._manga_prefix(user_id, nome)

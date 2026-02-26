@@ -24,17 +24,34 @@ class FileSystemMangaRepository(IMangaRepository):
         os.makedirs(path, exist_ok=True)
         return path
     
-    def listar_todos(self, user_id: int) -> List[Manga]:
-        mangas = []
+    def listar_todos(self, user_id: int, skip: int = 0, limit: Optional[int] = None) -> List[Manga]:
         user_path = self._get_user_path(user_id)
         
-        for item in os.listdir(user_path):
+        # Lista todos os nomes de diretórios e ordena primeiro
+        # Isso evita criar objetos Manga (que faz os.stat/os.listdir interno) para itens que não serão exibidos
+        itens = [item for item in os.listdir(user_path) if os.path.isdir(os.path.join(user_path, item))]
+        itens.sort(key=str.lower)
+
+        # Aplica paginação nos nomes
+        if limit is not None:
+            itens_paginados = itens[skip : skip + limit]
+        else:
+            itens_paginados = itens[skip:]
+
+        mangas = []
+        for item in itens_paginados:
             caminho_completo = os.path.join(user_path, item)
-            if os.path.isdir(caminho_completo):
-                manga = self._criar_manga_de_diretorio(item, caminho_completo)
-                mangas.append(manga)
+            manga = self._criar_manga_de_diretorio(item, caminho_completo)
+            mangas.append(manga)
         
-        return sorted(mangas, key=lambda m: m.nome.lower())
+        return mangas
+
+    def contar_todos(self, user_id: int) -> int:
+        user_path = self._get_user_path(user_id)
+        try:
+            return len([item for item in os.listdir(user_path) if os.path.isdir(os.path.join(user_path, item))])
+        except Exception:
+            return 0
     
     def buscar_por_nome(self, user_id: int, nome: str) -> Optional[Manga]:
         user_path = self._get_user_path(user_id)

@@ -13,11 +13,20 @@ manga_bp = Blueprint('manga', __name__)
 @manga_bp.route('/biblioteca')
 @auth_required
 def biblioteca():
-    """Lista todos os mangás da biblioteca do usuário"""
+    """Lista mangás da biblioteca do usuário com paginação (Jinja2)"""
     container = current_app.container
     
-    # Lista mangás passando user_id
-    mangas = container.manga_repository.listar_todos(g.user_id)
+    try:
+        page = int(request.args.get('page', 1))
+        per_page = int(request.args.get('per_page', 24))
+    except (ValueError, TypeError):
+        page, per_page = 1, 24
+
+    skip = (page - 1) * per_page
+    
+    # Lista mangás passando user_id e paginação
+    mangas = container.manga_repository.listar_todos(g.user_id, skip=skip, limit=per_page)
+    total = container.manga_repository.contar_todos(g.user_id)
     
     # Prepara dados para o template
     pastas = [{
@@ -27,7 +36,17 @@ def biblioteca():
         'total_capitulos': manga.total_capitulos
     } for manga in mangas]
     
-    return render_template('biblioteca.html', pastas=pastas)
+    import math
+    return render_template(
+        'biblioteca.html', 
+        pastas=pastas,
+        pagination={
+            'total': total,
+            'page': page,
+            'per_page': per_page,
+            'pages': math.ceil(total / per_page)
+        }
+    )
 
 
 @manga_bp.route('/capa/<nome_manga>')
