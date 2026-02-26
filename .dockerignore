@@ -1,0 +1,52 @@
+# .dockerignore — Exclui arquivos desnecessários do build Docker
+
+# Ambiente virtual Python
+.venv/
+venv/
+env/
+
+# Cache Python
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Frontend (não vai no container do backend)
+frontend/
+
+# Dados locais (serão montados via volume no Fly.io)
+data/
+*.db
+*.sqlite
+
+# Logs
+logs/
+*.log
+
+# Comics locais
+Comics/
+*.pdf
+
+# Variáveis de ambiente locais
+.env
+.env.local
+
+# Legado
+Legado/
+
+# Testes
+Tests/
+.coverage
+htmlcov/
+.pytest_cache/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# Git
+.git/
+.gitignore
+
+# Docs
+*.md

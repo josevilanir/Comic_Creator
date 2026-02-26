@@ -1,0 +1,46 @@
+# fly.toml — Configuração de deploy do Comic Creator no Fly.io
+# Gerado para: comic-creator-backend
+# Docs: https://fly.io/docs/reference/configuration/
+
+app = "comic-creator-backend"
+primary_region = "gru"  # São Paulo — mais próximo do Brasil
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  FLASK_ENV = "production"
+  PORT = "8080"
+  GUNICORN_BIND = "0.0.0.0:8080"
+  # Variáveis sensíveis (SECRET_KEY, JWT_SECRET_KEY, S3_*, CORS_ORIGINS)
+  # devem ser definidas via: fly secrets set NOME=valor
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = true   # Hiberna quando sem tráfego (free tier)
+  auto_start_machines = true  # Acorda automaticamente na requisição
+  min_machines_running = 0    # 0 = pode hibernar completamente (grátis)
+
+  [http_service.concurrency]
+    type = "connections"
+    hard_limit = 25
+    soft_limit = 20
+
+[[vm]]
+  size = "shared-cpu-1x"  # 256MB RAM — suficiente para Flask + Gunicorn
+  memory = "256mb"
+
+# Volume persistente para SQLite
+[[mounts]]
+  source = "comic_creator_data"
+  destination = "/data"
+  initial_size = "1gb"
+
+# Healthcheck
+[[services.http_checks]]
+  interval = "30s"
+  timeout = "10s"
+  grace_period = "30s"
+  method = "GET"
+  path = "/api/v1/health"
