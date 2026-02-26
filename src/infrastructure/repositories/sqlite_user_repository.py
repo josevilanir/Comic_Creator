@@ -162,6 +162,16 @@ class SQLiteUserRepository(IUserRepository):
                 (user_id,)
             )
 
+    def limpar_tokens_antigos(self, user_id: Optional[int] = None):
+        """Remove tokens revogados ou expirados da base de dados"""
+        with self._get_conn() as conn:
+            query = "DELETE FROM refresh_tokens WHERE (revoked = 1 OR expires_at < datetime('now'))"
+            params = []
+            if user_id:
+                query += " AND user_id = ?"
+                params.append(user_id)
+            conn.execute(query, params)
+
     # ── Aliases em português para os use cases do MVP ─────────────────────────
     def salvar_refresh_token(self, user_id: int, token: str, expires_at: str):
         return self.save_refresh_token(user_id, token, expires_at)

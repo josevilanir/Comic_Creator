@@ -33,6 +33,7 @@ class RefreshTokenUseCase:
 
         # Rotação: revogar o antigo, emitir novo par
         self.user_repo.revogar_refresh_token(refresh_token)
+        self.user_repo.limpar_tokens_antigos(user_id)
 
         new_access = self.jwt_svc.create_access_token(user_id, username)
         new_refresh = self.jwt_svc.create_refresh_token(user_id)

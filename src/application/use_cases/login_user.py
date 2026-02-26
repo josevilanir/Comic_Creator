@@ -21,6 +21,9 @@ class LoginUserUseCase:
         access_token = self.jwt_svc.create_access_token(user.id, user.username)
         refresh_token = self.jwt_svc.create_refresh_token(user.id)
         expires_at = (datetime.now(timezone.utc) + timedelta(days=7)).isoformat()
+        
+        # Limpa tokens antigos do usuário antes de salvar o novo
+        self.user_repo.limpar_tokens_antigos(user.id)
         self.user_repo.salvar_refresh_token(user.id, refresh_token, expires_at)
 
         return {

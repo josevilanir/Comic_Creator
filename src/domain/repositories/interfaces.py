@@ -102,6 +102,11 @@ class IUserRepository(ABC):
         """Lista todos os usuários"""
         pass
 
+    @abstractmethod
+    def limpar_tokens_antigos(self, user_id: Optional[int] = None):
+        """Remove tokens revogados ou expirados"""
+        pass
+
 
 class IURLSalvaRepository(ABC):
     """Interface para repositório de URLs Salvas"""
