@@ -130,22 +130,28 @@ class ImageDownloadService:
                 raise ImagensInvalidasException(f"Content-Type inválido: {content_type}")
             
             img_data = response.content
+            response.close()
             if not img_data:
                 raise ImagensInvalidasException("Imagem vazia")
-            
+
             # Converte para PIL Image
             try:
-                img = Image.open(BytesIO(img_data))
-                
+                buf = BytesIO(img_data)
+                del img_data
+                img = Image.open(buf)
+                img.load()  # força leitura completa antes de fechar o buffer
+                buf.close()
+
                 # Converte para RGB se necessário
                 if img.mode == 'P' and 'transparency' in img.info:
                     img = img.convert('RGBA')
-                
+
                 if img.mode == 'RGBA':
                     background = Image.new("RGB", img.size, (255, 255, 255))
                     background.paste(img, mask=img.split()[3])
+                    img.close()
                     return background
-                
+
                 return img.convert("RGB")
                 
             except UnidentifiedImageError:
@@ -208,7 +214,9 @@ class ImageDownloadService:
                     img.save(caminho_completo, 'WEBP', quality=95)
                 else:
                     img.save(caminho_completo, 'JPEG', quality=95)
-                
+                img.close()
+                del img
+
                 caminhos_salvos.append(caminho_completo)
                 
             except (DownloadFailedException, ImagensInvalidasException) as e:

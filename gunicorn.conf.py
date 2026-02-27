@@ -19,15 +19,15 @@ bind = os.environ.get("GUNICORN_BIND", "0.0.0.0:5000")
 # ── Workers ───────────────────────────────────────────────────────────────────
 # Jobs de download são persistidos no SQLite, então múltiplos workers são
 # seguros: qualquer worker pode ler/atualizar o estado do job via banco.
-workers = int(os.environ.get("GUNICORN_WORKERS", multiprocessing.cpu_count() * 2 + 1))
+workers = int(os.environ.get("GUNICORN_WORKERS", "1"))
 worker_class = "sync"
-max_requests = 1000        # Reinicia worker após N requests (evita memory leaks)
-max_requests_jitter = 100  # Aleatoriedade para evitar reinicializações simultâneas
+max_requests = 50          # Reinicia worker após N requests (evita memory leaks)
+max_requests_jitter = 10   # Aleatoriedade para evitar reinicializações simultâneas
 
 # ── Timeouts ──────────────────────────────────────────────────────────────────
 # 120 s para acomodar downloads de capítulo único que rodam de forma síncrona.
 # Downloads em lote (range) retornam 202 imediatamente — sem problema de timeout.
-timeout = int(os.environ.get("GUNICORN_TIMEOUT", "120"))
+timeout = int(os.environ.get("GUNICORN_TIMEOUT", "300"))
 graceful_timeout = 30
 keepalive = 5
 
