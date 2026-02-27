@@ -13,8 +13,8 @@ class Config:
     
     # Diretórios principais
     BASE_DIR = Path(__file__).parent.parent
-    DATA_DIR = BASE_DIR / 'data'
-    LOGS_DIR = BASE_DIR / 'logs'
+    DATA_DIR = Path(os.environ.get('DATA_DIR', str(BASE_DIR / 'data')))
+    LOGS_DIR = Path(os.environ.get('LOGS_DIR', str(BASE_DIR / 'logs')))
     
     # Flask
     SECRET_KEY = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-production')
@@ -27,7 +27,7 @@ class Config:
     THUMBNAIL_DIR = BASE_COMICS / '.thumbnails'
     
     # Database
-    DATABASE_PATH = str(DATA_DIR / 'comic_creator.db')
+    DATABASE_PATH = os.environ.get('DATABASE_PATH', str(DATA_DIR / 'comic_creator.db'))
     
     # URLs e dados persistentes
     URLS_JSON = str(DATA_DIR / 'urls_salvas.json')
