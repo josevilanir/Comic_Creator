@@ -85,15 +85,18 @@ def save_url():
 
 
 @api_bp.route('/urls', methods=['DELETE'])
+@api_bp.route('/urls/<path:nome_manga>', methods=['DELETE'])
 @auth_required
-def delete_url():
+def delete_url(nome_manga=None):
     """Remove URL salva do usuário"""
-    data = request.json or {}
-    nome = data.get('nome')
+    # Aceita nome via path param (DELETE /urls/<nome>) ou body JSON (DELETE /urls)
+    nome = nome_manga or (request.json or {}).get('nome')
     if not nome:
         return fail({'nome': 'obrigatório'})
-    
+
     try:
+        from urllib.parse import unquote
+        nome = unquote(nome)
         container = current_app.container
         if container.url_repository.deletar(g.user_id, nome):
             return success({'message': 'URL removida!'})
