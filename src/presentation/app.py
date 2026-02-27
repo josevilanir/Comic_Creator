@@ -19,6 +19,7 @@ limiter = Limiter(
 def create_app(env='development'):
     """Factory da aplicação Flask"""
     app = Flask(__name__, template_folder='../../templates', static_folder='../../static')
+    app.url_map.strict_slashes = False
 
     # Carregar configurações
     app.config.from_object(config[env])
