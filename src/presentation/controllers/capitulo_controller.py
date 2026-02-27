@@ -1,7 +1,7 @@
 """
 Capitulo Controller - Controller para gerenciamento de capítulos
 """
-from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app, send_file, jsonify, g, Response
+from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app, send_file, jsonify, g, Response, stream_with_context
 import os
 from src.presentation.decorators.auth_required import auth_required
 from src.presentation.api.utils import serve_file
@@ -48,11 +48,21 @@ def visualizar_pdf(nome_manga, nome_arquivo):
     if '..' in nome_manga or '..' in nome_arquivo:
         return 'Acesso negado', 403
 
-    # Modo S3: redireciona para URL assinada temporária
+    # Modo S3: proxy em streaming para evitar CORS (fetch cross-origin para R2 é bloqueado)
     if getattr(container, 's3_service', None):
-        key = f"user_{g.user_id}/{nome_manga}/{nome_arquivo}"
-        url = container.s3_service.get_presigned_url(key)
-        return redirect(url)
+        try:
+            key = f"user_{g.user_id}/{nome_manga}/{nome_arquivo}"
+            chunks, content_length = container.s3_service.get_object_stream(key)
+            headers = {'Content-Disposition': f'inline; filename="{nome_arquivo}"'}
+            if content_length:
+                headers['Content-Length'] = str(content_length)
+            return Response(
+                stream_with_context(chunks),
+                content_type='application/pdf',
+                headers=headers,
+            )
+        except Exception:
+            return 'Arquivo não encontrado', 404
 
     # Modo filesystem
     manga = container.manga_repository.buscar_por_nome(g.user_id, nome_manga)

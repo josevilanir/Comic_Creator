@@ -79,3 +79,24 @@ class S3Service:
             Params={"Bucket": self.bucket, "Key": key},
             ExpiresIn=expiry or self.presigned_expiry,
         )
+
+    def get_object_stream(self, key: str, chunk_size: int = 65536):
+        """
+        Retorna um gerador que produz chunks do objeto em streaming.
+        Não carrega o arquivo inteiro em memória.
+
+        Raises:
+            KeyError: se o objeto não existir (botocore.exceptions.ClientError 404)
+        """
+        response = self._client.get_object(Bucket=self.bucket, Key=key)
+        body = response["Body"]
+        content_length = response.get("ContentLength")
+
+        def _chunks():
+            while True:
+                chunk = body.read(chunk_size)
+                if not chunk:
+                    break
+                yield chunk
+
+        return _chunks(), content_length
