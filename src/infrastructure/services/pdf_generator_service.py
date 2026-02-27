@@ -3,6 +3,7 @@ PDF Generator Service - Serviço para gerar PDFs a partir de imagens
 """
 import os
 from typing import List
+import fitz  # pymupdf
 from PIL import Image
 
 from ...domain.exceptions import ImagensInvalidasException
@@ -49,46 +50,26 @@ class PDFGeneratorService:
         """
         if not caminhos_imagens:
             raise ImagensInvalidasException("Nenhuma imagem fornecida para gerar PDF")
-        
-        # Carrega todas as imagens como PIL Image
-        imagens_pil = []
-        
-        for caminho in caminhos_imagens:
-            try:
-                img = Image.open(caminho)
-                
-                # Converte para RGB se necessário
-                if img.mode == 'P' and 'transparency' in img.info:
-                    img = img.convert('RGBA')
-                
-                if img.mode == 'RGBA':
-                    background = Image.new("RGB", img.size, (255, 255, 255))
-                    background.paste(img, mask=img.split()[3])
-                    imagens_pil.append(background)
-                else:
-                    imagens_pil.append(img.convert("RGB"))
-                    
-            except Exception as e:
-                raise ImagensInvalidasException(f"Erro ao processar imagem {caminho}: {e}")
-        
-        if not imagens_pil:
-            raise ImagensInvalidasException("Nenhuma imagem válida para gerar PDF")
-        
+
         # Garante que diretório existe
         os.makedirs(os.path.dirname(caminho_pdf_saida), exist_ok=True)
-        
+
         try:
-            # Salva primeira imagem com as demais anexadas
-            imagens_pil[0].save(
-                caminho_pdf_saida,
-                save_all=True,
-                append_images=imagens_pil[1:] if len(imagens_pil) > 1 else [],
-                resolution=self.resolution,
-                title=titulo
-            )
-            
+            doc = fitz.open()
+            for caminho in caminhos_imagens:
+                # Converte cada imagem para um PDF de uma página e insere no doc.
+                # PyMuPDF processa uma imagem por vez — sem acumular todas em RAM.
+                with fitz.open(caminho) as img_doc:
+                    pdf_bytes = img_doc.convert_to_pdf()
+                page_pdf = fitz.open("pdf", pdf_bytes)
+                doc.insert_pdf(page_pdf)
+                page_pdf.close()
+
+            doc.set_metadata({"title": titulo})
+            doc.save(caminho_pdf_saida, garbage=4, deflate=True)
+            doc.close()
             return caminho_pdf_saida
-            
+
         except Exception as e:
             raise ImagensInvalidasException(f"Erro ao salvar PDF: {e}")
     
