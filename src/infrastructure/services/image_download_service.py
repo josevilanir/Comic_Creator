@@ -160,6 +160,41 @@ class ImageDownloadService:
         except requests.exceptions.RequestException as e:
             raise DownloadFailedException(url, str(e))
     
+    def baixar_imagem_para_disco(self, url: str, caminho_destino: str) -> str:
+        """
+        Baixa imagem diretamente para disco via streaming, sem carregar em memória.
+
+        Args:
+            url: URL da imagem
+            caminho_destino: Caminho completo onde salvar o arquivo
+
+        Returns:
+            caminho_destino
+
+        Raises:
+            DownloadFailedException: Se falhar ao baixar
+            ImagensInvalidasException: Se Content-Type inválido ou arquivo vazio
+        """
+        try:
+            response = requests.get(url, headers=self.headers, timeout=self.timeout, stream=True)
+            response.raise_for_status()
+
+            content_type = response.headers.get('Content-Type', '').lower()
+            if not content_type.startswith('image/') and 'octet-stream' not in content_type:
+                raise ImagensInvalidasException(f"Content-Type inválido: {content_type}")
+
+            with open(caminho_destino, 'wb') as f:
+                for chunk in response.iter_content(chunk_size=8192):
+                    f.write(chunk)
+
+            if os.path.getsize(caminho_destino) == 0:
+                raise ImagensInvalidasException("Imagem vazia")
+
+            return caminho_destino
+
+        except requests.exceptions.RequestException as e:
+            raise DownloadFailedException(url, str(e))
+
     def baixar_capitulo_completo(
         self, 
         url_capitulo: str,
@@ -198,29 +233,12 @@ class ImageDownloadService:
         
         for idx, url in enumerate(urls_imagens):
             try:
-                img = self.baixar_imagem(url)
-                
-                # Detecta extensão pelo Content-Type ou URL
                 extensao = self._detectar_extensao(url)
                 nome_arquivo = f"{prefixo_arquivo}_{str(idx).zfill(3)}{extensao}"
                 caminho_completo = os.path.join(pasta_temp, nome_arquivo)
-                
-                # Salva como RGB
-                if extensao == '.jpg':
-                    img.save(caminho_completo, 'JPEG', quality=95)
-                elif extensao == '.png':
-                    img.save(caminho_completo, 'PNG')
-                elif extensao == '.webp':
-                    img.save(caminho_completo, 'WEBP', quality=95)
-                else:
-                    img.save(caminho_completo, 'JPEG', quality=95)
-                img.close()
-                del img
-
+                self.baixar_imagem_para_disco(url, caminho_completo)
                 caminhos_salvos.append(caminho_completo)
-                
             except (DownloadFailedException, ImagensInvalidasException) as e:
-                # Log erro mas continua tentando outras imagens
                 print(f"Erro ao baixar {url}: {e}")
                 continue
         
