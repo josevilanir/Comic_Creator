@@ -84,6 +84,24 @@ class TestApiV1:
         assert data['status'] == 'fail'
         assert 'nome' in data['data']
 
+    def test_delete_url_via_path_param(self, client, app, auth_headers):
+        """DELETE /api/v1/urls/<nome> deve funcionar sem body JSON."""
+        app.container.url_repository.deletar.return_value = True
+        resp = client.delete('/api/v1/urls/One%20Piece', headers=auth_headers)
+        assert resp.status_code == 200
+        data = resp.get_json()
+        assert data['status'] == 'success'
+
+    def test_delete_url_path_param_not_found(self, client, app, auth_headers):
+        """DELETE /api/v1/urls/<nome> retorna fail (não error do Flask) quando URL não existe."""
+        app.container.url_repository.deletar.return_value = False
+        resp = client.delete('/api/v1/urls/Missing', headers=auth_headers)
+        assert resp.status_code == 404
+        data = resp.get_json()
+        # Must be JSend "fail" format, NOT Flask's "error" handler format
+        assert data['status'] == 'fail'
+        assert 'nome' in data['data']
+
     def test_download_chapter_missing_data(self, client, auth_headers):
         resp = client.post('/api/v1/download', json={}, headers=auth_headers)
         assert resp.status_code == 400
