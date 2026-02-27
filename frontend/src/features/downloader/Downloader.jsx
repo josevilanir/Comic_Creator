@@ -66,14 +66,7 @@ function Downloader() {
           showAlert={showAlert}
         />
 
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-            gap: '24px',
-            marginBottom: '24px',
-          }}
-        >
+        <div className="downloader-grid">
           <SingleDownload
             capitulo={capitulo}
             setCapitulo={setCapitulo}

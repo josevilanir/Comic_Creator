@@ -652,7 +652,7 @@ img { display: block; }
 .manga-card:hover .card-actions-float { opacity: 1; }
 
 .card-action-btn {
-  width: 30px; height: 30px;
+  width: 44px; height: 44px;
   border-radius: var(--radius-sm);
   border: none;
   cursor: pointer;
@@ -1049,6 +1049,16 @@ select.form-input {
 }
 
 /* ═══════════════════════════════════════════
+   DOWNLOADER GRID
+═══════════════════════════════════════════ */
+.downloader-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+/* ═══════════════════════════════════════════
    URL ITEMS (Downloader)
 ═══════════════════════════════════════════ */
 .url-item {
@@ -1176,16 +1186,42 @@ select.form-input {
 
 @media (max-width: 768px) {
   .container, .navbar-inner, .page-header-inner, .hero-inner { padding: 0 16px; }
+  /* Navbar: reduz gap para não transbordar */
+  .navbar-inner { gap: 16px; }
+  /* Manga grid: cards um pouco menores */
   .manga-grid, .loading-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 14px; }
   .features-grid { grid-template-columns: repeat(2, 1fr); }
+  /* Mockup: 2 colunas em tablet */
+  .mockup-grid { grid-template-columns: repeat(2, 1fr); }
   .form-card { padding: 20px; }
   .hero-title { font-size: 2rem; }
+  /* Downloader: 1 coluna em tablet */
+  .downloader-grid { grid-template-columns: 1fr; }
+  /* Botões flutuantes sempre visíveis em touch (sem hover) */
+  .card-actions-float { opacity: 1; }
 }
 
 @media (max-width: 480px) {
+  /* Manga grid: cards ainda menores */
+  .manga-grid, .loading-grid { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; }
   .features-grid { grid-template-columns: 1fr; }
+  /* Mockup: 1 coluna */
+  .mockup-grid { grid-template-columns: 1fr; }
   .hero-actions { flex-direction: column; }
+  /* Botões de formulário/CTA ocupam largura toda */
   .btn { width: 100%; justify-content: center; }
+  /* Exceção: botões inline em listas e seções mantêm tamanho automático */
+  .chapter-actions .btn,
+  .section-header .btn,
+  .sort-btn { width: auto; }
+  /* Chapter rows mais compactos */
+  .chapter-row { padding: 10px 12px; gap: 10px; }
+  .chapter-thumb, .chapter-thumb-placeholder { width: 42px; height: 58px; }
+}
+
+@media (max-width: 360px) {
+  /* Telas muito pequenas: cards mínimos */
+  .manga-grid, .loading-grid { grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 8px; }
 }
 /* ═══════════════════════════════════════════
    MANGA READER — PDF.js canvas renderer
@@ -1346,8 +1382,8 @@ select.form-input {
 }
 
 .reader-nav-btn {
-  width: 26px;
-  height: 26px;
+  width: 36px;
+  height: 36px;
   border-radius: var(--radius-full);
   border: none;
   background: transparent;
