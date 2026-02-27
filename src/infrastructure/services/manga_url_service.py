@@ -29,28 +29,36 @@ class DefaultAdapter(ISiteAdapter):
 
     def format_url(self, base_url: str, chapter_number: int) -> str:
         base_url = base_url.rstrip('/')
-        
-        # Caso 1: URL já termina com número (ex: .../capitulo-1 ou .../chap-01)
+
+        # Caso 1: URL termina com prefixo + número (ex: .../capitulo-1, .../chap-01)
         match = re.search(r'(capitulo[-_]?|chap[-_]?|chapter[-_]?)(\d+)$', base_url, re.IGNORECASE)
         if match:
             prefixo, num_exemplo = match.group(1), match.group(2)
             largura = len(num_exemplo)
             base_sem_num = base_url[:match.start()] + prefixo
-            
-            # Mantém padding de zeros se o exemplo tiver
             if num_exemplo.startswith('0') and largura > 1:
                 num_formatado = str(chapter_number).zfill(largura)
             else:
                 num_formatado = str(chapter_number)
-                
             return f"{base_sem_num}{num_formatado}/"
-            
-        # Caso 2: Termina com prefixo mas sem número (ex: .../capitulo-)
+
+        # Caso 2: URL termina com número nu (ex: .../1171 ou .../one-piece/1171)
+        # Cobre sites onde o capítulo é apenas o número após o nome do mangá
+        match = re.search(r'/(\d+)$', base_url)
+        if match:
+            num_exemplo = match.group(1)
+            base_sem_num = base_url[:match.start()]
+            if num_exemplo.startswith('0') and len(num_exemplo) > 1:
+                num_formatado = str(chapter_number).zfill(len(num_exemplo))
+            else:
+                num_formatado = str(chapter_number)
+            return f"{base_sem_num}/{num_formatado}/"
+
+        # Caso 3: Termina com prefixo sem número (ex: .../capitulo-)
         if re.search(r'(capitulo[-_]|chap[-_]|chapter[-_])$', base_url, re.IGNORECASE):
             return f"{base_url}{chapter_number}/"
-            
-        # Caso 3: URL base genérica (ex: .../manga/nome)
-        # Adiciona o padrão mais comum
+
+        # Caso 4: URL base genérica (ex: .../manga/nome)
         return f"{base_url}/capitulo-{chapter_number}/"
 
 
