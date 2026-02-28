@@ -144,15 +144,14 @@ function UrlManager({
               </span>
             </div>
             {urlKeys.map(nome => (
-              <div className="url-item" key={nome}>
-                <div style={{ minWidth: 0 }}>
-                  <div className="url-item-name">{nome}</div>
-                  <div className="url-item-url">{urls[nome]}</div>
+              <div key={nome} className="flex flex-col gap-3 bg-gray-50 rounded-2xl p-4 border border-gray-100 mb-2">
+                <div className="min-w-0">
+                  <p className="font-bold text-gray-800 text-sm">{nome}</p>
+                  <p className="text-xs text-gray-400 truncate mt-1">{urls[nome]}</p>
                 </div>
                 <button
-                  className="btn btn-sm btn-danger"
+                  className="w-full py-3 rounded-full border border-red-300 text-red-500 text-sm font-bold hover:bg-red-50 transition-colors"
                   onClick={() => handleRemove(nome)}
-                  style={{ flexShrink: 0 }}
                 >
                   🗑 Remover
                 </button>
