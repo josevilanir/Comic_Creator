@@ -1,30 +1,36 @@
 import React, { useState, useRef } from 'react';
 import { authImgUrl } from '../../services/api';
+import { useLongPress } from '../../hooks/useLongPress';
 
 /**
- * MangaCard — componente base reutilizável para exibição de um mangá.
- * UI com estado local de loading de ações (delete/upload).
- * Recebe dados e callbacks via props.
+ * MangaCard — exibe capa e info do mangá.
+ *
+ * Interação:
+ *   - Toque simples / clique  → navega para capítulos
+ *   - Toque longo (500ms)     → abre menu de ações no canto inferior da capa
+ *   - Hover desktop           → mesmo menu aparece via CSS (group-hover)
  */
 function MangaCard({ manga, onClick, onDelete, onUploadCapa }) {
   const [isDeleting,  setIsDeleting]  = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [capaUrl,     setCapaUrl]     = useState(authImgUrl(manga.capa_url));
+  const [menuOpen,    setMenuOpen]    = useState(false);
+
   const fileInputRef = useRef(null);
+  // Evita que o synthetic click pós-long-press dispare navegação
+  const didLongPress = useRef(false);
 
-  async function handleDelete(e) {
-    e.stopPropagation();
-    if (!window.confirm(`Excluir "${manga.nome}" e TODOS os seus capítulos?
-
-Esta ação não pode ser desfeita.`)) return;
+  // ── Ações ─────────────────────────────────────────────────────────────────
+  async function doDelete() {
+    if (!window.confirm(`Excluir "${manga.nome}" e TODOS os seus capítulos?\n\nEsta ação não pode ser desfeita.`)) return;
     setIsDeleting(true);
     await onDelete(manga.nome);
     setIsDeleting(false);
   }
 
   function handleUploadClick(e) {
-    e.preventDefault();
     e.stopPropagation();
+    setMenuOpen(false);
     fileInputRef.current?.click();
   }
 
@@ -38,7 +44,23 @@ Esta ação não pode ser desfeita.`)) return;
     e.target.value = '';
   }
 
+  // ── Long press ────────────────────────────────────────────────────────────
+  const longPressProps = useLongPress(() => {
+    didLongPress.current = true;
+    setMenuOpen(true);
+  }, 500);
+
+  // ── Clique no card ────────────────────────────────────────────────────────
   function handleCardClick() {
+    // Swallow the synthetic click that fires right after a touch long-press
+    if (didLongPress.current) {
+      didLongPress.current = false;
+      return;
+    }
+    if (menuOpen) {
+      setMenuOpen(false);
+      return;
+    }
     if (isDeleting || isUploading) return;
     onClick();
   }
@@ -47,7 +69,7 @@ Esta ação não pode ser desfeita.`)) return;
 
   return (
     <>
-      {/* Input fora do card — evita propagação de clique */}
+      {/* Input de arquivo fora do card — evita propagação de clique */}
       <input
         ref={fileInputRef}
         type="file"
@@ -57,18 +79,22 @@ Esta ação não pode ser desfeita.`)) return;
       />
 
       <div
-        className="group flex flex-col gap-2 animate-in"
+        className="group flex flex-col gap-2 animate-in select-none"
         onClick={handleCardClick}
         style={{ cursor: busy ? 'default' : 'pointer' }}
       >
-        {/* Capa */}
-        <div className="relative aspect-[2/3] rounded-xl overflow-hidden bg-[var(--cream-dark)]">
+        {/* ── Capa ── */}
+        <div
+          className="relative aspect-[2/3] rounded-xl overflow-hidden bg-[var(--cream-dark)]"
+          {...longPressProps}
+        >
           {capaUrl ? (
             <img
               className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
               src={capaUrl}
               alt={manga.nome}
               loading="lazy"
+              draggable={false}
             />
           ) : (
             <div className="w-full h-full flex flex-col items-center justify-center gap-2">
@@ -77,31 +103,36 @@ Esta ação não pode ser desfeita.`)) return;
             </div>
           )}
 
-          {/* Overlay com botões — sempre visível em mobile, hover em desktop */}
+          {/* Overlay — oculto por padrão; aparece no hover (desktop) ou long press */}
           <div
-            className="absolute inset-0 bg-black/40 flex items-center justify-center gap-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity"
+            className={`absolute inset-0 bg-black/40 flex flex-col justify-end pb-2 transition-opacity
+              ${menuOpen ? 'opacity-100' : 'opacity-0 md:group-hover:opacity-100'}`}
             onClick={e => e.stopPropagation()}
           >
-            <button
-              className="bg-white rounded-full p-2 text-sm shadow disabled:opacity-50 hover:scale-110 transition-transform"
-              onClick={handleUploadClick}
-              disabled={busy}
-              title="Trocar capa"
-            >
-              {isUploading ? '⏳' : '🖼'}
-            </button>
-            <button
-              className="bg-red-500 text-white rounded-full p-2 text-sm shadow disabled:opacity-50 hover:scale-110 transition-transform"
-              onClick={handleDelete}
-              disabled={busy}
-              title="Excluir mangá"
-            >
-              {isDeleting ? '⏳' : '🗑'}
-            </button>
+            <div className="flex justify-center gap-3">
+              <button
+                className="bg-white/90 backdrop-blur-sm rounded-full p-2.5 shadow-lg text-sm
+                           disabled:opacity-50 hover:scale-110 transition-transform"
+                onClick={handleUploadClick}
+                disabled={busy}
+                title="Trocar capa"
+              >
+                {isUploading ? '⏳' : '🖼️'}
+              </button>
+              <button
+                className="bg-red-500/90 backdrop-blur-sm text-white rounded-full p-2.5 shadow-lg text-sm
+                           disabled:opacity-50 hover:scale-110 transition-transform"
+                onClick={(e) => { e.stopPropagation(); doDelete(); setMenuOpen(false); }}
+                disabled={busy}
+                title="Excluir mangá"
+              >
+                {isDeleting ? '⏳' : '🗑️'}
+              </button>
+            </div>
           </div>
         </div>
 
-        {/* Info */}
+        {/* ── Info ── */}
         <div>
           <p className="text-sm font-bold text-gray-900 truncate leading-tight">{manga.nome}</p>
           <div className="flex items-center justify-between mt-1">
