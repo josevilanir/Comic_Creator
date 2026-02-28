@@ -160,23 +160,28 @@ class ImageDownloadService:
         except requests.exceptions.RequestException as e:
             raise DownloadFailedException(url, str(e))
     
-    def baixar_imagem_para_disco(self, url: str, caminho_destino: str) -> str:
+    def baixar_imagem_para_disco(self, url: str, caminho_destino: str, referer: str = '') -> str:
         """
         Baixa imagem diretamente para disco via streaming, sem carregar em memória.
 
         Args:
             url: URL da imagem
             caminho_destino: Caminho completo onde salvar o arquivo
+            referer: Header Referer a enviar (necessário em alguns servidores)
 
         Returns:
             caminho_destino
 
         Raises:
             DownloadFailedException: Se falhar ao baixar
-            ImagensInvalidasException: Se Content-Type inválido ou arquivo vazio
+            ImagensInvalidasException: Se Content-Type inválido ou arquivo muito pequeno
         """
         try:
-            response = requests.get(url, headers=self.headers, timeout=self.timeout, stream=True)
+            headers = self.headers.copy()
+            if referer:
+                headers['Referer'] = referer
+
+            response = requests.get(url, headers=headers, timeout=self.timeout, stream=True)
             response.raise_for_status()
 
             content_type = response.headers.get('Content-Type', '').lower()
@@ -184,11 +189,16 @@ class ImageDownloadService:
                 raise ImagensInvalidasException(f"Content-Type inválido: {content_type}")
 
             with open(caminho_destino, 'wb') as f:
+                tamanho = 0
                 for chunk in response.iter_content(chunk_size=8192):
                     f.write(chunk)
+                    tamanho += len(chunk)
 
-            if os.path.getsize(caminho_destino) == 0:
-                raise ImagensInvalidasException("Imagem vazia")
+            if tamanho < 1024:
+                os.remove(caminho_destino)
+                raise ImagensInvalidasException(
+                    f"Arquivo muito pequeno ({tamanho} bytes) — provavelmente não é uma imagem"
+                )
 
             return caminho_destino
 
@@ -218,25 +228,29 @@ class ImageDownloadService:
         """
         # Baixa HTML
         html = self.baixar_html(url_capitulo)
-        
+
         # Extrai URLs
         urls_imagens = self.extrair_urls_imagens(html, url_capitulo)
-        
+
         if not urls_imagens:
             raise ImagensInvalidasException("Nenhuma URL de imagem encontrada na página")
-        
+
+        # Extrai domínio como Referer (alguns servidores exigem para servir imagens)
+        parsed = urlparse(url_capitulo)
+        referer = f"{parsed.scheme}://{parsed.netloc}/"
+
         # Cria pasta temp se não existir
         os.makedirs(pasta_temp, exist_ok=True)
-        
+
         # Baixa cada imagem
         caminhos_salvos = []
-        
+
         for idx, url in enumerate(urls_imagens):
             try:
                 extensao = self._detectar_extensao(url)
                 nome_arquivo = f"{prefixo_arquivo}_{str(idx).zfill(3)}{extensao}"
                 caminho_completo = os.path.join(pasta_temp, nome_arquivo)
-                self.baixar_imagem_para_disco(url, caminho_completo)
+                self.baixar_imagem_para_disco(url, caminho_completo, referer=referer)
                 caminhos_salvos.append(caminho_completo)
             except (DownloadFailedException, ImagensInvalidasException) as e:
                 print(f"Erro ao baixar {url}: {e}")
