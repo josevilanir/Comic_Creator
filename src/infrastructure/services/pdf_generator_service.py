@@ -56,20 +56,31 @@ class PDFGeneratorService:
 
         try:
             doc = fitz.open()
+            imagens_validas = 0
             for caminho in caminhos_imagens:
-                # Converte cada imagem para um PDF de uma página e insere no doc.
-                # PyMuPDF processa uma imagem por vez — sem acumular todas em RAM.
-                with fitz.open(caminho) as img_doc:
-                    pdf_bytes = img_doc.convert_to_pdf()
-                page_pdf = fitz.open("pdf", pdf_bytes)
-                doc.insert_pdf(page_pdf)
-                page_pdf.close()
+                try:
+                    # Converte cada imagem para um PDF de uma página e insere no doc.
+                    # PyMuPDF processa uma imagem por vez — sem acumular todas em RAM.
+                    with fitz.open(caminho) as img_doc:
+                        pdf_bytes = img_doc.convert_to_pdf()
+                    page_pdf = fitz.open("pdf", pdf_bytes)
+                    doc.insert_pdf(page_pdf)
+                    page_pdf.close()
+                    imagens_validas += 1
+                except Exception as e:
+                    print(f"Imagem ignorada (corrompida): {caminho} — {e}")
+                    continue
+
+            if imagens_validas == 0:
+                raise ImagensInvalidasException("Nenhuma imagem válida encontrada para gerar PDF")
 
             doc.set_metadata({"title": titulo})
             doc.save(caminho_pdf_saida, garbage=4, deflate=True)
             doc.close()
             return caminho_pdf_saida
 
+        except ImagensInvalidasException:
+            raise
         except Exception as e:
             raise ImagensInvalidasException(f"Erro ao salvar PDF: {e}")
     
