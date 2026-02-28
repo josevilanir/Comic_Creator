@@ -57,56 +57,59 @@ Esta ação não pode ser desfeita.`)) return;
       />
 
       <div
-        className="manga-card animate-in"
+        className="group flex flex-col gap-2 animate-in"
         onClick={handleCardClick}
         style={{ cursor: busy ? 'default' : 'pointer' }}
       >
         {/* Capa */}
-        <div className="card-thumb-wrap">
+        <div className="relative aspect-[2/3] rounded-xl overflow-hidden bg-[var(--cream-dark)]">
           {capaUrl ? (
-            <img className="card-thumb" src={capaUrl} alt={manga.nome} loading="lazy" />
+            <img
+              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+              src={capaUrl}
+              alt={manga.nome}
+              loading="lazy"
+            />
           ) : (
-            <div className="card-no-thumb">
-              <span className="card-no-thumb-icon">📖</span>
-              <span className="card-no-thumb-text">Sem capa</span>
+            <div className="w-full h-full flex flex-col items-center justify-center gap-2">
+              <span className="text-4xl opacity-40">📖</span>
+              <span className="text-xs text-gray-400 font-bold uppercase tracking-wider">Sem capa</span>
             </div>
           )}
-        </div>
 
-        {/* Overlay hover */}
-        <div className="card-overlay">
-          <span className="card-overlay-label">Ver capítulos →</span>
-        </div>
-
-        {/* Ações flutuantes */}
-        <div className="card-actions-float" onClick={e => e.stopPropagation()}>
-          <button
-            className="card-action-btn card-action-upload"
-            onClick={handleUploadClick}
-            disabled={busy}
-            title="Trocar capa"
+          {/* Overlay com botões — sempre visível em mobile, hover em desktop */}
+          <div
+            className="absolute inset-0 bg-black/40 flex items-center justify-center gap-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity"
+            onClick={e => e.stopPropagation()}
           >
-            {isUploading ? '⏳' : '🖼'}
-          </button>
-          <button
-            className="card-action-btn card-action-delete"
-            onClick={handleDelete}
-            disabled={busy}
-            title="Excluir mangá"
-          >
-            {isDeleting ? '⏳' : '🗑'}
-          </button>
+            <button
+              className="bg-white rounded-full p-2 text-sm shadow disabled:opacity-50 hover:scale-110 transition-transform"
+              onClick={handleUploadClick}
+              disabled={busy}
+              title="Trocar capa"
+            >
+              {isUploading ? '⏳' : '🖼'}
+            </button>
+            <button
+              className="bg-red-500 text-white rounded-full p-2 text-sm shadow disabled:opacity-50 hover:scale-110 transition-transform"
+              onClick={handleDelete}
+              disabled={busy}
+              title="Excluir mangá"
+            >
+              {isDeleting ? '⏳' : '🗑'}
+            </button>
+          </div>
         </div>
 
         {/* Info */}
-        <div className="card-body">
-          <h3 className="card-title">{manga.nome}</h3>
-          <div className="card-meta">
-            <span className="card-chapters">
+        <div>
+          <p className="text-sm font-bold text-gray-900 truncate leading-tight">{manga.nome}</p>
+          <div className="flex items-center justify-between mt-1">
+            <span className="text-xs text-gray-400">
               {manga.total_capitulos != null ? `${manga.total_capitulos} cap.` : '—'}
             </span>
             {manga.total_capitulos > 0 && (
-              <span className="card-badge">PDF</span>
+              <span className="text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded-full font-bold">PDF</span>
             )}
           </div>
         </div>

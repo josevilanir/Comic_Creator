@@ -112,7 +112,7 @@ function Library() {
 
         {/* Grid */}
         {paginated.length > 0 && (
-          <div className="manga-grid">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
             {paginated.map(manga => (
               <MangaCard
                 key={manga.nome}
