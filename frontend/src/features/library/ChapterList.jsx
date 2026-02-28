@@ -110,61 +110,72 @@ function ChapterList() {
           </div>
         )}
 
-        {paginated.map(chapter => (
-          <div
-            key={chapter.filename}
-            className="chapter-row animate-in"
-            style={{ opacity: deletingFile === chapter.filename ? 0.45 : 1, transition: 'opacity 0.2s' }}
-          >
-            {/* Thumbnail */}
-            {chapter.thumbnail ? (
-              <img
-                className="chapter-thumb"
-                src={authImgUrl(chapter.thumbnail)}
-                alt={chapter.title}
-                loading="lazy"
-              />
-            ) : (
-              <div className="chapter-thumb-placeholder">📄</div>
-            )}
+        {paginated.map(chapter => {
+          const num = parseInt(
+            (chapter.title ?? chapter.filename)?.match(/\d+/)?.[0] ?? '',
+            10
+          );
+          const displayTitle = isNaN(num) ? (chapter.title ?? chapter.filename) : `Capítulo ${num}`;
 
-            <div className="chapter-info">
-              <span className="chapter-title">{chapter.title}</span>
-              {chapter.read && <span className="chapter-read-badge">✓ Lido</span>}
-            </div>
+          return (
+            <div
+              key={chapter.filename}
+              className="chapter-row animate-in"
+              style={{ opacity: deletingFile === chapter.filename ? 0.45 : 1, transition: 'opacity 0.2s' }}
+            >
+              {/* Thumbnail */}
+              {chapter.thumbnail ? (
+                <img
+                  className="chapter-thumb"
+                  src={authImgUrl(chapter.thumbnail)}
+                  alt={displayTitle}
+                  loading="lazy"
+                />
+              ) : (
+                <div className="chapter-thumb-placeholder">📄</div>
+              )}
 
-            <div className="chapter-actions" style={{ display: 'flex', gap: '8px' }}>
-              <button
-                className="btn btn-sm btn-coral"
-                onClick={() => {
-                  navigate(
-                    `/manga/${encodeURIComponent(decodedName)}/ler/${encodeURIComponent(chapter.filename)}`,
-                    { state: { chapters: sorted } }
-                  );
-                }}
-                title="Ler capítulo"
-              >
-                📖 Ler
-              </button>
-              <button
-                className={`btn btn-sm ${chapter.read ? 'btn-outline' : 'btn-success'}`}
-                onClick={() => handleToggleLido(chapter.filename)}
-                title={chapter.read ? 'Marcar como não lido' : 'Marcar como lido'}
-              >
-                {chapter.read ? '↩ Não lido' : '✓ Lido'}
-              </button>
-              <button
-                className="btn btn-sm btn-danger"
-                onClick={() => handleDelete(chapter.filename)}
-                disabled={deletingFile === chapter.filename}
-                title="Excluir capítulo"
-                aria-label={`Excluir ${chapter.title}`}
-              >
-                {deletingFile === chapter.filename ? '⏳' : '🗑'}
-              </button>
+              <div className="chapter-info">
+                <span className="chapter-title">{displayTitle}</span>
+                {chapter.read && <span className="chapter-read-badge">✓ Lido</span>}
+              </div>
+
+              <div className="chapter-actions" style={{ display: 'flex', gap: '8px' }}>
+                <button
+                  className="btn btn-sm btn-coral"
+                  style={{ minHeight: '44px' }}
+                  onClick={() => {
+                    navigate(
+                      `/manga/${encodeURIComponent(decodedName)}/ler/${encodeURIComponent(chapter.filename)}`,
+                      { state: { chapters: sorted } }
+                    );
+                  }}
+                  title="Ler capítulo"
+                >
+                  📖 Ler
+                </button>
+                <button
+                  className={`btn btn-sm ${chapter.read ? 'btn-outline' : 'btn-success'}`}
+                  style={{ minHeight: '44px' }}
+                  onClick={() => handleToggleLido(chapter.filename)}
+                  title={chapter.read ? 'Marcar como não lido' : 'Marcar como lido'}
+                >
+                  {chapter.read ? '↩ Não lido' : '✓ Lido'}
+                </button>
+                <button
+                  className="btn btn-sm btn-danger"
+                  style={{ minHeight: '44px', minWidth: '44px' }}
+                  onClick={() => handleDelete(chapter.filename)}
+                  disabled={deletingFile === chapter.filename}
+                  title="Excluir capítulo"
+                  aria-label={`Excluir ${displayTitle}`}
+                >
+                  {deletingFile === chapter.filename ? '⏳' : '🗑'}
+                </button>
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
 
         <Pagination
           currentPage={currentPage}

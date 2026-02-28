@@ -63,7 +63,7 @@ function MangaReader() {
 
   const [page,      setPage]      = useState(1);
   const [total,     setTotal]     = useState(0);
-  const [zoom,      setZoom]      = useState(1.4);
+  const [zoom,      setZoom]      = useState(() => window.innerWidth < 640 ? 0.7 : 1.4);
   const [status,    setStatus]    = useState('loading'); // 'loading' | 'ready' | 'error'
   const [rendering, setRendering] = useState(false);
 

@@ -1217,6 +1217,9 @@ select.form-input {
   /* Chapter rows mais compactos */
   .chapter-row { padding: 10px 12px; gap: 10px; }
   .chapter-thumb, .chapter-thumb-placeholder { width: 42px; height: 58px; }
+  /* URL items: empilhar em mobile */
+  .url-item { flex-direction: column; align-items: flex-start; }
+  .url-item .btn-danger { width: 100%; justify-content: center; }
 }
 
 @media (max-width: 360px) {
@@ -1536,6 +1539,15 @@ select.form-input {
   .reader-topbar { padding: 0 10px; gap: 8px; height: 52px; }
   .reader-chapter-nav { display: none; }
   .reader-click-zone { width: 20%; }
+  /* Canvas: scale down to fit viewport width on mobile */
+  .reader-canvas-container {
+    width: 100%;
+    overflow-x: hidden;
+  }
+  .reader-canvas {
+    max-width: 100vw;
+    height: auto;
+  }
 }
 /* ═══════════════════════════════════════════
    AUTH PAGE

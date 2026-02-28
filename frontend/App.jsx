@@ -54,7 +54,14 @@ function Navbar() {
           
           {user && (
               <div style={{ display: 'flex', alignItems: 'center', marginLeft: '16px', gap: '12px' }}>
-                  <span style={{ color: 'var(--text-light)', fontSize: '0.85rem' }}>👋 {user.username}</span>
+                  <span style={{
+                color: 'var(--text-light)',
+                fontSize: '0.85rem',
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                maxWidth: '80px',
+              }}>👋 {user.username}</span>
                   <button onClick={logout} className="btn btn-sm btn-outline">Sair</button>
               </div>
           )}
