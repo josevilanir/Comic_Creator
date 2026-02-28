@@ -28,6 +28,19 @@ class PDFGeneratorService:
         self.resolution = resolution
         self.quality = quality
     
+    def _normalizar_imagem(self, caminho: str) -> str:
+        """Converte webp para jpg se necessário. Retorna caminho final."""
+        if not caminho.lower().endswith('.webp'):
+            return caminho
+
+        caminho_jpg = caminho[:-5] + '.jpg'
+        try:
+            with Image.open(caminho) as img:
+                img.convert('RGB').save(caminho_jpg, 'JPEG', quality=95)
+            return caminho_jpg
+        except Exception as e:
+            raise Exception(f"Falha ao converter webp para jpg: {e}")
+
     def gerar_pdf_de_imagens(
         self,
         caminhos_imagens: List[str],
@@ -59,14 +72,17 @@ class PDFGeneratorService:
             imagens_validas = 0
             for caminho in caminhos_imagens:
                 try:
+                    caminho_final = self._normalizar_imagem(caminho)
                     # Converte cada imagem para um PDF de uma página e insere no doc.
                     # PyMuPDF processa uma imagem por vez — sem acumular todas em RAM.
-                    with fitz.open(caminho) as img_doc:
+                    with fitz.open(caminho_final) as img_doc:
                         pdf_bytes = img_doc.convert_to_pdf()
                     page_pdf = fitz.open("pdf", pdf_bytes)
                     doc.insert_pdf(page_pdf)
                     page_pdf.close()
                     imagens_validas += 1
+                    if caminho_final != caminho:
+                        os.remove(caminho_final)
                 except Exception as e:
                     print(f"Imagem ignorada (corrompida): {caminho} — {e}")
                     continue
