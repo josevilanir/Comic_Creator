@@ -170,7 +170,7 @@ function MangaCard({ manga, onClick, onDelete, onUploadCapa }) {
 
         {/* ── Info ── */}
         <div>
-          <p className="text-sm font-bold text-gray-900 truncate leading-tight">{manga.nome}</p>
+          <p className="text-sm font-bold text-gray-900 truncate leading-tight" title={manga.nome}>{manga.nome}</p>
           <div className="flex items-center justify-between mt-1">
             {/* Capítulos abaixo da capa — visível só no mobile */}
             <span className="text-xs text-gray-400 md:hidden">

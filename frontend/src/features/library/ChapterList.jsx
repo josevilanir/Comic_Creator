@@ -81,7 +81,7 @@ function ChapterList() {
         {sorted.length > 0 && (
           <div className="section-header">
             <span className="section-header-title">Capítulos</span>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
               {totalPages > 1 && (
                 <span className="section-header-count">
                   Pág. {currentPage}/{totalPages}
@@ -100,12 +100,12 @@ function ChapterList() {
             <h3>Sem capítulos</h3>
             <p>
               Nenhum capítulo de <strong>{decodedName}</strong> foi baixado ainda.{' '}
-              <span
-                style={{ color: 'var(--coral)', cursor: 'pointer', fontWeight: 700 }}
+              <button
+                style={{ color: 'var(--coral)', cursor: 'pointer', fontWeight: 700, background: 'none', border: 'none', padding: 0, font: 'inherit' }}
                 onClick={() => navigate('/download')}
               >
                 Baixar agora →
-              </span>
+              </button>
             </p>
           </div>
         )}
@@ -140,7 +140,7 @@ function ChapterList() {
                 {chapter.read && <span className="chapter-read-badge">✓ Lido</span>}
               </div>
 
-              <div className="chapter-actions" style={{ display: 'flex', gap: '8px' }}>
+              <div className="chapter-actions" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                 <button
                   className="btn btn-sm btn-coral"
                   style={{ minHeight: '44px' }}

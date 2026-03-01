@@ -128,7 +128,7 @@ function RangeDownload({
               {rangeFim && jobStatus.status === 'cancelado' && '⛔ Download cancelado'}
             </span>
             {rangeAtivo && (
-              <Button className="btn-sm btn-danger" onClick={onCancel}>
+              <Button className="btn-sm btn-danger" onClick={onCancel} style={{ flexShrink: 0 }}>
                 ⛔ Cancelar
               </Button>
             )}
