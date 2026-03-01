@@ -37,7 +37,7 @@ export function AuthPage() {
         justifyContent: 'center', 
         alignItems: 'center', 
         minHeight: '100vh',
-        background: 'var(--bg-gradient)'
+        background: 'linear-gradient(135deg, var(--cream) 0%, var(--cream-dark) 100%)'
     }}>
       <div className="form-card" style={{ maxWidth: '400px', width: '100%' }}>
         <h1 style={{ textAlign: 'center', color: 'var(--coral)', marginBottom: '24px' }}>Comic Creator</h1>

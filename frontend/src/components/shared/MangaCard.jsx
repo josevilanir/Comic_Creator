@@ -146,7 +146,7 @@ function MangaCard({ manga, onClick, onDelete, onUploadCapa }) {
               {/* Botões — canto inferior direito */}
               <div className="absolute bottom-2 right-2 flex gap-2">
                 <button
-                  className="bg-white/90 text-gray-700 rounded-full p-2 shadow-md
+                  className="bg-white/90 text-gray-700 w-11 h-11 rounded-full flex items-center justify-center shadow-md
                              hover:bg-white transition-colors disabled:opacity-50"
                   onClick={handleUploadClick}
                   disabled={busy}
@@ -155,7 +155,7 @@ function MangaCard({ manga, onClick, onDelete, onUploadCapa }) {
                   {isUploading ? '…' : <IconEdit />}
                 </button>
                 <button
-                  className="bg-red-500/90 text-white rounded-full p-2 shadow-md
+                  className="bg-red-500/90 text-white w-11 h-11 rounded-full flex items-center justify-center shadow-md
                              hover:bg-red-500 transition-colors disabled:opacity-50"
                   onClick={(e) => { e.stopPropagation(); doDelete(); setMenuOpen(false); }}
                   disabled={busy}

@@ -234,7 +234,8 @@ img { display: block; }
 
 .hero-image {
   flex-shrink: 0;
-  width: 420px;
+  max-width: 420px;
+  width: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1091,7 +1092,7 @@ select.form-input {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 340px;
+  max-width: min(340px, 100%);
 }
 
 /* ═══════════════════════════════════════════
@@ -1337,8 +1338,8 @@ select.form-input {
 }
 
 .reader-ctrl-btn {
-  width: 28px;
-  height: 28px;
+  width: 44px;
+  height: 44px;
   border-radius: var(--radius-full);
   border: none;
   background: transparent;
@@ -1538,7 +1539,9 @@ select.form-input {
 @media (max-width: 640px) {
   .reader-title-wrap { display: none; }
   .reader-topbar { padding: 0 10px; gap: 8px; height: 52px; }
-  .reader-chapter-nav { display: none; }
+  .reader-btn { padding: 5px 10px; font-size: 0.75rem; }
+  .reader-chapter-nav, .reader-page-counter { padding: 2px 5px; gap: 2px; }
+  .reader-chapter-pos { font-size: 0.65rem; }
   .reader-click-zone { width: 20%; }
   /* Canvas: scale down to fit viewport width on mobile */
   .reader-canvas-container {

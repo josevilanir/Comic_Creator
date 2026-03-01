@@ -86,7 +86,7 @@ function UrlManager({
       </div>
 
       {/* área de salvar URL e lista */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(300px, 100%), 1fr))', gap: '24px' }}>
         <div className="form-card">
           <div className="form-card-title">
             <div className="form-icon">🔗</div>

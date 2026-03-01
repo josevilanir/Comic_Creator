@@ -69,7 +69,7 @@ function Navbar() {
 
         {/* Hamburger — mobile */}
         <button
-          className="md:hidden p-2 text-gray-700 text-xl leading-none"
+          className="md:hidden p-3 w-11 h-11 flex items-center justify-center text-gray-700 text-xl leading-none"
           onClick={() => setMenuOpen(o => !o)}
           aria-label="Menu"
         >
@@ -84,7 +84,7 @@ function Navbar() {
             <Link
               key={link.to}
               to={link.to}
-              className={`text-sm font-bold py-1 no-underline ${linkClass(link.to)}`}
+              className={`text-sm font-bold py-3 no-underline ${linkClass(link.to)}`}
               onClick={() => setMenuOpen(false)}
             >
               {link.label}
