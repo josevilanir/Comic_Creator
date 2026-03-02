@@ -1,29 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
-const FEATURES = [
-  {
-    icon: '📥',
-    title: 'Download Automático',
-    desc: 'Cole a URL base e baixe capítulos inteiros convertidos em PDF automaticamente.',
-  },
-  {
-    icon: '📚',
-    title: 'Biblioteca Organizada',
-    desc: 'Todos os seus mangás em um só lugar, com capas, contagem de capítulos e busca.',
-  },
-  {
-    icon: '🖼',
-    title: 'Capas Personalizadas',
-    desc: 'Faça upload de qualquer imagem como capa diretamente pelo browser.',
-  },
-  {
-    icon: '🗂',
-    title: 'Gestão Completa',
-    desc: 'Exclua capítulos ou mangás inteiros, ordene e navegue com paginação fluida.',
-  },
-];
-
 /**
  * CircleTextBadge — cria um texto circular rodando em volta do centro
  */
@@ -136,21 +113,6 @@ function LandingPage() {
         </div>
       </section>
 
-      {/* ── FEATURES (Keeping existing for content but styled nicely) ───────────────── */}
-      <section className="features bento-hero">
-        <div className="features-header">
-           <h2 className="font-black text-3xl uppercase tracking-tighter">Everything you need</h2>
-        </div>
-        <div className="features-grid">
-          {FEATURES.map((f, i) => (
-            <div key={f.title} className="bento-layout-card p-6 flex flex-col gap-3">
-              <div className="text-3xl bg-[var(--coral-light)] w-12 h-12 flex items-center justify-center rounded-xl border border-black shadow-sm">{f.icon}</div>
-              <h3 className="font-black text-lg uppercase tracking-tight">{f.title}</h3>
-              <p className="text-sm text-gray-600">{f.desc}</p>
-            </div>
-          ))}
-        </div>
-      </section>
     </div>
   );
 }
