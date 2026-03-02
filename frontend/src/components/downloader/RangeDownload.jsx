@@ -1,6 +1,8 @@
 import React from 'react';
 import Button from '../ui/Button';
 import ResultLog from './ResultLog';
+import JobStatusHeader from './JobStatusHeader';
+import DownloadSummary from './DownloadSummary';
 
 /**
  * Formulário + andamento para downloads em range.
@@ -76,6 +78,7 @@ function RangeDownload({
               />
             </div>
           </div>
+
           {capInicio && capFim && parseInt(capFim, 10) >= parseInt(capInicio, 10) && (
             <div
               style={{
@@ -92,6 +95,7 @@ function RangeDownload({
               📋 {parseInt(capFim, 10) - parseInt(capInicio, 10) + 1} capítulos serão baixados
             </div>
           )}
+
           <Button
             type="submit"
             className="btn-coral"
@@ -105,114 +109,20 @@ function RangeDownload({
       {/* Progresso em tempo real */}
       {jobStatus && (
         <div>
-          {/* Status header */}
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              marginBottom: '4px',
-            }}
-          >
-            <span
-              style={{
-                fontFamily: 'var(--font-display)',
-                fontSize: '0.82rem',
-                fontWeight: 800,
-                color: 'var(--text-900)',
-              }}
-            >
-              {rangeAtivo && `⏳ Baixando capítulo ${jobStatus.atual ?? '...'}...`}
-              {rangeFim && jobStatus.status === 'concluido' && '✅ Download concluído!'}
-              {rangeFim && jobStatus.status === 'cancelado' && '⛔ Download cancelado'}
-            </span>
-            {rangeAtivo && (
-              <Button className="btn-sm btn-danger" onClick={onCancel} style={{ flexShrink: 0 }}>
-                ⛔ Cancelar
-              </Button>
-            )}
-          </div>
+          <JobStatusHeader
+            rangeAtivo={rangeAtivo}
+            rangeFim={rangeFim}
+            jobStatus={jobStatus}
+            onCancel={onCancel}
+          />
 
-          {/* Resumo final */}
-          {rangeFim && (
-            <div
-              style={{
-                display: 'flex',
-                gap: '12px',
-                marginTop: '14px',
-                flexWrap: 'wrap',
-              }}
-            >
-              <div
-                style={{
-                  flex: 1,
-                  padding: '10px 14px',
-                  background: '#EDFAF4',
-                  borderRadius: 'var(--radius-sm)',
-                  textAlign: 'center',
-                }}
-              >
-                <div
-                  style={{
-                    fontFamily: 'var(--font-display)',
-                    fontSize: '1.3rem',
-                    fontWeight: 900,
-                    color: '#22A05B',
-                  }}
-                >
-                  {jobStatus.resultados.filter(r => r.sucesso).length}
-                </div>
-                <div
-                  style={{
-                    fontFamily: 'var(--font-display)',
-                    fontSize: '0.7rem',
-                    fontWeight: 700,
-                    color: '#22A05B',
-                  }}
-                >
-                  Baixados
-                </div>
-              </div>
-              <div
-                style={{
-                  flex: 1,
-                  padding: '10px 14px',
-                  background: 'var(--coral-light)',
-                  borderRadius: 'var(--radius-sm)',
-                  textAlign: 'center',
-                }}
-              >
-                <div
-                  style={{
-                    fontFamily: 'var(--font-display)',
-                    fontSize: '1.3rem',
-                    fontWeight: 900,
-                    color: 'var(--coral)',
-                  }}
-                >
-                  {jobStatus.resultados.filter(r => !r.sucesso).length}
-                </div>
-                <div
-                  style={{
-                    fontFamily: 'var(--font-display)',
-                    fontSize: '0.7rem',
-                    fontWeight: 700,
-                    color: 'var(--coral)',
-                  }}
-                >
-                  Falhas
-                </div>
-              </div>
-            </div>
-          )}
+          {rangeFim && <DownloadSummary resultados={jobStatus.resultados} />}
 
-          {/* Log de resultados */}
           <ResultLog
             resultados={jobStatus.resultados}
             capAtual={rangeAtivo ? jobStatus.atual : null}
           />
 
-          {/* Botão novo download */}
           {rangeFim && (
             <Button
               className="btn-outline"
