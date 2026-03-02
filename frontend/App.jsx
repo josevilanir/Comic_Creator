@@ -1,5 +1,19 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
+import { AnimatePresence, motion } from 'framer-motion';
+
+function getPathIndex(path) {
+  if (path === '/') return 0;
+  if (path.startsWith('/library')) return 1;
+  if (path.startsWith('/download')) return 2;
+  return 3;
+}
+
+const pageVariants = {
+  initial: (dir) => ({ x: dir * 40, opacity: 0 }),
+  animate: { x: 0, opacity: 1, transition: { duration: 0.3, ease: 'easeOut' } },
+  exit: (dir) => ({ x: dir * -40, opacity: 0, transition: { duration: 0.2, ease: 'easeIn' } })
+};
 import LandingPage from './src/features/landing/LandingPage';
 import Library from './src/features/library/Library';
 import ChapterList from './src/features/library/ChapterList';
@@ -58,18 +72,28 @@ function BentoNavbar() {
       </div>
 
       {/* Floating Center Pill - Hidden on very small screens, shown as hamburger menu */}
-      <nav className="hidden md:flex bento-nav-pill">
-        {navLinks.map(link => (
-          <Link
-            key={link.to}
-            to={link.to}
-            className={linkClass(link.to)}
-          >
-            {link.label}
-          </Link>
-        ))}
+      <nav className="hidden md:flex bento-nav-pill items-center">
+        {navLinks.map(link => {
+          const active = isActive(link.to);
+          return (
+            <Link
+              key={link.to}
+              to={link.to}
+              className={`relative z-10 px-5 py-2 ${active ? 'text-black' : 'text-white hover:text-gray-300'} transition-colors font-extrabold text-[0.8125rem] capitalize no-underline`}
+            >
+              {active && (
+                <motion.div
+                  layoutId="active-nav-pill"
+                  className="absolute inset-0 bg-white rounded-full -z-10"
+                  transition={{ type: "spring", stiffness: 450, damping: 35 }}
+                />
+              )}
+              {link.label}
+            </Link>
+          );
+        })}
         {user && (
-           <span className="text-gray-400 text-xs ml-4">👋 {user.username}</span>
+           <span className="text-gray-400 text-xs ml-4 z-10 relative">👋 {user.username}</span>
         )}
       </nav>
       
@@ -105,13 +129,23 @@ function BentoNavbar() {
  * AppContent — separado para poder usar useLocation dentro do Router
  */
 function AppContent() {
-  const { pathname } = useLocation();
+  const location = useLocation();
+  const { pathname } = location;
   const isReader = pathname.includes('/ler/');
   const isAuthPage = pathname === '/login';
 
+  const prevIndexRef = useRef(getPathIndex(pathname));
+  const currentIndex = getPathIndex(pathname);
+  
+  let direction = 1;
+  if (currentIndex < prevIndexRef.current) direction = -1;
+  useEffect(() => {
+    prevIndexRef.current = currentIndex;
+  }, [currentIndex]);
+
   if (isReader || isAuthPage) {
     return (
-      <Routes>
+      <Routes location={location}>
         <Route path="/login" element={<AuthPage />} />
         <Route path="/manga/:mangaName/ler/:filename" element={<PrivateRoute><MangaReader /></PrivateRoute>} />
       </Routes>
@@ -122,13 +156,25 @@ function AppContent() {
     <div className="bento-app-container">
       <div className="bento-board shadow-2xl">
         <BentoNavbar />
-        <main className="bento-inner">
-          <Routes>
-            <Route path="/" element={<PrivateRoute><LandingPage /></PrivateRoute>} />
-            <Route path="/library" element={<PrivateRoute><Library /></PrivateRoute>} />
-            <Route path="/manga/:mangaName" element={<PrivateRoute><ChapterList /></PrivateRoute>} />
-            <Route path="/download" element={<PrivateRoute><Downloader /></PrivateRoute>} />
-          </Routes>
+        <main className="bento-inner overflow-x-hidden">
+          <AnimatePresence mode="wait" custom={direction} initial={false}>
+            <motion.div
+              key={pathname}
+              custom={direction}
+              variants={pageVariants}
+              initial="initial"
+              animate="animate"
+              exit="exit"
+              className="w-full h-full"
+            >
+              <Routes location={location}>
+                <Route path="/" element={<PrivateRoute><LandingPage /></PrivateRoute>} />
+                <Route path="/library" element={<PrivateRoute><Library /></PrivateRoute>} />
+                <Route path="/manga/:mangaName" element={<PrivateRoute><ChapterList /></PrivateRoute>} />
+                <Route path="/download" element={<PrivateRoute><Downloader /></PrivateRoute>} />
+              </Routes>
+            </motion.div>
+          </AnimatePresence>
         </main>
       </div>
     </div>
