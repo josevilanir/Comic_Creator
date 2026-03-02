@@ -55,12 +55,12 @@ logs/
 # Env
 .env
 .env.local
-GEMINI.MD
 
 # Banco de dados local
 comic_creator.db.env
 
-# Claude Code (worktrees e memória interna)
+# AI assistant memory files (all case variants)
 .claude/
+CLAUDE.md
 CLAUDE.MD
 GEMINI.MD
