@@ -2354,3 +2354,231 @@ select.form-input {
   justify-content: center;
   height: 100vh;
 }
+
+/* ═══════════════════════════════════════════
+   DOWNLOAD PAGE — WRAPPER E TÍTULO
+═══════════════════════════════════════════ */
+.download-page-wrapper {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 32px 32px 64px;
+}
+
+.download-page-title {
+  font-family: var(--font-display);
+  font-size: 2rem;
+  font-weight: 900;
+  color: var(--text-900);
+  text-align: center;
+  margin-bottom: 28px;
+  letter-spacing: 0.02em;
+}
+
+/* ═══════════════════════════════════════════
+   DOWNLOAD PAGE — GRID 3 COLUNAS
+═══════════════════════════════════════════ */
+.download-page-layout {
+  display: grid;
+  grid-template-columns: 280px 1fr 300px;
+  gap: 20px;
+  align-items: start;
+}
+
+/* Coluna 2 — Hero */
+.download-hero-area {
+  background: linear-gradient(160deg, #F5C6BC 0%, #C4D4E0 100%);
+  border-radius: var(--radius-lg);
+  min-height: 400px;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  position: relative;
+  overflow: hidden;
+  padding: 32px 24px;
+}
+
+.download-hero-bg-pattern {
+  position: absolute;
+  inset: 0;
+  opacity: 0.12;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(43,43,43,0.4) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(43,43,43,0.4) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+/* Círculo central hero */
+.download-hero-circle {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.download-hero-circle-svg {
+  position: absolute;
+  animation: spin 20s linear infinite;
+  pointer-events: none;
+}
+
+.download-hero-circle-inner {
+  width: 80px;
+  height: 80px;
+  background: var(--text-900);
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-size: 0.55rem;
+  font-weight: 900;
+  color: var(--white);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  text-align: center;
+  z-index: 1;
+  box-shadow:
+    0 0 0 10px rgba(255,255,255,0.15),
+    0 0 0 22px rgba(255,255,255,0.07);
+  cursor: default;
+  transition: background 0.2s;
+}
+
+.download-hero-circle-inner:hover {
+  background: var(--coral);
+}
+
+/* Stack de livros decorativo */
+.download-hero-books {
+  position: relative;
+  width: 140px;
+  height: 200px;
+  flex-shrink: 0;
+}
+
+.download-hero-book {
+  position: absolute;
+  width: 120px;
+  height: 170px;
+  border-radius: 6px;
+  transform: rotate(-12deg);
+  border: 1px solid rgba(255,255,255,0.25);
+}
+
+.download-hero-book--top {
+  background: #3CD28E;
+  z-index: 3;
+  top: 0;
+  left: 0;
+  box-shadow: 6px 12px 20px rgba(0,0,0,0.15);
+}
+
+.download-hero-book--mid {
+  background: #9C89F5;
+  z-index: 2;
+  top: 12px;
+  left: 10px;
+  box-shadow: 6px 12px 20px rgba(0,0,0,0.12);
+}
+
+.download-hero-book--bot {
+  background: #FC9FAD;
+  z-index: 1;
+  top: 24px;
+  left: 20px;
+  box-shadow: 6px 12px 20px rgba(0,0,0,0.08);
+}
+
+/* Coluna 3 — Painéis */
+.download-panels {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.download-panels .form-card {
+  margin-bottom: 0;
+}
+
+/* Sidebar override — fundo bege nos cards internos */
+.download-sidebar .form-card {
+  background: var(--cream-dark);
+  border-color: var(--cream-darker);
+}
+
+/* Tab label acima de cada painel */
+.download-panel-card {
+  display: flex;
+  flex-direction: column;
+}
+
+.download-panel-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-family: var(--font-display);
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-500);
+  margin-bottom: 6px;
+  padding: 0 4px;
+}
+
+.download-panel-tab-btn {
+  font-size: 0.68rem;
+  color: var(--text-300);
+  font-weight: 700;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+/* ═══════════════════════════════════════════
+   DOWNLOAD — BARRA DE PROGRESSO INFERIOR
+═══════════════════════════════════════════ */
+.download-progress-bar-area {
+  margin-top: 20px;
+  background: var(--cream-dark);
+  border-radius: var(--radius-lg);
+  padding: 20px 24px;
+  min-height: 80px;
+  display: flex;
+  align-items: center;
+}
+
+.download-progress-bar-area > * {
+  flex: 1;
+}
+
+/* ═══════════════════════════════════════════
+   DOWNLOAD PAGE — RESPONSIVO
+═══════════════════════════════════════════ */
+@media (max-width: 1100px) {
+  .download-page-layout {
+    grid-template-columns: 250px 1fr 280px;
+  }
+}
+
+@media (max-width: 900px) {
+  .download-page-layout {
+    grid-template-columns: 1fr 1fr;
+  }
+  .download-hero-area {
+    grid-column: 1 / -1;
+    min-height: 200px;
+  }
+}
+
+@media (max-width: 600px) {
+  .download-page-layout {
+    grid-template-columns: 1fr;
+  }
+  .download-page-wrapper {
+    padding: 20px 16px 48px;
+  }
+}
+
