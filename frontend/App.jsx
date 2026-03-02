@@ -46,11 +46,11 @@ function BentoNavbar() {
         {/* Actions Right */}
         <div className="flex items-center gap-3">
           {user ? (
-            <button onClick={logout} className="btn bg-white text-black hover:bg-gray-100 rounded-full px-6 shadow-sm border border-gray-200">
+            <button onClick={logout} className="btn bg-white text-black hover:bg-gray-100 active:scale-95 transition-all duration-150 rounded-full px-6 shadow-sm border border-gray-200">
               Sair
             </button>
           ) : (
-             <Link to="/login" className="btn bg-white text-black hover:bg-gray-100 rounded-full px-6 shadow-sm border border-gray-200">
+             <Link to="/login" className="btn bg-white text-black hover:bg-gray-100 active:scale-95 transition-all duration-150 rounded-full px-6 shadow-sm border border-gray-200">
               Join Us
             </Link>
           )}
@@ -76,7 +76,7 @@ function BentoNavbar() {
       {/* Mobile nav logic (simplified for brevity, can still use old hamburger logic if needed) */}
       <div className="md:hidden absolute top-4 left-1/2 -translate-x-1/2 z-[100]">
          <button
-          className="bg-black text-white px-4 py-2 rounded-full text-sm font-bold"
+          className="bg-black text-white px-4 py-2 rounded-full text-sm font-bold active:scale-95 transition-all duration-150"
           onClick={() => setMenuOpen(o => !o)}
         >
            Menu {menuOpen ? '✕' : '☰'}
@@ -89,7 +89,7 @@ function BentoNavbar() {
             <Link
               key={link.to}
               to={link.to}
-              className={`text-sm font-bold py-2 no-underline ${isActive(link.to) ? 'text-white' : 'text-gray-400'}`}
+              className={`text-sm font-bold py-2 no-underline active:scale-95 transition-all duration-150 block ${isActive(link.to) ? 'text-white' : 'text-gray-400'}`}
               onClick={() => setMenuOpen(false)}
             >
               {link.label}
