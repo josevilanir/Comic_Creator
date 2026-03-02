@@ -3,6 +3,7 @@ import Button from '../ui/Button';
 
 /**
  * Formulário para baixar um capítulo único.
+ * O wrapper download-panel-card e o label ficam no Downloader.jsx.
  */
 function SingleDownload({
   capitulo,
@@ -23,7 +24,7 @@ function SingleDownload({
         }}
       >
         <div className="form-group">
-          <label className="form-label">Número do Capítulo</label>
+          <label className="form-label">NÚMERO DO CAPÍTULO</label>
           <input
             type="number"
             className="form-input"

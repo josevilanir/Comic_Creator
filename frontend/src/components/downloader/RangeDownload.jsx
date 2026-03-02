@@ -1,5 +1,4 @@
 import React from 'react';
-import ProgressBar from '../ui/ProgressBar';
 import Button from '../ui/Button';
 import ResultLog from './ResultLog';
 
@@ -133,8 +132,6 @@ function RangeDownload({
               </Button>
             )}
           </div>
-
-          <ProgressBar value={jobStatus.concluido} total={jobStatus.total} />
 
           {/* Resumo final */}
           {rangeFim && (
