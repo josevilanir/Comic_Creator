@@ -16,9 +16,9 @@ const NAV_LINKS = [
 ];
 
 /**
- * Navbar — mobile-first com Tailwind. Hamburger em mobile, links em desktop.
+ * Navbar — Floating pill layout (Bento Box style)
  */
-function Navbar() {
+function BentoNavbar() {
   const { pathname } = useLocation();
   const { user, logout } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -29,108 +29,109 @@ function Navbar() {
   }
 
   function linkClass(to) {
-    return isActive(to)
-      ? 'font-bold text-[var(--coral)]'
-      : 'text-gray-500 hover:text-gray-900';
+    return isActive(to) ? 'bento-nav-link active' : 'bento-nav-link';
   }
 
-  const navLinks = NAV_LINKS.filter(l => l.to !== '/');
+  const navLinks = NAV_LINKS;
 
   return (
-    <header className="sticky top-0 z-50 w-full bg-white/95 backdrop-blur border-b border-gray-100 shadow-sm">
-      <div className="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between gap-4">
-
-        {/* Logo */}
-        <Link to="/" className="flex items-center gap-2 shrink-0 no-underline">
-          <span className="w-8 h-8 bg-[var(--coral)] rounded-lg flex items-center justify-center text-sm shadow-sm">📖</span>
-          <span className="font-bold text-gray-900 text-sm hidden sm:block">Comic Creator</span>
+    <>
+      <div className="bento-header-wrapper">
+        {/* Logo Left */}
+        <Link to="/" className="navbar-logo no-underline">
+          <span className="navbar-logo-text" style={{ fontSize: '1.4rem' }}>comic creator</span>
+          <span className="navbar-logo-icon">❤</span>
         </Link>
-
-        {/* Links — desktop */}
-        <nav className="hidden md:flex items-center gap-1 flex-1">
-          {navLinks.map(link => (
-            <Link
-              key={link.to}
-              to={link.to}
-              className={`px-4 py-2 rounded-full text-sm font-bold transition-all no-underline ${linkClass(link.to)}`}
-            >
-              {link.label}
+        
+        {/* Actions Right */}
+        <div className="flex items-center gap-3">
+          {user ? (
+            <button onClick={logout} className="btn bg-white text-black hover:bg-gray-100 rounded-full px-6 shadow-sm border border-gray-200">
+              Sair
+            </button>
+          ) : (
+             <Link to="/login" className="btn bg-white text-black hover:bg-gray-100 rounded-full px-6 shadow-sm border border-gray-200">
+              Join Us
             </Link>
-          ))}
-        </nav>
+          )}
+        </div>
+      </div>
 
-        {/* User + Sair — desktop */}
+      {/* Floating Center Pill - Hidden on very small screens, shown as hamburger menu */}
+      <nav className="hidden md:flex bento-nav-pill">
+        {navLinks.map(link => (
+          <Link
+            key={link.to}
+            to={link.to}
+            className={linkClass(link.to)}
+          >
+            {link.label}
+          </Link>
+        ))}
         {user && (
-          <div className="hidden md:flex items-center gap-3">
-            <span className="text-sm text-gray-500 truncate max-w-[120px]">👋 {user.username}</span>
-            <button onClick={logout} className="btn btn-sm btn-outline">Sair</button>
-          </div>
+           <span className="text-gray-400 text-xs ml-4">👋 {user.username}</span>
         )}
-
-        {/* Hamburger — mobile */}
-        <button
-          className="md:hidden p-3 w-11 h-11 flex items-center justify-center text-gray-700 text-xl leading-none"
+      </nav>
+      
+      {/* Mobile nav logic (simplified for brevity, can still use old hamburger logic if needed) */}
+      <div className="md:hidden absolute top-4 left-1/2 -translate-x-1/2 z-[100]">
+         <button
+          className="bg-black text-white px-4 py-2 rounded-full text-sm font-bold"
           onClick={() => setMenuOpen(o => !o)}
-          aria-label="Menu"
         >
-          {menuOpen ? '✕' : '☰'}
+           Menu {menuOpen ? '✕' : '☰'}
         </button>
       </div>
 
-      {/* Dropdown mobile */}
       {menuOpen && (
-        <div className="md:hidden bg-white border-t border-gray-100 px-4 py-3 flex flex-col gap-3">
+        <div className="md:hidden absolute top-16 left-1/2 -translate-x-1/2 bg-black text-white rounded-xl p-4 flex flex-col gap-3 z-[100] shadow-xl border border-gray-800 w-48 text-center">
           {navLinks.map(link => (
             <Link
               key={link.to}
               to={link.to}
-              className={`text-sm font-bold py-3 no-underline ${linkClass(link.to)}`}
+              className={`text-sm font-bold py-2 no-underline ${isActive(link.to) ? 'text-white' : 'text-gray-400'}`}
               onClick={() => setMenuOpen(false)}
             >
               {link.label}
             </Link>
           ))}
-          {user && (
-            <>
-              <span className="text-sm text-gray-400">👋 {user.username}</span>
-              <button
-                onClick={() => { logout(); setMenuOpen(false); }}
-                className="btn btn-sm btn-outline w-full justify-center"
-              >
-                Sair
-              </button>
-            </>
-          )}
         </div>
       )}
-    </header>
+    </>
   );
 }
 
 /**
  * AppContent — separado para poder usar useLocation dentro do Router
- * e ocultar a navbar na página de leitura (reader ocupa tela toda)
  */
 function AppContent() {
   const { pathname } = useLocation();
   const isReader = pathname.includes('/ler/');
   const isAuthPage = pathname === '/login';
 
+  if (isReader || isAuthPage) {
+    return (
+      <Routes>
+        <Route path="/login" element={<AuthPage />} />
+        <Route path="/manga/:mangaName/ler/:filename" element={<PrivateRoute><MangaReader /></PrivateRoute>} />
+      </Routes>
+    );
+  }
+
   return (
-    <>
-      {!isReader && !isAuthPage && <Navbar />}
-      <main>
-        <Routes>
-          <Route path="/login" element={<AuthPage />} />
-          
-          <Route path="/" element={<PrivateRoute><LandingPage /></PrivateRoute>} />
-          <Route path="/library" element={<PrivateRoute><Library /></PrivateRoute>} />
-          <Route path="/manga/:mangaName" element={<PrivateRoute><ChapterList /></PrivateRoute>} />
-          <Route path="/manga/:mangaName/ler/:filename" element={<PrivateRoute><MangaReader /></PrivateRoute>} />
-          <Route path="/download" element={<PrivateRoute><Downloader /></PrivateRoute>} />
-        </Routes>
-      </main>
-    </>
+    <div className="bento-app-container">
+      <div className="bento-board shadow-2xl">
+        <BentoNavbar />
+        <main className="bento-inner">
+          <Routes>
+            <Route path="/" element={<PrivateRoute><LandingPage /></PrivateRoute>} />
+            <Route path="/library" element={<PrivateRoute><Library /></PrivateRoute>} />
+            <Route path="/manga/:mangaName" element={<PrivateRoute><ChapterList /></PrivateRoute>} />
+            <Route path="/download" element={<PrivateRoute><Downloader /></PrivateRoute>} />
+          </Routes>
+        </main>
+      </div>
+    </div>
   );
 }
 
