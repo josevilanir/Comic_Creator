@@ -308,7 +308,19 @@ export function AuthPage() {
   const subtitle = getSubtitle(mode, step);
 
   return (
-    <>
+    <div
+      style={{
+        minHeight: '100vh',
+        width: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: '#0d0d0f',
+        position: 'relative',
+        overflow: 'hidden',
+      }}
+    >
       <GradientBackground />
       <ConfettiCanvas ref={confettiRef} manualstart />
 
@@ -323,125 +335,153 @@ export function AuthPage() {
       {/* Status modal */}
       <StatusModal status={modalStatus} errorMessage={error} onRetry={handleRetry} />
 
-      {/* Main card */}
-      <div className="auth-screen">
-        <div className="auth-card">
-          <fieldset
-            disabled={modalStatus !== 'closed'}
-            style={{ border: 'none', padding: 0, margin: 0 }}
-          >
-            {/* Step dots */}
-            {steps.length > 1 && (
-              <BlurFade delay={0.05}>
-                <div className="auth-dots">
-                  {steps.map((_, i) => (
-                    <span
-                      key={i}
-                      className={`auth-dot${i === step ? ' auth-dot--active' : i < step ? ' auth-dot--done' : ''}`}
-                    />
-                  ))}
-                </div>
-              </BlurFade>
-            )}
+      {/* Content — above blur overlay */}
+      <div
+        style={{
+          position: 'relative',
+          zIndex: 10,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: '2rem',
+          width: '300px',
+        }}
+      >
+        <fieldset
+          disabled={modalStatus !== 'closed'}
+          style={{ border: 'none', padding: 0, margin: 0, width: '100%' }}
+        >
+          {/* Step dots */}
+          {steps.length > 1 && (
+            <BlurFade delay={0.05}>
+              <div className="auth-dots">
+                {steps.map((_, i) => (
+                  <span
+                    key={i}
+                    className={`auth-dot${i === step ? ' auth-dot--active' : i < step ? ' auth-dot--done' : ''}`}
+                  />
+                ))}
+              </div>
+            </BlurFade>
+          )}
 
-            {/* Title block */}
+          {/* Title block */}
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={`${mode}-${step}`}
+              variants={titleVariants}
+              initial="initial"
+              animate="animate"
+              exit="exit"
+              style={{ marginBottom: 0 }}
+            >
+              <h1
+                className="auth-title"
+                style={{
+                  whiteSpace: 'pre-line',
+                  fontSize: 'clamp(2.5rem, 5vw, 3.5rem)',
+                  fontWeight: '300',
+                  color: '#ffffff',
+                  letterSpacing: '-0.03em',
+                  lineHeight: '1.1',
+                  textAlign: 'center',
+                }}
+              >
+                {title}
+              </h1>
+              <p
+                className="auth-subtitle"
+                style={{
+                  color: 'rgba(255,255,255,0.55)',
+                  fontSize: '0.9rem',
+                  textAlign: 'center',
+                }}
+              >
+                {subtitle}
+              </p>
+            </motion.div>
+          </AnimatePresence>
+
+          {/* Form */}
+          <form onSubmit={(e) => e.preventDefault()} className="auth-step-form">
             <AnimatePresence mode="wait">
               <motion.div
-                key={`${mode}-${step}`}
-                variants={titleVariants}
-                initial="initial"
-                animate="animate"
-                exit="exit"
-                style={{ marginBottom: 0 }}
+                key={`${mode}-input-${step}`}
+                initial={{ opacity: 0, x: 20, filter: 'blur(4px)' }}
+                animate={{ opacity: 1, x: 0, filter: 'blur(0px)', transition: { duration: 0.3, ease: [0.21, 0.47, 0.32, 0.98] } }}
+                exit={{ opacity: 0, x: -20, filter: 'blur(4px)', transition: { duration: 0.2 } }}
               >
-                <h1 className="auth-title" style={{ whiteSpace: 'pre-line' }}>
-                  {title}
-                </h1>
-                <p className="auth-subtitle">{subtitle}</p>
+                <AuthStepInput
+                  icon={meta.icon}
+                  label={meta.label}
+                  placeholder={meta.placeholder}
+                  type={meta.type}
+                  showToggle={meta.showToggle}
+                  value={fields[currentField]}
+                  onChange={(v) => handleFieldChange(currentField, v)}
+                  isValid={isValid}
+                  onAdvance={handleAdvance}
+                  inputRef={(el) => (inputRefs.current[currentField] = el)}
+                />
               </motion.div>
             </AnimatePresence>
 
-            {/* Form */}
-            <form onSubmit={(e) => e.preventDefault()} className="auth-step-form">
-              <AnimatePresence mode="wait">
+            {/* Submit / advance button */}
+            <BlurFade delay={0.1}>
+              <GlassButton
+                type="button"
+                onClick={handleAdvance}
+                disabled={!isValid || loading}
+              >
+                {loading && mode === 'login'
+                  ? 'Entrando...'
+                  : step < steps.length - 1
+                  ? 'Continuar'
+                  : mode === 'login'
+                  ? 'Entrar'
+                  : 'Criar conta'}
+              </GlassButton>
+            </BlurFade>
+
+            {/* Back button */}
+            <AnimatePresence>
+              {step > 0 && (
                 <motion.div
-                  key={`${mode}-input-${step}`}
-                  initial={{ opacity: 0, x: 20, filter: 'blur(4px)' }}
-                  animate={{ opacity: 1, x: 0, filter: 'blur(0px)', transition: { duration: 0.3, ease: [0.21, 0.47, 0.32, 0.98] } }}
-                  exit={{ opacity: 0, x: -20, filter: 'blur(4px)', transition: { duration: 0.2 } }}
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 6 }}
+                  transition={{ duration: 0.2 }}
+                  style={{ display: 'flex', justifyContent: 'center' }}
                 >
-                  <AuthStepInput
-                    icon={meta.icon}
-                    label={meta.label}
-                    placeholder={meta.placeholder}
-                    type={meta.type}
-                    showToggle={meta.showToggle}
-                    value={fields[currentField]}
-                    onChange={(v) => handleFieldChange(currentField, v)}
-                    isValid={isValid}
-                    onAdvance={handleAdvance}
-                    inputRef={(el) => (inputRefs.current[currentField] = el)}
-                  />
+                  <button type="button" className="auth-back-btn" onClick={handleBack}>
+                    <ArrowLeft size={15} />
+                    Voltar
+                  </button>
                 </motion.div>
-              </AnimatePresence>
-
-              {/* Submit / advance button */}
-              <BlurFade delay={0.1}>
-                <GlassButton
-                  type="button"
-                  onClick={handleAdvance}
-                  disabled={!isValid || loading}
-                >
-                  {loading && mode === 'login'
-                    ? 'Entrando...'
-                    : step < steps.length - 1
-                    ? 'Continuar'
-                    : mode === 'login'
-                    ? 'Entrar'
-                    : 'Criar conta'}
-                </GlassButton>
-              </BlurFade>
-
-              {/* Back button */}
-              <AnimatePresence>
-                {step > 0 && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 6 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: 6 }}
-                    transition={{ duration: 0.2 }}
-                    style={{ display: 'flex', justifyContent: 'center' }}
-                  >
-                    <button type="button" className="auth-back-btn" onClick={handleBack}>
-                      <ArrowLeft size={15} />
-                      Voltar
-                    </button>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </form>
-
-            {/* Toggle login / register */}
-            <p className="auth-switch">
-              {mode === 'login' ? (
-                <>
-                  Não tem conta?{' '}
-                  <button type="button" onClick={() => switchMode('register')}>
-                    Criar conta
-                  </button>
-                </>
-              ) : (
-                <>
-                  Já tem conta?{' '}
-                  <button type="button" onClick={() => switchMode('login')}>
-                    Entrar
-                  </button>
-                </>
               )}
-            </p>
-          </fieldset>
-        </div>
+            </AnimatePresence>
+          </form>
+
+          {/* Toggle login / register */}
+          <p className="auth-switch">
+            {mode === 'login' ? (
+              <>
+                Não tem conta?{' '}
+                <button type="button" onClick={() => switchMode('register')}>
+                  Criar conta
+                </button>
+              </>
+            ) : (
+              <>
+                Já tem conta?{' '}
+                <button type="button" onClick={() => switchMode('login')}>
+                  Entrar
+                </button>
+              </>
+            )}
+          </p>
+        </fieldset>
       </div>
-    </>
+    </div>
   );
 }
