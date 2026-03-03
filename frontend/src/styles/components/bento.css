@@ -1,0 +1,94 @@
+/* ═══════════════════════════════════════════
+   BENTO BOX LAYOUT 
+═══════════════════════════════════════════ */
+.bento-app-container {
+  min-height: 100vh;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  background: var(
+    --text-900
+  ); /* Dark outer background like the reference border */
+}
+
+@media (min-width: 768px) {
+  .bento-app-container {
+    padding: 24px;
+  }
+}
+
+.bento-board {
+  flex: 1;
+  background: var(--cream);
+  border-radius: var(--radius-xl);
+  overflow: hidden; /* Contains the scrollable inner content */
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.bento-inner {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  position: relative;
+  /* Custom scrollbar for inner bento */
+  scrollbar-width: thin;
+  scrollbar-color: var(--coral-mid) var(--cream-dark);
+}
+
+.bento-nav-pill {
+  background: var(--text-900);
+  color: var(--white);
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+  padding: 12px 32px;
+  display: inline-flex;
+  align-items: center;
+  gap: 24px;
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 100;
+  white-space: nowrap;
+}
+
+.bento-nav-link {
+  color: var(--white);
+  font-family: var(--font-display);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  text-transform: capitalize;
+  opacity: 0.8;
+  transition:
+    opacity 0.2s,
+    transform 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  text-decoration: none;
+}
+
+.bento-nav-link:hover,
+.bento-nav-link.active {
+  opacity: 1;
+}
+
+.bento-nav-link:active {
+  transform: scale(0.92);
+}
+
+.bento-header-wrapper {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px 32px;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 90;
+  pointer-events: none; /* Let clicks pass through except on children */
+}
+
+.bento-header-wrapper > * {
+  pointer-events: auto;
+}
+
