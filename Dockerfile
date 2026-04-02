@@ -42,4 +42,4 @@ ENV FLASK_ENV=production \
 EXPOSE 8080
 
 # Inicia com Gunicorn
-CMD gunicorn "main:app" --config gunicorn.conf.py
+CMD gunicorn "main:app" --config deploy/gunicorn.conf.py
