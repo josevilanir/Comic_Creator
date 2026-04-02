@@ -2,15 +2,22 @@
 Image Download Service - Serviço para download de imagens de capítulos
 """
 import os
+import re
 import requests
 from bs4 import BeautifulSoup
-from urllib.parse import urljoin, urlparse
+from urllib.parse import urljoin, urlparse, parse_qs
 from typing import List, Optional
 from PIL import Image, UnidentifiedImageError
 from io import BytesIO
 
 from ...domain.exceptions import DownloadFailedException, ImagensInvalidasException
 from ...domain.validators import ValidadorCapitulo
+
+
+_CDN_SEQUENCIAL_RE = re.compile(r'^(https?://.+/)(\d{2,3})\.(jpg|jpeg|png|webp)$', re.IGNORECASE)
+_MIN_IMAGENS_CAPITULO = 10
+_EXTENSOES_IMAGEM = ('.jpg', '.jpeg', '.png', '.webp')
+_BLACKLIST_UI = ['logo', 'banner', 'icon', 'favicon', 'button', 'badge', 'spinner', 'loading', 'placeholder']
 
 
 class ImageDownloadService:
@@ -60,26 +67,74 @@ class ImageDownloadService:
     def extrair_urls_imagens(self, html: str, url_base: str) -> List[str]:
         """
         Extrai URLs de imagens do HTML.
-        
+
         Args:
             html: Conteúdo HTML
             url_base: URL base para resolver URLs relativas
-            
+
         Returns:
             Lista de URLs de imagens válidas
         """
         soup = BeautifulSoup(html, 'html.parser')
-        tags_imagens = soup.find_all('img')
-        
+
         urls_validas = []
-        
-        for tag in tags_imagens:
+
+        for tag in soup.find_all('img'):
             img_url = self._extrair_url_da_tag(tag, url_base)
-            
             if img_url and ValidadorCapitulo.validar_url_imagem(img_url):
                 urls_validas.append(img_url)
-        
-        return urls_validas
+
+        # Extrai imagens de links de redirect (ex: Madara theme com suaap.com?t=IMAGE_URL)
+        for tag in soup.find_all('a', href=True):
+            try:
+                params = parse_qs(urlparse(tag['href']).query)
+                if 't' in params:
+                    img_url = params['t'][0]
+                    caminho = img_url.split('?')[0].lower()
+                    if any(caminho.endswith(e) for e in _EXTENSOES_IMAGEM) and \
+                       not any(p in caminho.split('/')[-1] for p in _BLACKLIST_UI):
+                        if ValidadorCapitulo.validar_url_imagem(img_url):
+                            urls_validas.append(img_url)
+            except Exception:
+                pass
+
+        # Deduplicar preservando ordem
+        visto: set = set()
+        unicas = []
+        for u in urls_validas:
+            if u not in visto:
+                visto.add(u)
+                unicas.append(u)
+
+        # Sites com lazy-load expõem só a 1ª página no HTML estático — enumera via CDN sequencial
+        if len(unicas) < _MIN_IMAGENS_CAPITULO and unicas:
+            cdn = self._enumerar_cdn_sequencial(unicas)
+            if cdn:
+                return cdn
+
+        return unicas
+
+    def _enumerar_cdn_sequencial(self, seeds: List[str]) -> List[str]:
+        """Enumera páginas via CDN sequencial (01.jpg, 02.jpg...) quando o HTML só expõe a primeira."""
+        for seed in seeds:
+            m = _CDN_SEQUENCIAL_RE.match(seed.split('?')[0])
+            if not m:
+                continue
+            base, num_str, ext = m.group(1), m.group(2), m.group(3)
+            largura = len(num_str)
+            result = []
+            for i in range(1, 100):
+                url = f"{base}{str(i).zfill(largura)}.{ext}"
+                try:
+                    resp = requests.head(url, headers=self.headers, timeout=8, allow_redirects=True)
+                    if resp.status_code >= 400:
+                        break
+                    result.append(url)
+                except Exception:
+                    break
+            if len(result) >= _MIN_IMAGENS_CAPITULO:
+                return result
+        return []
     
     def _extrair_url_da_tag(self, tag, url_base: str) -> Optional[str]:
         """
